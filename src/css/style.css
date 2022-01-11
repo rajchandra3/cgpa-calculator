@@ -1,0 +1,164 @@
+/* *{
+  outline: 1px red dotted;
+} */
+.container{
+  margin: 0px;
+  padding: 0px;
+}
+.centered{
+  margin: auto;
+}
+.active{
+  font-weight: 900;
+  color: cornflowerblue;
+}
+.sticky-content{
+  /* position:'-webkit-sticky';
+  position: 'sticky'; */
+  position: relative;
+  bottom:'1rem';
+  margin-top: '1rem';
+}
+.hidden{
+  display: none !important;
+}
+.no-padding{
+  padding: 0px !important;
+}
+.no-margin{
+  margin: 0px !important;
+}
+.google-ads {
+  animation-duration: 3s;
+  animation-delay: 2s;
+  /*animation-iteration-count: 2;*/
+}
+#feedback{
+  display: none;
+  transition: display 2s ease-in-out;
+  -moz-transition : display 2s ease-in-out
+}
+footer{
+  margin-bottom: 3rem !important;
+}
+
+.header{
+    /* width: 100%; */
+    /* background : linear-gradient(to bottom right,#58a6da,#1b567e); */
+    /* background : linear-gradient(to bottom right,#c31432,#240b36); */
+    /* color: white; */
+    font-weight: bold;
+    font-size: 24px;
+    text-align: center;
+}
+p{
+    font-size:20px;
+    font-weight:bold;
+}
+h1{
+    width: 100%;
+    font-size: 24px;
+    text-align: center;
+    position: relative;
+    margin-bottom: 3%;
+}
+.card-container{
+    border-radius: 8px;
+}
+.form-inline{
+    display: inline-flex;
+}
+.btn-holder{
+    padding: 3%;
+}
+h1{
+    text-transform: uppercase;
+}
+body{
+    font-family: 'Raleway', sans-serif;
+}
+.container-fluid{
+  background-color:  #f0f0f0;
+    /* background : linear-gradient(to bottom,#58a6da,#091d2a); */    
+    /* background : linear-gradient(to bottom,#c31432,#240b36); */
+
+}
+.has-box-shadow{
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
+.float-container{
+  position:fixed;
+  width:330px;
+  height:40px;
+  bottom:0px;
+  right:30px;
+  text-align:center;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.pointer{
+  cursor: pointer;
+}
+.h-250{
+  height: 250px;
+}
+.h-150{
+  height: 150px;
+  width: 100%;
+}
+.common-footer-container{
+  z-index: 1041;
+}
+.common-footer-container > .text-center{
+  margin-bottom: 0 !important;
+}
+.result-text{
+  font-size: 5rem;
+  font-weight: 900;
+}
+.ad-wrapper {
+  width: 100%;
+  display: flex !important;
+  justify-content:center !important;
+}
+.discord-ad{
+  border-radius: 0.25rem;
+  padding: 0rem;
+  margin: 1rem;
+  display: flex !important;
+  justify-content: space-between !important;
+}
+.discord-ad > .content {
+  padding: 0.5rem 1.5rem;
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content:space-between;
+}
+.discord-ad > .content > .d-title {
+  font-weight:900;
+  margin-bottom: 0.25rem !important;
+}
+.d-info-link {
+  padding: 0 0.25rem;
+  font-weight: 900;
+}
+.discord-ad > .content > .d-description > a{
+  background:
+     linear-gradient(
+       to bottom, #fff 0%,
+       #fff 100%
+     );
+  background-position: 0 100%;
+  background-repeat: repeat-x;
+  background-size: 4px 2px;
+  color: #fff;
+  text-decoration: none;
+  transition: background-size .2s;
+}
+.discord-ad > .content > .d-description > a:hover {
+  background-size: 4px 50px;
+  color: #000;
+}
