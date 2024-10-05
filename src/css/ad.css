@@ -1,20 +1,30 @@
-.ad-container{
+.ad-container {
+    margin: 20px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
     border-radius: 4px;
-    border: 2px solid darkgray;
 }
-.ad-head{
-    padding: 4px;
-    width: 100%;
-    background-color: darkgrey;
-    color: #fff;
-    text-transform: uppercase;
-    font-size: x-small;
-    font-weight: 900;
-}
-.adsbygoogle{
-    margin: auto;
-}
-.ads{
-    margin: auto;
+
+.ad-head {
+    font-size: 12px;
+    color: #6c757d;
     text-align: center;
+    margin-bottom: 5px;
+}
+
+.horizontal-ad {
+    width: 100%;
+    max-width: 970px;
+    margin: 20px auto;
+}
+
+@media (max-width: 768px) {
+    .ad-container {
+        margin: 10px 0;
+    }
+    
+    .horizontal-ad {
+        max-width: 100%;
+    }
 }
