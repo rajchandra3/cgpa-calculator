@@ -1,7 +1,18 @@
 // Add this function at the beginning of the file
 function roundToTwo(num) {
     if (isNaN(num)) return 0;
-    return Math.round((num + Number.EPSILON) * 100) / 100;
+    // Round to two decimal places with special handling for the third decimal
+    let rounded = Math.round(num * 1000) / 1000; // Round to 3 decimal places
+    let decimalPart = rounded - Math.floor(rounded);
+    let thirdDecimal = Math.round((decimalPart * 1000) % 10);
+    
+    if (thirdDecimal >= 5) {
+        rounded = Math.ceil(rounded * 100) / 100;
+    } else {
+        rounded = Math.floor(rounded * 100) / 100;
+    }
+    
+    return rounded;
 }
 
 //Expected Marks
@@ -285,3 +296,4 @@ $('.form-control').on('keyup',function(){
         $(this).val('');
     }
 });
+
