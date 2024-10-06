@@ -77,6 +77,18 @@
     <!-- load js files  -->
     <script language="javascript" type="text/javascript" src="./src/js/ads.js"></script>
     <script src="serviceWorker.js"></script>
+
+    <!-- Google Ads Tag -->
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16729760450">
+    </script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'AW-16729760450');
+    </script>
 </head>
 <body onload="track('page_views')">
     <!-- for facebook -->
