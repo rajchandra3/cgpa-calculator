@@ -25,6 +25,13 @@
     
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8598751574376549" crossorigin="anonymous"></script>
+    <!-- Auto ads - will automatically place ads in optimal positions -->
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({
+            google_ad_client: "ca-pub-8598751574376549",
+            enable_page_level_ads: true
+        });
+    </script>
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
@@ -39,14 +46,12 @@
     <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
 
     <!-- Google analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8SGELQM6QV"></script>
     <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-      ga('create', 'UA-99147431-4', 'auto');
-      ga('send', 'pageview');
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-8SGELQM6QV');
     </script>
 
     <!-- Schema.org -->
@@ -90,6 +95,80 @@
 
         gtag('config', 'AW-16729760450');
     </script>
+
+    <!-- Enhanced ad initialization -->
+    <script>
+        // Initialize analytics and tracking
+        function track(eventName, properties = {}) {
+            // Send to Mixpanel if available
+            if (window.mixpanel && typeof window.mixpanel.track === 'function') {
+                window.mixpanel.track(eventName, properties);
+            }
+            
+            // Send to Google Analytics
+            if (window.gtag) {
+                gtag('event', eventName, properties);
+            }
+            
+            // Log for debugging
+            console.log('Track:', eventName, properties);
+        }
+        
+        // Initialize tabs based on URL with analytics
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize ad tracking and viewability
+            initAdViewability();
+            
+            // Get tab from URL or default to GPA calculator
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            
+            // Track page view with tab information
+            track('page_view', {
+                tab: tabParam || 'sc',
+                referrer: document.referrer,
+                device: window.innerWidth <= 768 ? 'mobile' : 'desktop'
+            });
+        });
+        
+        // Track ad viewability with Intersection Observer
+        function initAdViewability() {
+            if ('IntersectionObserver' in window) {
+                // Create observer for ad containers
+                const adObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const adContainer = entry.target;
+                            const adType = adContainer.dataset.adType || 'unknown';
+                            const adLocation = adContainer.dataset.location || 'unknown';
+                            
+                            // Track viewable impression
+                            track('ad_viewable', {
+                                type: adType,
+                                location: adLocation,
+                                calculator: new URLSearchParams(window.location.search).get('tab') || 'sc',
+                                viewport_percentage: Math.round(entry.intersectionRatio * 100)
+                            });
+                            
+                            // Stop observing once viewable
+                            adObserver.unobserve(adContainer);
+                        }
+                    });
+                }, {
+                    threshold: [0.5, 0.75, 1.0], // Track different visibility thresholds
+                    rootMargin: '0px'
+                });
+                
+                // Observe all ad containers
+                document.querySelectorAll('.ad-container, .mid-form-ad, .inline-ad, .lazy-ad').forEach(container => {
+                    adObserver.observe(container);
+                });
+            }
+        }
+        
+        // Make track function globally available
+        window.track = track;
+    </script>
 </head>
 <body onload="track('page_views')">
     <!-- for facebook -->
@@ -114,16 +193,16 @@
             <div class="collapse navbar-collapse" id="navbarText">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a id="nav-sc" class="nav-link" href="/?tab=sc">GPA CALCULATOR</a>
+                        <a id="nav-sc" class="nav-link" href="/?tab=sc" data-tab="sc">GPA CALCULATOR</a>
                     </li>
                     <li class="nav-item">
-                        <a id="nav-gc" class="nav-link" href="/?tab=gc">QUICK CGPA CALCULATOR</a>
+                        <a id="nav-gc" class="nav-link" href="/?tab=gc" data-tab="gc">QUICK CGPA CALCULATOR</a>
                     </li>
                     <li class="nav-item">
-                        <a id="nav-ec" class="nav-link" href="/?tab=ec">EXPECTED MARKS CALCULATOR</a>
+                        <a id="nav-ec" class="nav-link" href="/?tab=ec" data-tab="ec">EXPECTED MARKS CALCULATOR</a>
                     </li>
                     <li class="nav-item">
-                        <a id="nav-fc" class="nav-link" href="/?tab=fc">ANY SEM CGPA CALCULATOR</a>
+                        <a id="nav-fc" class="nav-link" href="/?tab=fc" data-tab="fc">ANY SEM CGPA CALCULATOR</a>
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
@@ -161,8 +240,8 @@
         </div>
     </div>
     
-    <!-- This semseter GPA calculator -->
-    <div class="row col-sm-12 col-md-12 col-lg-12 gpa-calculator no-padding" id="sc">
+    <!-- GPA Calculator -->
+    <div class="row col-sm-12 col-md-12 col-lg-12 gpa-calculator no-padding calculator-tab" id="sc">
         <!-- ads for large screens -->
         <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
             <div class="ad-container">
@@ -325,6 +404,21 @@
                         <option value="20">20</option>
                     </select>
                 </div>
+                
+                <!-- Mid-form ad placement for better viewability -->
+                <div class="mid-form-ad lazy-ad" data-ad-type="mid-form" data-location="gpa_calculator_mid">
+                    <div class="ad-head">Advertisement</div>
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-client="ca-pub-8598751574376549"
+                         data-ad-slot="7637288848"
+                         data-ad-format="rectangle"
+                         data-full-width-responsive="false"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
+                
                 <div class="input-group mb-3 table-row" id="course6">
                     <span class="input-group-text">Course </span>
                     <select class="form-select" name="grades" id="g6">
@@ -502,7 +596,7 @@
     </div>
 
     <!-- quick cgpa calculator -->
-    <div class="row col-sm-12 col-md-12 col-lg-12 centered quick-cgpa-calculator no-padding" id="gc">
+    <div class="row col-sm-12 col-md-12 col-lg-12 centered quick-cgpa-calculator no-padding calculator-tab" id="gc">
         <!-- ads for large screens -->
         <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
             <div class="ad-container">
@@ -544,6 +638,20 @@
                 <div class="input-group mb-3 table-row">
                     <input type="text" id='cgpa' class="form-control" maxlength="4" placeholder="CGPA till last Sem?" aria-label="CGPA Input">
                     <span class="input-group-text">max 10 </span>
+                </div>
+                
+                <!-- Mid-form ad placement for better engagement -->
+                <div class="mid-form-ad lazy-ad" data-ad-type="mid-form" data-location="quick_cgpa_mid">
+                    <div class="ad-head">Advertisement</div>
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-client="ca-pub-8598751574376549"
+                         data-ad-slot="6993669367"
+                         data-ad-format="rectangle"
+                         data-full-width-responsive="false"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
                 </div>
                 
                 <div class="input-group mb-3 table-row">
@@ -609,7 +717,7 @@
     </div>
 
     <!--Marks Predictor-->
-    <div class="row col-sm-12 col-md-12 col-lg-12 centered marks-predictor no-padding" id="ec">
+    <div class="row col-sm-12 col-md-12 col-lg-12 centered marks-predictor no-padding calculator-tab" id="ec">
         <!-- ads for large screens -->
         <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
             <div class="ad-container">
@@ -673,6 +781,21 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Mid-form ad placement -->
+                    <div class="mid-form-ad lazy-ad" data-ad-type="mid-form" data-location="expected_marks_mid">
+                        <div class="ad-head">Advertisement</div>
+                        <ins class="adsbygoogle"
+                             style="display:block"
+                             data-ad-client="ca-pub-8598751574376549"
+                             data-ad-slot="7637288848"
+                             data-ad-format="rectangle"
+                             data-full-width-responsive="false"></ins>
+                        <script>
+                            (adsbygoogle = window.adsbygoogle || []).push({});
+                        </script>
+                    </div>
+                    
                     <div class="mb-3 row">
                         <label for="da" class="col-sm-6 col-form-label text-end">Marks in Internals : </label>
                         <div class="col-sm-6">
@@ -700,6 +823,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="mb-3 row">
                         <label for="j-comp" class="col-sm-6 col-form-label text-end">Marks in J Component : </label>
                         <div class="col-sm-6">
@@ -790,7 +914,7 @@
     </div>
 
     <!--All semester CGPA calculator-->
-    <div class="row col-sm-12 col-md-12 col-lg-12 centered n-sem-cgpa-calculator no-padding" id="fc">
+    <div class="row col-sm-12 col-md-12 col-lg-12 centered n-sem-cgpa-calculator no-padding calculator-tab" id="fc">
          <!-- ads for large screens -->
          <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
             <div class="ad-container">
@@ -854,6 +978,21 @@
                     <input type="text" id="gpa4" class="form-control fgpa" name="fgpa4" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
                     <input type="text" id="fc4" class="form-control fcredits" name="fcredit4" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
                 </div>
+                
+                <!-- Mid-form ad placement -->
+                <div class="mid-form-ad lazy-ad" data-ad-type="mid-form" data-location="all_sem_cgpa_mid">
+                    <div class="ad-head">Advertisement</div>
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-client="ca-pub-8598751574376549"
+                         data-ad-slot="7637288848"
+                         data-ad-format="rectangle"
+                         data-full-width-responsive="false"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
+                
                 <div class="input-group mb-3 table-row" id="sem5">
                     <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">5th Sem</span>
                     <input type="text" id="gpa5" class="form-control fgpa" name="fgpa5" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
@@ -1043,6 +1182,144 @@
     <script type="module" src="https://files.rajchandra.me/js/config.js"></script>
     <script type="text/javascript" src="https://files.rajchandra.me/js/footer.js"></script>
     <script type="text/javascript" src="https://files.rajchandra.me/js/share_btn.js"></script>
+    
+    <!-- Initialize ads with analytics-driven optimization -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize optimized ads
+            if (typeof optimizeAdsByUserBehavior === 'function') {
+                // Get ad configuration based on analytics
+                const adConfig = optimizeAdsByUserBehavior();
+                
+                // Check if AdSense is blocked
+                const adBlockDetected = typeof adsbygoogle === 'undefined' || 
+                                      (adsbygoogle.hasOwnProperty('loaded') && !adsbygoogle.loaded);
+                
+                if (adBlockDetected) {
+                    console.log('Ad blocker detected, adjusting UI');
+                    // Track ad blocker detection
+                    try {
+                        track('ad_blocker_detected', {
+                            calculator: new URLSearchParams(window.location.search).get('tab') || 'sc'
+                        });
+                    } catch (e) {
+                        console.error('Error tracking ad blocker detection', e);
+                    }
+                    
+                    // Remove ad containers to improve layout
+                    document.querySelectorAll('.ad-container, .mid-form-ad, .inline-ad, .lazy-ad').forEach(ad => {
+                        ad.style.display = 'none';
+                    });
+                    
+                    return; // Skip ad initialization
+                }
+                
+                // Initialize ads with priority order
+                setTimeout(function() {
+                    // 1. First initialize primary ad slots on high-converting calculators
+                    const currentTab = new URLSearchParams(window.location.search).get('tab') || 'sc';
+                    const isHighPriorityTab = ['sc', 'gc'].includes(currentTab);
+                    
+                    if (isHighPriorityTab) {
+                        console.log('Initializing high-priority ads for tab:', currentTab);
+                        // Initialize primary ad slots first
+                        const tabElement = document.getElementById(currentTab);
+                        if (tabElement) {
+                            // Prioritize mid-form ads for high-priority sections
+                            const primaryAds = tabElement.querySelectorAll('.mid-form-ad .adsbygoogle');
+                            primaryAds.forEach(ad => {
+                                try {
+                                    if (!ad.closest('.mid-form-ad').classList.contains('loaded')) {
+                                        (adsbygoogle = window.adsbygoogle || []).push({});
+                                        ad.closest('.mid-form-ad').classList.add('loaded');
+                                        
+                                        // Track the loaded ad
+                                        try {
+                                            track('ad_loaded', {
+                                                type: 'mid-form',
+                                                location: ad.closest('.mid-form-ad').dataset.location || 'unknown',
+                                                calculator: currentTab
+                                            });
+                                        } catch (e) {
+                                            console.error('Error tracking ad load', e);
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Error loading high priority ad:', e);
+                                }
+                            });
+                        }
+                    }
+                    
+                    // 2. Then initialize getAds() function for main ad slots
+                    if (typeof getAds === 'function') {
+                        getAds();
+                    }
+                    
+                    // 3. Finally, initialize all remaining lazy ads with delay
+                    setTimeout(function() {
+                        // Initialize mid-form ads for all calculators for consistency
+                        document.querySelectorAll('.mid-form-ad .adsbygoogle:not(.adsbygoogle-noablate)').forEach(ad => {
+                            if (!ad.getAttribute('data-adsbygoogle-status') && !ad.closest('.mid-form-ad').classList.contains('loaded')) {
+                                try {
+                                    (adsbygoogle = window.adsbygoogle || []).push({});
+                                    ad.closest('.mid-form-ad').classList.add('loaded');
+                                    
+                                    // Track the loaded ad
+                                    try {
+                                        const location = ad.closest('.mid-form-ad').dataset.location || 'unknown';
+                                        track('ad_loaded', {
+                                            type: 'mid-form',
+                                            location: location,
+                                            calculator: currentTab
+                                        });
+                                    } catch (e) {
+                                        console.error('Error tracking ad load', e);
+                                    }
+                                } catch (e) {
+                                    console.error('Error loading mid-form ad:', e);
+                                }
+                            }
+                        });
+                        
+                        // Initialize other lazy ads
+                        document.querySelectorAll('.lazy-ad:not(.mid-form-ad) .adsbygoogle:not(.adsbygoogle-noablate)').forEach(ad => {
+                            if (!ad.getAttribute('data-adsbygoogle-status') && !ad.closest('.lazy-ad').classList.contains('loaded')) {
+                                try {
+                                    (adsbygoogle = window.adsbygoogle || []).push({});
+                                    ad.closest('.lazy-ad').classList.add('loaded');
+                                } catch (e) {
+                                    console.error('Error loading lazy ad:', e);
+                                }
+                            }
+                        });
+                        
+                        // After all ads have been initialized, check for empty containers and hide them
+                        if (typeof hideEmptyAdContainers === 'function') {
+                            setTimeout(hideEmptyAdContainers, 2000);
+                        }
+                    }, isHighPriorityTab ? 500 : 1000); // Load faster on high priority tabs
+                    
+                }, 100);
+                
+                // Track calculator usage
+                const calculatorForms = document.querySelectorAll('form');
+                calculatorForms.forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        const calculatorId = this.closest('[id]').id;
+                        track('calculator_used', {
+                            calculator: calculatorId,
+                            inputs: form.querySelectorAll('input').length,
+                            test_group: window.adConfig && window.adConfig.isTestGroup ? 'test' : 'control'
+                        });
+                    });
+                });
+                
+                // Log initialization
+                console.log('Analytics-driven ad optimization initialized');
+            }
+        });
+    </script>
 
 </body>
 </html>
