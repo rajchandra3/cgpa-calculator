@@ -13,8 +13,6 @@
   color: cornflowerblue;
 }
 .sticky-content{
-  /* position:'-webkit-sticky';
-  position: 'sticky'; */
   position: relative;
   bottom:'1rem';
   margin-top: '1rem';
@@ -31,7 +29,6 @@
 .google-ads {
   animation-duration: 3s;
   animation-delay: 2s;
-  /*animation-iteration-count: 2;*/
 }
 #feedback{
   display: none;
@@ -43,13 +40,10 @@ footer{
 }
 
 .header{
-    /* width: 100%; */
-    /* background : linear-gradient(to bottom right,#58a6da,#1b567e); */
-    /* background : linear-gradient(to bottom right,#c31432,#240b36); */
-    /* color: white; */
     font-weight: bold;
     font-size: 24px;
     text-align: center;
+    margin-bottom: 10px;
 }
 p{
     font-size:20px;
@@ -60,10 +54,11 @@ h1{
     font-size: 24px;
     text-align: center;
     position: relative;
-    margin-bottom: 3%;
+    margin-bottom: 20px;
 }
 .card-container{
     border-radius: 8px;
+    background-color: white;
 }
 .form-inline{
     display: inline-flex;
@@ -76,12 +71,12 @@ h1{
 }
 body{
     font-family: 'Raleway', sans-serif;
+    padding-top: 76px !important;
+    background-color: #f5f5f5;
+    overflow-x: hidden;
 }
 .container-fluid{
-  background-color:  #f0f0f0;
-    /* background : linear-gradient(to bottom,#58a6da,#091d2a); */    
-    /* background : linear-gradient(to bottom,#c31432,#240b36); */
-
+  background-color: transparent;
 }
 .has-box-shadow{
   box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
@@ -117,6 +112,10 @@ body{
 .result-text{
   font-size: 5rem;
   font-weight: 900;
+  color: #0d6efd !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+  display: block !important;
+  margin: 0 auto !important;
 }
 .ad-wrapper {
   width: 100%;
@@ -170,7 +169,7 @@ body{
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: #007bff;
+  background-color: #0d6efd;
   color: white;
   display: flex;
   justify-content: center;
@@ -179,6 +178,8 @@ body{
   cursor: pointer;
   transition: all 0.3s ease;
   z-index: 1000;
+  padding: 0;
+  margin: 0;
 }
 
 .install-app-container:hover {
@@ -186,6 +187,654 @@ body{
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.install-app-container i {
+.install-app-container i.my-float {
   font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Fix font awesome display */
+.fa-download:before {
+  content: "\f019";
+  display: inline-block;
+}
+
+/* Updated styling for input groups to match the screenshots */
+.input-group {
+    margin-bottom: 15px;
+}
+.input-group-text {
+    background-color: #f0f0f0;
+    border-color: #ced4da;
+    color: #495057;
+}
+.form-control, .form-select {
+    border-color: #ced4da;
+}
+
+/* Updated card styling */
+.card-container.has-box-shadow {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: none;
+}
+
+/* Navbar styling to match the screenshots */
+.navbar {
+    padding: 0;
+    background-color: #1a2a3a !important;
+}
+
+.navbar-brand {
+    padding: 0.5rem 1rem;
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    text-transform: uppercase;
+    padding: 1rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(255,255,255,0.75);
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link.active {
+    color: #fff;
+    background-color: rgba(255,255,255,0.1);
+}
+
+/* Remove the border-bottom for active since the screenshot doesn't show it */
+.navbar-nav .nav-link.active {
+    border-bottom: none;
+    font-weight: 600;
+}
+
+/* Form controls - update to match screenshot */
+.form-control, .form-select {
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+}
+
+.input-group-text {
+    background-color: #eee;
+    border: 1px solid #ddd;
+    color: #444;
+    font-weight: 500;
+}
+
+/* Card styling to match screenshot */
+.card-container {
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+/* Clean up the spacing */
+h1.card-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 20px 0;
+    text-transform: uppercase;
+    color: #333;
+}
+
+/* Quick CGPA Calculator specific styling */
+.quick-cgpa-calculator .form-control {
+  height: 48px;
+  font-size: 16px;
+  padding: 10px 15px;
+}
+
+.quick-cgpa-calculator .input-group-text {
+  min-width: 80px;
+  justify-content: flex-end;
+  font-size: 14px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-left: none;
+}
+
+[data-bs-theme="dark"] .quick-cgpa-calculator .form-control {
+  background-color: #2a2a2a !important;
+  border-color: #444 !important;
+  color: white !important;
+}
+
+[data-bs-theme="dark"] .quick-cgpa-calculator .input-group-text {
+  background-color: #333 !important;
+  border-color: #444 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Rounded corners for the first and last items in grouped inputs */
+.quick-cgpa-calculator .input-group.table-row .form-control {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+  border-right: none;
+}
+
+.quick-cgpa-calculator .input-group.table-row .input-group-text {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Match the theme selector shown in screenshot */
+#theme-selector {
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    width: auto;
+}
+
+/* Content wrapper spacing */
+.row.col-sm-12 {
+    padding: 20px;
+}
+
+/* Card stylings to match screenshot */
+.card-container.has-box-shadow {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Buttons styling */
+.btn-primary {
+    background-color: #0d6efd;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    font-weight: 500;
+}
+
+/* Ad container styling */
+.ad-container {
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.ad-head {
+    background-color: #ddd;
+    padding: 4px 8px;
+    color: #555;
+    font-size: 12px;
+}
+
+/* Form input styling fixes */
+.input-group-text, .form-control, .form-select {
+    font-size: 14px;
+}
+
+input.form-control::placeholder {
+    color: #aaa;
+}
+
+/* Adjust theme dropdown */
+.form-select {
+    background-position: right 0.5rem center;
+    background-size: 12px;
+}
+
+/* Dark mode specific styling */
+[data-bs-theme="dark"] {
+    background-color: #1a1a1a;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+[data-bs-theme="dark"] .card-container {
+    background-color: #212121;
+}
+
+[data-bs-theme="dark"] h1.card-title,
+[data-bs-theme="dark"] h1 {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Remove underlines and text changes on hover/click */
+a, a:hover, a:focus, a:active, a:visited {
+    text-decoration: none;
+}
+
+.navbar-nav .nav-link {
+    transition: background-color 0.2s ease;
+    border: none;
+    text-decoration: none;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus,
+.navbar-nav .nav-link:active {
+    text-decoration: none;
+}
+
+/* Fix for input groups in dark mode */
+[data-bs-theme="dark"] .input-group-text {
+    background-color: #333;
+    border-color: #444;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+    background-color: #333;
+    border-color: #444;
+    color: white;
+}
+
+[data-bs-theme="dark"] .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Table-like layout for the Any Sem CGPA Calculator and GPA Calculator */
+.input-group.table-row {
+    margin-bottom: 1px; /* Tighter spacing */
+    border-radius: 0;
+}
+
+[data-bs-theme="dark"] .input-group.table-row .input-group-text {
+    background-color: #2c2c2c;
+}
+
+[data-bs-theme="dark"] .input-group.table-row .form-control,
+[data-bs-theme="dark"] .input-group.table-row .form-select {
+    background-color: #333;
+}
+
+/* Clean up headers for dark mode */
+[data-bs-theme="dark"] .header {
+    color: white;
+}
+
+/* Fix alert colors in dark mode */
+[data-bs-theme="dark"] .alert-primary {
+    background-color: #212121;
+    border-color: #333;
+    color: white;
+}
+
+/* Override Bootstrap active state styles */
+.btn:active, .btn:focus,
+.form-select:active, .form-select:focus,
+.form-control:active, .form-control:focus {
+    box-shadow: none !important;
+}
+
+/* Table-like styling for the GPA Calculator and Any Sem CGPA Calculator in dark mode */
+[data-bs-theme="dark"] .gpa-calculator .input-group,
+[data-bs-theme="dark"] .n-sem-cgpa-calculator .input-group {
+    margin-bottom: 2px;
+    background-color: #2c2c2c;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+[data-bs-theme="dark"] .gpa-calculator .input-group-text,
+[data-bs-theme="dark"] .n-sem-cgpa-calculator .input-group-text {
+    background-color: #262626;
+    color: rgba(255, 255, 255, 0.9);
+    border-color: #333;
+    border-right: 1px solid #333;
+    min-width: 100px;
+}
+
+[data-bs-theme="dark"] .gpa-calculator .form-select,
+[data-bs-theme="dark"] .gpa-calculator .form-control,
+[data-bs-theme="dark"] .n-sem-cgpa-calculator .form-select,
+[data-bs-theme="dark"] .n-sem-cgpa-calculator .form-control {
+    background-color: #2c2c2c;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+}
+
+/* Focus states without the default Bootstrap highlights */
+.form-control:focus,
+.form-select:focus {
+    border-color: #444;
+    box-shadow: none;
+}
+
+/* Remove button text change on hover/focus */
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    color: white !important;
+    background-color: #0b5ed7 !important;
+    box-shadow: none !important;
+}
+
+/* Fix active tab appearance */
+.navbar-nav .nav-link.active {
+    font-weight: 600;
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Table-row styling for input groups */
+.table-row {
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.table-row:hover {
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Light mode table row */
+.table-row {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+/* Dark mode adjustments for input fields */
+@media (prefers-color-scheme: dark) {
+  .table-row {
+    background-color: #1e1e1e !important;
+    border: 1px solid #333 !important;
+  }
+  
+  .table-row .form-control,
+  .table-row .form-select,
+  .table-row .input-group-text {
+    border-color: #444 !important;
+    color: #f0f0f0 !important;
+  }
+  
+  input, select, textarea {
+    color: #f0f0f0 !important;
+    background-color: #2d2d2d !important;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    color: #f0f0f0 !important;
+    background-color: #2d2d2d !important;
+    border-color: #0d6efd !important;
+  }
+  
+  /* Improve button visibility in dark mode */
+  .btn {
+    color: #f0f0f0 !important;
+  }
+  
+  /* Fix for alerts in dark mode */
+  .alert {
+    color: #f0f0f0 !important;
+  }
+}
+
+/* Common styles for both themes */
+.card-container {
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Improved visibility for input group text */
+.input-group-text {
+  font-weight: 600;
+  min-width: 100px;
+  justify-content: center;
+}
+
+/* Fix for nav tabs in both themes */
+.nav-tabs .nav-link.active {
+  font-weight: 600;
+}
+
+/* Fix hover effects */
+a:hover, .nav-link:hover {
+  text-decoration: none !important;
+}
+
+/* Common styling for calculator input displays */
+.n-sem-cgpa-calculator .input-group-text,
+.marks-predictor .input-group-text,
+.gpa-calculator .input-group-text {
+  min-width: 100px;
+  justify-content: flex-start;
+  background-color: #eee;
+}
+
+/* Table-like layout styling for light mode */
+body[data-bs-theme="light"] .table-row {
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+body[data-bs-theme="light"] .table-row:hover {
+  background-color: #f8f9fa;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Light mode - Quick CGPA Calculator */
+body[data-bs-theme="light"] .quick-cgpa-calculator .form-control {
+  background-color: #ffffff;
+  border-color: #dee2e6;
+  border-right: none;
+  color: #212529;
+}
+
+body[data-bs-theme="light"] .quick-cgpa-calculator .input-group-text {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  border-left: none;
+  color: #6c757d;
+  min-width: 80px;
+  justify-content: flex-end;
+}
+
+/* Any Sem CGPA Calculator light mode */
+body[data-bs-theme="light"] .n-sem-cgpa-calculator .input-group-text {
+  background-color: #f2f2f2;
+  color: #495057;
+  font-weight: 500;
+  min-width: 80px;
+  justify-content: center;
+}
+
+body[data-bs-theme="light"] .n-sem-cgpa-calculator .form-control {
+  border-color: #dee2e6;
+}
+
+/* GPA Calculator light mode */
+body[data-bs-theme="light"] .gpa-calculator .input-group-text {
+  background-color: #f2f2f2;
+  color: #495057;
+  font-weight: 500;
+  min-width: 80px;
+  justify-content: center;
+}
+
+body[data-bs-theme="light"] .gpa-calculator .form-select {
+  border-color: #dee2e6;
+}
+
+/* Button styling for light mode */
+body[data-bs-theme="light"] .btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+body[data-bs-theme="light"] .btn-primary:hover,
+body[data-bs-theme="light"] .btn-primary:focus {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Improve containers in light mode */
+body[data-bs-theme="light"] .card-container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+/* Additional Quick CGPA Calculator styles for light mode */
+body[data-bs-theme="light"] .quick-cgpa-calculator input.form-control {
+  height: 50px;
+  padding: 10px 15px;
+  border-radius: 4px 0 0 4px;
+  font-size: 16px;
+}
+
+body[data-bs-theme="light"] .quick-cgpa-calculator .input-group-text {
+  border-radius: 0 4px 4px 0;
+  padding: 10px 15px;
+  background-color: #f0f0f0;
+}
+
+/* Table styling for Any Sem CGPA Calculator in light mode */
+body[data-bs-theme="light"] .n-sem-cgpa-calculator .table-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+body[data-bs-theme="light"] .n-sem-cgpa-calculator .input-group-text {
+  background-color: #f2f2f2;
+  border-radius: 4px 0 0 4px;
+  border-right: none;
+}
+
+body[data-bs-theme="light"] .n-sem-cgpa-calculator .form-control {
+  border-left: none;
+  background-color: #ffffff;
+}
+
+/* Styles for GPA Calculator dropdowns in light mode */
+body[data-bs-theme="light"] .gpa-calculator .table-row {
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  background-color: #ffffff;
+}
+
+body[data-bs-theme="light"] .gpa-calculator .table-row .input-group-text {
+  background-color: #f2f2f2;
+  color: #333;
+  font-weight: 500;
+  border-color: #dee2e6;
+  min-width: 100px;
+}
+
+body[data-bs-theme="light"] .gpa-calculator .form-select {
+  color: #333;
+  background-color: #ffffff;
+  border-color: #dee2e6;
+}
+
+body[data-bs-theme="light"] .gpa-calculator .form-select option {
+  color: #333;
+  background-color: #ffffff;
+}
+
+/* Override any conflicting styles */
+body[data-bs-theme="light"] .gpa-calculator .table-row,
+body[data-bs-theme="light"] .gpa-calculator .form-select,
+body[data-bs-theme="light"] .gpa-calculator .input-group-text {
+  color: #333 !important;
+}
+
+/* Fix dropdown arrows for better visibility */
+body[data-bs-theme="light"] .form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+}
+
+/* Enhance form input visibility in light theme */
+body[data-bs-theme="light"] .form-control {
+  color: #212529 !important;
+  background-color: #ffffff !important;
+  border-color: #ced4da !important;
+}
+
+body[data-bs-theme="light"] input.form-control,
+body[data-bs-theme="light"] select.form-select {
+  font-weight: 500 !important;
+  color: #212529 !important;
+}
+
+body[data-bs-theme="light"] .form-control::placeholder {
+  color: #6c757d !important;
+}
+
+/* Specific fixes for Quick CGPA Calculator inputs */
+body[data-bs-theme="light"] .quick-cgpa-calculator input.form-control {
+  height: 50px;
+  padding: 10px 15px;
+  border-radius: 4px 0 0 4px;
+  font-size: 16px;
+  color: #212529 !important;
+  font-weight: 500 !important;
+}
+
+/* Specific fixes for Expected Marks Calculator inputs */
+body[data-bs-theme="light"] #cat1, 
+body[data-bs-theme="light"] #cat2, 
+body[data-bs-theme="light"] #da, 
+body[data-bs-theme="light"] #al, 
+body[data-bs-theme="light"] #lab, 
+body[data-bs-theme="light"] #j-comp, 
+body[data-bs-theme="light"] #fat {
+  color: #212529 !important;
+  font-weight: 500 !important;
+}
+
+/* Ensure alert messages are visible */
+body[data-bs-theme="light"] .alert-primary,
+body[data-bs-theme="light"] .alert-marks,
+body[data-bs-theme="light"] .alert-cgpa-msg,
+body[data-bs-theme="light"] .alert-fcgpa,
+body[data-bs-theme="light"] .alert-grades {
+  background-color: #e7f1ff !important;
+  color: #0c63e4 !important;
+  border-color: #c5e0fb !important;
+}
+
+/* Consistent styling for all result containers */
+.result-container {
+  background-color: #e7f1ff !important;
+  border-color: #c5e0fb !important;
+  padding: 2rem !important;
+  margin: 1.5rem 0 !important;
+  border-radius: 0.5rem !important;
+}
+
+[data-bs-theme="dark"] .result-container {
+  background-color: rgba(13, 110, 253, 0.15) !important;
+  border-color: rgba(13, 110, 253, 0.3) !important;
+}
+
+/* Make all results use the same consistent styling */
+.result-text {
+  font-size: 5rem !important;
+  font-weight: 900 !important;
+  color: #0d6efd !important; /* Blue in light mode */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+[data-bs-theme="dark"] .result-text {
+  color: #7eafff !important; /* Lighter blue in dark mode for better contrast */
 }

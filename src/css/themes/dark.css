@@ -1,43 +1,259 @@
 body{
-  background:#242424 !important;
-  color: azure !important;
+  background:#121212 !important;
+  color: #f0f0f0 !important;
 }
+
 .card-container{
-  background-color: #1c1c1c !important;
+  background-color: #1e1e1e !important;
+  border: 1px solid #333 !important;
 }
 
 select{
-  background-color: #080808 !important;
-  border-color: grey !important;
+  background-color: #2d2d2d !important;
+  border-color: #555 !important;
+  color: #f0f0f0 !important;
 }
 
 .form-control, .form-control:focus{
-  color: aliceblue !important;
-  background-color: #080808 !important;
-  border-color: grey !important;
+  color: #f0f0f0 !important;
+  background-color: #2d2d2d !important;
+  border-color: #555 !important;
+}
+
+.form-select, .form-select:focus {
+  color: #f0f0f0 !important;
+  background-color: #2d2d2d !important;
+  border-color: #555 !important;
 }
 
 .input-group-text{
-  background-color: #636363 !important;
-  border-color:  1px solid grey !important;
-  color: aliceblue !important;
+  background-color: #4a4a4a !important;
+  border-color: #555 !important;
+  color: #ffffff !important;
+}
+
+/* Stronger navbar styling for dark mode */
+.navbar.navbar-dark {
+  background-color: #0c2d48 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Override Bootstrap's bg-dark class for navbar */
+.navbar.bg-dark {
+  background-color: #343a40 !important;
+}
+
+.navbar.navbar-dark .navbar-brand, 
+.navbar.navbar-dark .nav-link {
+  color: #ffffff !important;
+}
+
+.navbar.navbar-dark .navbar-text {
+  color: #ffffff !important;
+}
+
+.navbar.navbar-dark .nav-link.active {
+  color: #ffffff !important;
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.navbar.navbar-dark .nav-link:hover,
+.navbar.navbar-dark .nav-link:focus {
+  color: #4dabf7 !important;
+  text-decoration: none !important;
+}
+
+/* Override Bootstrap's default navbar toggler for dark theme */
+.navbar.navbar-dark .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.navbar.navbar-dark .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+
+/* Improve labels */
+.dark-theme label,
+.dark-theme .form-check-label {
+  color: #f0f0f0 !important;
+}
+
+/* Make buttons more visible */
+.dark-theme .btn-primary {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+  color: #ffffff !important;
+}
+
+.dark-theme .btn-primary:hover,
+.dark-theme .btn-primary:focus {
+  background-color: #0b5ed7 !important;
+  border-color: #0a58ca !important;
+}
+
+.dark-theme .btn-outline-light {
+  color: #f8f9fa !important;
+  border-color: #f8f9fa !important;
+}
+
+.dark-theme .btn-outline-light:hover,
+.dark-theme .btn-outline-light:focus {
+  background-color: #f8f9fa !important;
+  color: #212529 !important;
+}
+
+/* Alert boxes with better contrast */
+.dark-theme .alert-primary {
+  background-color: #084298 !important;
+  border-color: #084298 !important;
+  color: #ffffff !important;
+}
+
+.dark-theme .text-info {
+  color: #6edff6 !important; /* Brighter blue for better contrast */
 }
 
 .modal-content{
-  color: #fff !important;
-  background-color: #343a40 !important;
-  border: 1px solid grey !important;
+  color: #f0f0f0 !important;
+  background-color: #2d2d2d !important;
+  border: 1px solid #555 !important;
 }
+
 .modal-body > .container-fluid > .row{
-  background-color: #343a40 !important;
+  background-color: #2d2d2d !important;
 }
+
 .close{
-  color: grey !important;
+  color: #f0f0f0 !important;
 }
+
 .discord-ad{
   color: #fff;
   background: #8E2DE2;  /* fallback for old browsers */
   background: -webkit-linear-gradient(to right, #4A00E0, #8E2DE2);  /* Chrome 10-25, Safari 5.1-6 */
   background: linear-gradient(to right, #4A00E0, #8E2DE2); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+/* Focus states for better keyboard navigation */
+.dark-theme a:focus,
+.dark-theme button:focus,
+.dark-theme input:focus,
+.dark-theme select:focus,
+.dark-theme textarea:focus,
+.dark-theme .form-control:focus,
+.dark-theme .form-select:focus {
+  outline: 2px solid #4dabf7 !important;
+  outline-offset: 2px !important;
+}
+
+/* Add high contrast for link elements */
+.dark-theme a {
+  color: #4dabf7 !important;
+}
+
+.dark-theme a:hover {
+  color: #4dabf7 !important;
+  text-decoration: none !important;
+}
+
+/* Override bootstrap link styling */
+a, a:hover, a:focus, a:active {
+  text-decoration: none !important;
+}
+
+/* Table-like styles for input groups */
+.table-row {
+  background-color: #1e1e1e !important;
+  border: 1px solid #333 !important;
+  margin-bottom: 8px !important;
+}
+
+.table-row .form-control,
+.table-row .form-select,
+.table-row .input-group-text {
+  border-color: #444 !important;
+  color: #f0f0f0 !important;
+}
+
+.table-row .form-control:focus,
+.table-row .form-select:focus {
+  border-color: #0d6efd !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Enhance dark mode visibility for input groups */
+.input-group .form-control,
+.input-group .form-select {
+  background-color: #2d2d2d !important;
+  color: #f0f0f0 !important;
+}
+
+/* Fix alert text */
+.alert {
+  color: #f0f0f0 !important;
+}
+
+/* Make buttons more visible in dark mode */
+.btn {
+  color: #f0f0f0 !important;
+}
+
+.btn-primary {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: #0b5ed7 !important;
+  border-color: #0a58ca !important;
+  color: #ffffff !important;
+}
+
+/* Ensure consistent text color on focus */
+a:focus, button:focus, .nav-link:focus {
+  color: inherit !important;
+}
+
+/* Fix nav tabs for dark mode */
+.nav-tabs .nav-link.active {
+  background-color: #1e1e1e !important;
+  border-color: #444 #444 #1e1e1e !important;
+  color: #f0f0f0 !important;
+}
+
+.nav-tabs {
+  border-bottom: 1px solid #444 !important;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: #444 #444 #444 !important;
+  text-decoration: none !important;
+}
+
+/* Special styling for Quick CGPA Calculator in dark mode */
+.quick-cgpa-calculator .table-row {
+  background-color: #1a1a1a !important;
+  border: none !important;
+  margin-bottom: 15px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.quick-cgpa-calculator .form-control {
+  background-color: #1f1f1f !important;
+  border-color: #333 !important;
+  padding: 12px 15px !important;
+  height: auto !important;
+  color: #fff !important;
+}
+
+.quick-cgpa-calculator .input-group-text {
+  background-color: #333 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  border-color: #333 !important;
+  font-size: 14px !important;
 }
 

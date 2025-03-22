@@ -1,33 +1,43 @@
-const installBtns = document.querySelectorAll('.install-app-button');
-const hideContainer = () => {
-    let btns = document
-        .querySelectorAll('.install-app-container');
-    for(let btn of btns){
-        btn.classList.toggle('hidden', true);
-    }
-};
+// Install PWA functionality
+let deferredPrompt;
+const installButton = document.querySelector('.install-app-button');
 
-const showContainer = () => {
-    let btns = document
-        .querySelectorAll('.install-app-container');
-        for(let btn of btns){
-            btn.classList.toggle('hidden', false);
-        }
-};
+// Hide install button by default
+installButton.classList.add('hidden');
 
-window.addEventListener('beforeinstallprompt', (event) => {
-    console.log('👍', 'beforeinstallprompt', event);
-    // Prevent the mini-infobar from appearing on mobile
-    event.preventDefault();
-    // Stash the event so it can be triggered later.
-    window.deferredPrompt = event;
-    // Remove the 'hidden' class from the install button container
-    showContainer();
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent Chrome 67 and earlier from automatically showing the prompt
+  e.preventDefault();
+  // Stash the event so it can be triggered later
+  deferredPrompt = e;
+  // Show the install button
+  installButton.classList.remove('hidden');
+
+  // Handle install button click
+  installButton.addEventListener('click', (e) => {
+    // Hide the install button
+    installButton.classList.add('hidden');
+    // Show the install prompt
+    deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+        track('pwa_installed'); // Track installation event
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      // Clear the saved prompt
+      deferredPrompt = null;
+    });
+  });
 });
 
-window.addEventListener('appinstalled', (event) => {
-    console.log('👍', 'appinstalled', event);
-    mixpanel.track('App Installed');
+// Handle already installed case
+window.addEventListener('appinstalled', (evt) => {
+  // Hide install button if app is installed
+  installButton.classList.add('hidden');
+  console.log('App was installed.');
 });
 
 // Track how the PWA was launched #
@@ -58,35 +68,3 @@ window.addEventListener('DOMContentLoaded', () => {
         console.log('DISPLAY_MODE_CHANGED', displayMode);
     });
 });
-
-for(let installBtn of installBtns){
-    installBtn.addEventListener('click',(e) => {
-        mixpanel.track('Click: Install App button');
-        console.log('Clicked install app button');
-        const promptEvent = window.deferredPrompt;
-        if (!promptEvent) {
-            // The deferred prompt isn't available.
-            const reason = `The deferred prompt isn't available.`;
-            console.log(reason);
-            mixpanel.track('App Installation Failed', { reason });
-            hideContainer();
-            return;
-        }
-        // Show the install prompt.
-        promptEvent.prompt();
-        // Log the result
-        promptEvent.userChoice.then((result) => {
-            console.log('👍', 'userChoice', result);
-            if (result.outcome === 'accepted') {
-                console.log('User accepted the install prompt');
-                mixpanel.track('Accepted: App Install prompt');
-            } else {
-                console.log('User dismissed the install prompt');
-                mixpanel.track('Declined: App Install prompt');
-            }
-            // Reset the deferred prompt variable, since
-            // prompt() can only be called once.
-            window.deferredPrompt = null;
-        });
-    });
-}

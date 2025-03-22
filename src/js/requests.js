@@ -76,3 +76,54 @@ let getCookie =(cname) => {
     }
     return "";
   }
+
+// Track events with Mixpanel
+function track(eventName) {
+    try {
+        mixpanel.track(eventName);
+    } catch (e) {
+        console.error('Error tracking event:', e);
+    }
+}
+
+// Get advertisements with theme-aware styling
+function getAds() {
+    // Array of advertisement options that will work in both light and dark themes
+    const adOptions = [
+        {
+            title: 'Color Tile Game',
+            description: 'Take a break with our fun color-matching game!',
+            imageUrl: 'https://color-tile.rajchandra.me/src/images/icons/icon-512x512.png',
+            ctaText: 'Play Now',
+            ctaUrl: 'https://rajchandra.me/r/0biYgwkl4?s=cgpa-calculator'
+        },
+        {
+            title: 'Install This App',
+            description: 'Access the CGPA calculator offline on any device!',
+            imageUrl: 'src/images/icons/icon-128x128.png',
+            ctaText: 'Install',
+            ctaUrl: '#'
+        }
+    ];
+
+    // Choose a random ad from options
+    const randomAd = adOptions[Math.floor(Math.random() * adOptions.length)];
+
+    // Return formatted HTML with Bootstrap theme variables
+    return `
+    <div class="custom-ads my-3">
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0" style="width: 80px;">
+                <img src="${randomAd.imageUrl}" alt="${randomAd.title}" class="img-fluid rounded">
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <h5 class="ad-title">${randomAd.title}</h5>
+                <p class="ad-body mb-2">${randomAd.description}</p>
+                <a href="${randomAd.ctaUrl}" class="ad-cta btn btn-sm btn-primary" target="_blank" 
+                   onclick="track('ad_click_${randomAd.title.replace(/\s+/g, '_').toLowerCase()}')">
+                    ${randomAd.ctaText}
+                </a>
+            </div>
+        </div>
+    </div>`;
+}
