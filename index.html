@@ -1186,138 +1186,321 @@
     <!-- Initialize ads with analytics-driven optimization -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize optimized ads
-            if (typeof optimizeAdsByUserBehavior === 'function') {
-                // Get ad configuration based on analytics
-                const adConfig = optimizeAdsByUserBehavior();
-                
-                // Check if AdSense is blocked
-                const adBlockDetected = typeof adsbygoogle === 'undefined' || 
-                                      (adsbygoogle.hasOwnProperty('loaded') && !adsbygoogle.loaded);
-                
-                if (adBlockDetected) {
-                    console.log('Ad blocker detected, adjusting UI');
-                    // Track ad blocker detection
-                    try {
-                        track('ad_blocker_detected', {
-                            calculator: new URLSearchParams(window.location.search).get('tab') || 'sc'
-                        });
-                    } catch (e) {
-                        console.error('Error tracking ad blocker detection', e);
-                    }
-                    
-                    // Remove ad containers to improve layout
-                    document.querySelectorAll('.ad-container, .mid-form-ad, .inline-ad, .lazy-ad').forEach(ad => {
-                        ad.style.display = 'none';
-                    });
-                    
-                    return; // Skip ad initialization
-                }
-                
-                // Initialize ads with priority order
-                setTimeout(function() {
-                    // 1. First initialize primary ad slots on high-converting calculators
-                    const currentTab = new URLSearchParams(window.location.search).get('tab') || 'sc';
-                    const isHighPriorityTab = ['sc', 'gc'].includes(currentTab);
-                    
-                    if (isHighPriorityTab) {
-                        console.log('Initializing high-priority ads for tab:', currentTab);
-                        // Initialize primary ad slots first
-                        const tabElement = document.getElementById(currentTab);
-                        if (tabElement) {
-                            // Prioritize mid-form ads for high-priority sections
-                            const primaryAds = tabElement.querySelectorAll('.mid-form-ad .adsbygoogle');
-                            primaryAds.forEach(ad => {
-                                try {
-                                    if (!ad.closest('.mid-form-ad').classList.contains('loaded')) {
-                                        (adsbygoogle = window.adsbygoogle || []).push({});
-                                        ad.closest('.mid-form-ad').classList.add('loaded');
-                                        
-                                        // Track the loaded ad
-                                        try {
-                                            track('ad_loaded', {
-                                                type: 'mid-form',
-                                                location: ad.closest('.mid-form-ad').dataset.location || 'unknown',
-                                                calculator: currentTab
-                                            });
-                                        } catch (e) {
-                                            console.error('Error tracking ad load', e);
-                                        }
-                                    }
-                                } catch (e) {
-                                    console.error('Error loading high priority ad:', e);
-                                }
-                            });
-                        }
-                    }
-                    
-                    // 2. Then initialize getAds() function for main ad slots
-                    if (typeof getAds === 'function') {
-                        getAds();
-                    }
-                    
-                    // 3. Finally, initialize all remaining lazy ads with delay
-                    setTimeout(function() {
-                        // Initialize mid-form ads for all calculators for consistency
-                        document.querySelectorAll('.mid-form-ad .adsbygoogle:not(.adsbygoogle-noablate)').forEach(ad => {
-                            if (!ad.getAttribute('data-adsbygoogle-status') && !ad.closest('.mid-form-ad').classList.contains('loaded')) {
-                                try {
-                                    (adsbygoogle = window.adsbygoogle || []).push({});
-                                    ad.closest('.mid-form-ad').classList.add('loaded');
+            // Set up global error handler for ad loading issues
+            window.addEventListener('error', function(e) {
+                // Check if error is related to ad loading
+                if (e.target && (e.target.src || e.target.href)) {
+                    const resource = e.target.src || e.target.href;
+                    if (resource.includes('adsbygoogle') || resource.includes('pagead2.googlesyndication.com')) {
+                        console.log('AdSense resource failed to load:', resource);
+                        
+                        // Find the closest ad container
+                        const adContainer = e.target.closest('.ad-container, .mid-form-ad, .lazy-ad, .interstitial-content');
+                        if (adContainer) {
+                            // Log the error
+                            console.log('Ad container with loading error:', adContainer);
+                            
+                            // Add error class to container for styling
+                            adContainer.classList.add('ad-load-error');
+                            
+                            // Show loading error message
+                            if (!adContainer.querySelector('.ad-error-message')) {
+                                const errorMessage = document.createElement('div');
+                                errorMessage.className = 'ad-error-message';
+                                errorMessage.innerHTML = 'Ad loading failed. <span class="retry-link">Try again</span>';
+                                
+                                // Style the message
+                                errorMessage.style.padding = '10px';
+                                errorMessage.style.margin = '10px auto';
+                                errorMessage.style.backgroundColor = 'rgba(0,0,0,0.05)';
+                                errorMessage.style.borderRadius = '4px';
+                                errorMessage.style.fontSize = '13px';
+                                errorMessage.style.color = '#666';
+                                errorMessage.style.textAlign = 'center';
+                                
+                                // Add a retry link
+                                const retryLink = errorMessage.querySelector('.retry-link');
+                                if (retryLink) {
+                                    retryLink.style.color = '#0d6efd';
+                                    retryLink.style.cursor = 'pointer';
+                                    retryLink.style.textDecoration = 'underline';
                                     
-                                    // Track the loaded ad
-                                    try {
-                                        const location = ad.closest('.mid-form-ad').dataset.location || 'unknown';
-                                        track('ad_loaded', {
-                                            type: 'mid-form',
-                                            location: location,
-                                            calculator: currentTab
-                                        });
-                                    } catch (e) {
-                                        console.error('Error tracking ad load', e);
-                                    }
-                                } catch (e) {
-                                    console.error('Error loading mid-form ad:', e);
+                                    // Add retry functionality
+                                    retryLink.addEventListener('click', function() {
+                                        // Find the adsbygoogle element
+                                        const adElement = adContainer.querySelector('.adsbygoogle');
+                                        if (adElement) {
+                                            // Remove the error message
+                                            errorMessage.remove();
+                                            
+                                            // Create a new ad element
+                                            const newAd = document.createElement('ins');
+                                            newAd.className = 'adsbygoogle';
+                                            
+                                            // Copy attributes from the original element
+                                            Array.from(adElement.attributes).forEach(attr => {
+                                                if (attr.name !== 'data-adsbygoogle-status') {
+                                                    newAd.setAttribute(attr.name, attr.value);
+                                                }
+                                            });
+                                            
+                                            // Replace the ad element
+                                            adElement.parentNode.replaceChild(newAd, adElement);
+                                            
+                                            // Try to load the ad again
+                                            try {
+                                                (adsbygoogle = window.adsbygoogle || []).push({});
+                                                adContainer.classList.remove('ad-load-error');
+                                                adContainer.classList.add('processing');
+                                                
+                                                // Show loading message
+                                                const loadingMessage = document.createElement('div');
+                                                loadingMessage.className = 'ad-loading-message';
+                                                loadingMessage.textContent = 'Loading advertisement...';
+                                                loadingMessage.style.padding = '5px';
+                                                loadingMessage.style.color = '#666';
+                                                loadingMessage.style.textAlign = 'center';
+                                                loadingMessage.style.fontSize = '12px';
+                                                adContainer.appendChild(loadingMessage);
+                                                
+                                                // Remove loading message after timeout
+                                                setTimeout(() => {
+                                                    if (adContainer.contains(loadingMessage)) {
+                                                        loadingMessage.remove();
+                                                    }
+                                                }, 5000);
+                                            } catch (e) {
+                                                console.error('Error reloading ad:', e);
+                                                adContainer.appendChild(errorMessage);
+                                            }
+                                        }
+                                    });
                                 }
+                                
+                                adContainer.appendChild(errorMessage);
                             }
-                        });
-                        
-                        // Initialize other lazy ads
-                        document.querySelectorAll('.lazy-ad:not(.mid-form-ad) .adsbygoogle:not(.adsbygoogle-noablate)').forEach(ad => {
-                            if (!ad.getAttribute('data-adsbygoogle-status') && !ad.closest('.lazy-ad').classList.contains('loaded')) {
-                                try {
-                                    (adsbygoogle = window.adsbygoogle || []).push({});
-                                    ad.closest('.lazy-ad').classList.add('loaded');
-                                } catch (e) {
-                                    console.error('Error loading lazy ad:', e);
-                                }
-                            }
-                        });
-                        
-                        // After all ads have been initialized, check for empty containers and hide them
-                        if (typeof hideEmptyAdContainers === 'function') {
-                            setTimeout(hideEmptyAdContainers, 2000);
                         }
-                    }, isHighPriorityTab ? 500 : 1000); // Load faster on high priority tabs
-                    
-                }, 100);
-                
-                // Track calculator usage
-                const calculatorForms = document.querySelectorAll('form');
-                calculatorForms.forEach(form => {
-                    form.addEventListener('submit', function(e) {
-                        const calculatorId = this.closest('[id]').id;
-                        track('calculator_used', {
-                            calculator: calculatorId,
-                            inputs: form.querySelectorAll('input').length,
-                            test_group: window.adConfig && window.adConfig.isTestGroup ? 'test' : 'control'
-                        });
+                    }
+                }
+            }, true);
+            
+            // Set up fallback for critical ad spots if regular ads fail to load
+            function setupFallbackAds() {
+                // Check for failed ad loads after 8 seconds (enough time for retries)
+                setTimeout(() => {
+                    document.querySelectorAll('.ad-container.ad-load-error, .mid-form-ad.ad-load-error').forEach(container => {
+                        // Only apply fallback if no successful ad is loaded
+                        if (!container.classList.contains('loaded')) {
+                            console.log('Applying fallback ad to:', container);
+                            
+                            // Clear the container
+                            container.innerHTML = '';
+                            container.classList.remove('ad-load-error');
+                            container.classList.add('fallback-ad');
+                            
+                            // Create fallback ad header
+                            const fallbackHeader = document.createElement('div');
+                            fallbackHeader.className = 'ad-head';
+                            fallbackHeader.textContent = 'Advertisement';
+                            
+                            // Create fallback ad content - here we use a simple text ad
+                            // In production, you could load a simple static banner or affiliate link
+                            const fallbackContent = document.createElement('div');
+                            fallbackContent.className = 'fallback-ad-content';
+                            fallbackContent.innerHTML = `
+                                <div style="padding: 15px; text-align: center;">
+                                    <h5 style="margin-bottom: 10px; color: #333;">Student Resources</h5>
+                                    <p style="font-size: 14px; margin-bottom: 10px; color: #666;">
+                                        Find study materials and productivity tools to help with your academic journey.
+                                    </p>
+                                    <a href="https://www.amazon.in/s?k=student+resources&tag=craj0318g-21" target="_blank" 
+                                        style="display: inline-block; padding: 5px 15px; background-color: #0d6efd; color: white; 
+                                                text-decoration: none; border-radius: 4px; font-size: 14px;">
+                                        Browse Resources
+                                    </a>
+                                </div>
+                            `;
+                            
+                            // Add the fallback content to the container
+                            container.appendChild(fallbackHeader);
+                            container.appendChild(fallbackContent);
+                            
+                            // Track fallback impression
+                            try {
+                                if (typeof track === 'function') {
+                                    track('fallback_ad_shown', {
+                                        location: container.dataset.location || 'unknown',
+                                        calculator: new URLSearchParams(window.location.search).get('tab') || 'sc'
+                                    });
+                                }
+                            } catch (e) {
+                                console.error('Error tracking fallback ad impression:', e);
+                            }
+                        }
                     });
-                });
-                
-                // Log initialization
-                console.log('Analytics-driven ad optimization initialized');
+                }, 8000);
             }
+            
+            // Initialize fallback system
+            setupFallbackAds();
+            
+            // Re-initialize the original ad optimization functions
+            setTimeout(() => {
+                try {
+                    // First check if AdSense is available
+                    if (typeof adsbygoogle !== 'undefined') {
+                        console.log('AdSense is available, initializing ad optimization');
+                        
+                        // Check if optimized ads function is available
+                        if (typeof optimizeAdsByUserBehavior === 'function') {
+                            const adConfig = optimizeAdsByUserBehavior();
+                            
+                            // Initialize lazy ads with our enhanced retry mechanism
+                            if (typeof initLazyAds === 'function') {
+                                initLazyAds();
+                            }
+                            
+                            // Create sticky ad with appropriate delay
+                            if (typeof createStickyAd === 'function' && adConfig) {
+                                setTimeout(createStickyAd, adConfig.stickyAdDelay || 3000);
+                            }
+                            
+                            // Preload high priority ads if function exists
+                            if (typeof preloadHighPriorityAds === 'function') {
+                                setTimeout(preloadHighPriorityAds, 500);
+                            }
+                            
+                            // Set up viewability tracking for all ad containers
+                            const setupViewabilityTracking = () => {
+                                if ('IntersectionObserver' in window) {
+                                    const adContainers = document.querySelectorAll('.ad-container, .mid-form-ad, .lazy-ad');
+                                    
+                                    const viewabilityObserver = new IntersectionObserver((entries) => {
+                                        entries.forEach(entry => {
+                                            if (entry.isIntersecting) {
+                                                const container = entry.target;
+                                                
+                                                // If ad hasn't loaded yet, try to initialize it
+                                                if (!container.classList.contains('loaded') && !container.classList.contains('processing')) {
+                                                    try {
+                                                        console.log('Ad container came into view, trying to load:', container.dataset.location);
+                                                        container.classList.add('processing');
+                                                        
+                                                        const adInsElement = container.querySelector('.adsbygoogle');
+                                                        if (adInsElement && !adInsElement.getAttribute('data-adsbygoogle-status')) {
+                                                            // Push to AdSense
+                                                            (adsbygoogle = window.adsbygoogle || []).push({});
+                                                            
+                                                            // Check if ad loads successfully
+                                                            setTimeout(async () => {
+                                                                if (typeof checkAdRendered === 'function') {
+                                                                    const isRendered = await checkAdRendered(container);
+                                                                    
+                                                                    if (!isRendered && typeof retryLoadAd === 'function') {
+                                                                        retryLoadAd(container, 1);
+                                                                    } else if (isRendered) {
+                                                                        container.classList.add('loaded');
+                                                                        container.classList.remove('processing');
+                                                                    }
+                                                                }
+                                                            }, 2000);
+                                                        }
+                                                    } catch (e) {
+                                                        console.error('Error initializing ad on scroll:', e);
+                                                    }
+                                                }
+                                                
+                                                // Stop observing once we've taken action
+                                                viewabilityObserver.unobserve(container);
+                                            }
+                                        });
+                                    }, {
+                                        threshold: 0.2,
+                                        rootMargin: '100px 0px'
+                                    });
+                                    
+                                    // Start observing all ad containers
+                                    adContainers.forEach(container => {
+                                        if (!container.classList.contains('loaded') && !container.classList.contains('processing')) {
+                                            viewabilityObserver.observe(container);
+                                        }
+                                    });
+                                }
+                            };
+                            
+                            // Set up viewability tracking after a short delay
+                            setTimeout(setupViewabilityTracking, 1000);
+                            
+                            // Track calculator tab usage
+                            const calculatorTabs = document.querySelectorAll('[id="sc"], [id="gc"], [id="ec"], [id="fc"]');
+                            calculatorTabs.forEach(tab => {
+                                const calculatorId = tab.id;
+                                const forms = tab.querySelectorAll('form');
+                                
+                                forms.forEach(form => {
+                                    form.addEventListener('submit', function(e) {
+                                        try {
+                                            if (typeof track === 'function') {
+                                                track('calculator_used', {
+                                                    calculator: calculatorId,
+                                                    inputs: form.querySelectorAll('input').length,
+                                                    testGroup: window.adConfig?.isTestGroup ? 'test' : 'control'
+                                                });
+                                            }
+                                        } catch (err) {
+                                            console.error('Error tracking calculator usage:', err);
+                                        }
+                                    });
+                                });
+                            });
+                        } else {
+                            console.log('AdSense not available, possibly blocked');
+                            
+                            // Hide all ad containers if AdSense is not available
+                            document.querySelectorAll('.ad-container, .mid-form-ad, .lazy-ad, .inline-ad').forEach(container => {
+                                container.style.display = 'none';
+                            });
+                            
+                            // Add class to body for CSS adjustments
+                            document.body.classList.add('ads-disabled');
+                            
+                            // Track adblock detection
+                            try {
+                                if (typeof track === 'function') {
+                                    track('ad_blocker_detected', {
+                                        calculator: new URLSearchParams(window.location.search).get('tab') || 'sc'
+                                    });
+                                }
+                            } catch (e) {
+                                console.error('Error tracking ad blocker detection:', e);
+                            }
+                        }
+                    } else {
+                        console.log('AdSense not available, possibly blocked');
+                        
+                        // Hide all ad containers if AdSense is not available
+                        document.querySelectorAll('.ad-container, .mid-form-ad, .lazy-ad, .inline-ad').forEach(container => {
+                            container.style.display = 'none';
+                        });
+                        
+                        // Add class to body for CSS adjustments
+                        document.body.classList.add('ads-disabled');
+                        
+                        // Track adblock detection
+                        try {
+                            if (typeof track === 'function') {
+                                track('ad_blocker_detected', {
+                                    calculator: new URLSearchParams(window.location.search).get('tab') || 'sc'
+                                });
+                            }
+                        } catch (e) {
+                            console.error('Error tracking ad blocker detection:', e);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error initializing ad system:', e);
+                }
+            }, 100);
         });
     </script>
 
