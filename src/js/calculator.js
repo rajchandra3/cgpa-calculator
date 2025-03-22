@@ -15,6 +15,18 @@ function roundToTwo(num) {
     return rounded;
 }
 
+// Initialize error modal once
+let errorModal;
+document.addEventListener('DOMContentLoaded', function() {
+    errorModal = new bootstrap.Modal(document.getElementById('modal-error'));
+});
+
+// Function to show error modal
+function showErrorModal(message) {
+    document.getElementById('modal-body').innerHTML = message;
+    errorModal.show();
+}
+
 //Expected Marks
 var getMarks = function(){
     var marksCat1 = parseFloat($('#cat1').val());
@@ -51,8 +63,7 @@ var getMarks = function(){
             break;
     }
     if(isNaN(netMarks)){
-        $('#modal-body').html('Insufficient Data !!');
-        $('#modal-error').modal('show');
+        showErrorModal('Insufficient Data !!');
     }
     else{
         $('.alert-marks').show();
@@ -74,8 +85,7 @@ $('#submit').click(function(){
 
     var f=(((cgpa*tc)+(gpa*c))/(tc+c));
     if(isNaN(f)){
-        $('#modal-body').html('Insufficient Data !!');
-        $('#modal-error').modal('show');
+        showErrorModal('Insufficient Data !!');
         f="Unavailable";
     }else{
         $('.alert-cgpa-msg').show();
@@ -143,14 +153,12 @@ $('#sem-cgpa-btn').on('click',function(){
     var totalCredits = fc1*1 + fc2*1 + fc3*1 + fc4*1 + fc5*1 + fc6*1 + fc7*1 + fc8*1;
     
     if (totalCredits === 0) {
-        $('#modal-body').html('Total credits cannot be zero');
-        $('#modal-error').modal('show');
+        showErrorModal('Total credits cannot be zero');
     } else {
         fcgpa = ((parseFloat(gpa1)*fc1)+(parseFloat(gpa2)*fc2)+(parseFloat(gpa3)*fc3)+(parseFloat(gpa4)*fc4)+(parseFloat(gpa5)*fc5)+(parseFloat(gpa6)*fc6)+(parseFloat(gpa7)*fc7)+(parseFloat(gpa8)*fc8)) / totalCredits;
         
         if(isNaN(fcgpa)){
-            $('#modal-body').html('Insufficient Data !!');
-            $('#modal-error').modal('show');
+            showErrorModal('Insufficient Data !!');
         }
         else{
             $('.alert-fcgpa').show();
@@ -188,8 +196,7 @@ $('#gbtn').on('click',function(){
     gpa=(c1*g1+c2*g2+c3*g3+c4*g4+c5*g5+c6*g6+c7*g7+c8*g8+c9*g9+c10*g10)/(c1+c2+c3+c4+c5+c6+c7+c8+c9+c10);
 
     if(isNaN(gpa)){
-        $('#modal-body').html('Insufficient Data !!');
-        $('#modal-error').modal('show');
+        showErrorModal('Insufficient Data !!');
         gpa="Unavailable";
     }else{
         $('.alert-grades').show();
@@ -208,92 +215,84 @@ function clearAll(){
 * VALIDATION
 * */
 
-$('.cgpa-input').on('keyup',function(){
+// GPA and CGPA specific validations
+$('.fgpa, .fcredits, .cgpa-input, .form-control').on('keyup',function(){
     var input=document.getElementById(this.id).value;
     if(!input==''){
         var re=/^\d+\.?\d{0,2}$/;
         if (!(re.test(input))){
-            $('#modal-body').html('Please enter a valid data');
-            $('#modal-error').modal('show');
+            showErrorModal('Please enter a valid data');
             $(this).val('');
         }
     }
-    if((input>10 || input<0) && this.id==='gpa'){
-        $('#modal-body').html('Your GPA should be between 0 and 10 !');
-        $('#modal-error').modal('show');
+    if((input>10 || input<0) && (this.id==='gpa' || this.id.startsWith('gpa'))){
+        showErrorModal('Your GPA should be between 0 and 10 !');
         $(this).val('');
     }
     else if((input>10 || input<0) && this.id==='cgpa'){
-        $('#modal-body').html('Your CGPA should be between 0 and 10 !');
-        $('#modal-error').modal('show');
+        showErrorModal('Your CGPA should be between 0 and 10 !');
         $(this).val('');
     }
     else if((input>39 || input<0) && this.id==='c'){
-        $('#modal-body').html('Your Credits should be between 16 and 39 !');
-        $('#modal-error').modal('show');
+        showErrorModal('Your Credits should be between 16 and 39 !');
         $(this).val('');
     }
     else if((input>250 || input<0) && this.id==='tc'){
-        $('#modal-body').html('Your Credits should be between 0 and 250 !');
-        $('#modal-error').modal('show');
+        showErrorModal('Your Credits should be between 0 and 250 !');
+        $(this).val('');
+    }
+    else if((input>32 || input<0) && this.id.startsWith('fc')){
+        showErrorModal('Your Credits should be between 0 and 32 !');
         $(this).val('');
     }
 });
 
-$('.form-control').on('keyup',function(){
+// Expected marks form validation
+$('#cat1, #cat2, #da, #al, #lab, #j-comp, #fat').on('keyup', function(){
     var input = document.getElementById(this.id).value;
-    if(input !== ''){
-        var re = /^\d*\.?\d{0,2}$/;
-        if (!re.test(input)){
-            $('#modal-body').html('Please enter a valid number with up to 2 decimal places');
-            $('#modal-error').modal('show');
+    if(!input==''){
+        var re = /^\d+\.?\d{0,2}$/;
+        if (!(re.test(input))){
+            showErrorModal('Please enter a valid number with up to 2 decimal places');
+            $(this).val('');
+            return;
+        }
+        
+        // Validate specific fields
+        if((input > 30 || input < 0) && (this.id === 'cat1' || this.id === 'cat2' || this.id === 'da')){
+            showErrorModal(`Your ${this.id.toUpperCase()} marks should be between 0 and 30 !`);
+            $(this).val('');
+        }
+        else if((input > 10 || input < 0) && this.id === 'al'){
+            showErrorModal('Your Additional Learning marks should be between 0 and 10 !');
+            $(this).val('');
+        }
+        else if((input > 100 || input < 0) && (this.id === 'lab' || this.id === 'j-comp' || this.id === 'fat')){
+            showErrorModal(`Your ${this.id === 'fat' ? 'FAT' : (this.id === 'lab' ? 'Lab' : 'J Component')} marks should be between 0 and 100 !`);
             $(this).val('');
         }
     }
-    if((input>10 || input<0) && (this.id==='gpa1' || this.id==='gpa2' || this.id==='gpa3' || this.id==='gpa4' || this.id==='gpa5' || this.id==='gpa6' || this.id==='gpa7' || this.id==='gpa8')){
-        $('#modal-body').html('Your GPA should be between 0 and 10 !');
-        $('#modal-error').modal('show');
-        $(this).val('');
+});
+
+// Generic validation for all form inputs
+$('.form-control, .form-select').on('keyup change',function(){
+    // Skip if already validated by more specific rules
+    if($(this).hasClass('fgpa') || $(this).hasClass('fcredits') || $(this).hasClass('cgpa-input') || 
+       this.id === 'cat1' || this.id === 'cat2' || this.id === 'da' || this.id === 'al' || 
+       this.id === 'lab' || this.id === 'j-comp' || this.id === 'fat') {
+        return;
     }
-    else if((input>30 || input<0) && (this.id==='cat1' || this.id==='cat2' || this.id==='nf-cat1' || this.id==='nf-cat2')){
-        $('#modal-body').html('Your marks should be between 0 and 30 !');
-        $('#modal-error').modal('show');
-        $(this).val('');
-    }
-    else if((input>30 || input<0) && (this.id==='cat1' || this.id==='cat2')){
-        $('#modal-body').html('Your marks should be between 0 and 30 !');
-        $('#modal-error').modal('show');
-        $(this).val('');
-    }
-    else if((input>30 || input<0) && (this.id==='nf-cat1' || this.id==='nf-cat2')){
-        $('#modal-body').html('Your marks should be between 0 and 30 !');
-        $('#modal-error').modal('show');
-        $(this).val('');
-    }
-    // else if( (input>60 || input<0) && (this.id==='nf-lab')){
-    //     $('#modal-body').html('Your marks should be between 0 and 60 !');
-    //     $('#modal-error').modal('show');
-    //     $(this).val('');
-    // }
-    else if((input>30 || input<0) && (this.id==='da' || this.id==='nf-da')){
-        $('#modal-body').html('Your marks should be between 0 and 30 !');
-        $('#modal-error').modal('show');
-        $(this).val('');
-    }
-    else if((input>10 || input<0) && (this.id==='al' || this.id==='nf-al')){
-        $('#modal-body').html('Additional Learning marks should be between 0 and 10 !');
-        $('#modal-error').modal('show');
-        $(this).val('');
-    }
-    else if((input>100 || input<0) && (this.id==='lab' || this.id==='nf-lab' || this.id==='j-comp' || this.id==='nf-j-comp' || this.id==='fat')){
-        $('#modal-body').html('Your marks should be between 0 and 100 !');
-        $('#modal-error').modal('show');
-        $(this).val('');
-    }
-    else if((input>39 || input<0) && (this.id==='fc1' || this.id==='fc2' || this.id==='fc3' || this.id==='fc4' || this.id==='fc5' || this.id==='fc6' || this.id==='fc7' || this.id==='fc8')){
-        $('#modal-body').html('Your Credits should be between 16 and 39 !');
-        $('#modal-error').modal('show');
-        $(this).val('');
+    
+    // Only validate input elements, not selects
+    if (this.tagName.toLowerCase() === 'input') {
+        var input = document.getElementById(this.id).value;
+        if(input !== ''){
+            var re = /^\d*\.?\d{0,2}$/;
+            if (!re.test(input)){
+                showErrorModal('Please enter a valid number with up to 2 decimal places');
+                $(this).val('');
+            }
+        }
     }
 });
 

@@ -1,15 +1,24 @@
 .ad-container {
     margin: 20px 0;
-    border: 1px solid darkgray;
-    border-radius: 4px;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background-color: var(--bs-body-bg);
+    transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .ad-head {
     font-size: 12px;
-    color: #fff;
     text-align: center;
     margin-bottom: 5px;
-    background-color: darkgrey;
+    padding: 2px 0;
+    background-color: var(--bs-secondary-bg);
+    color: var(--bs-secondary-color);
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.ad-content {
+    padding: 10px;
 }
 
 .horizontal-ad {
@@ -18,6 +27,93 @@
     margin: 20px auto;
 }
 
+/* Enhanced Dark Mode Styling */
+[data-bs-theme="dark"] .ad-container {
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: #1a1a1a;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme="dark"] .ad-head {
+    background-color: #9e9e9e; /* Gray header to match screenshot */
+    color: #ffffff;
+    padding: 4px 0;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-bs-theme="dark"] .ad-content {
+    padding: 12px;
+    background-color: #1a1a1a;
+}
+
+/* Light Mode Styling */
+[data-bs-theme="light"] .ad-container {
+    border-color: rgba(0, 0, 0, 0.125);
+    background-color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="light"] .ad-head {
+    background-color: #f0f0f0;
+    color: #555555;
+    font-weight: normal;
+}
+
+/* Custom ads styling */
+.custom-ads {
+    font-family: var(--bs-body-font-family);
+    width: 100%;
+    margin: 0;
+    border-radius: var(--bs-border-radius);
+    border: 1px dashed var(--bs-border-color);
+    text-align: left;
+    padding: 10px;
+    background-color: var(--bs-tertiary-bg);
+}
+
+[data-bs-theme="dark"] .custom-ads {
+    background-color: #1a1a1a;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.custom-ads .ad-title {
+    font-weight: bold;
+    color: var(--bs-heading-color);
+    margin-bottom: 5px;
+}
+
+.custom-ads .ad-body {
+    color: var(--bs-body-color);
+    font-size: 0.9rem;
+}
+
+.custom-ads .ad-cta {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    text-align: center;
+    background-color: var(--bs-primary);
+    color: white;
+    padding: 8px;
+    border-radius: var(--bs-border-radius);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+[data-bs-theme="dark"] .custom-ads .ad-cta {
+    background-color: #0d6efd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.custom-ads .ad-cta:hover {
+    background-color: var(--bs-primary-bg-subtle);
+    color: var(--bs-primary);
+}
+
+/* Improve responsive design */
 @media (max-width: 768px) {
     .ad-container {
         margin: 10px 0;
