@@ -2,15 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
-  <script>try{var s=localStorage.getItem('color-scheme')||localStorage.getItem('ui_theme')||localStorage.getItem('theme');if(s==='light'||s==='dark'){document.querySelector('meta[name="color-scheme"]').content=s;}}catch(e){}</script>
+  <script>try{var s=localStorage.getItem('color-scheme')||localStorage.getItem('ui_theme')||localStorage.getItem('theme');if(s==='light'||s==='dark'){document.querySelector('meta[name="color-scheme"]').content=s;document.documentElement.dataset.theme=s;}}catch(e){}</script>
 
   <title>Anna University CGPA Calculator | GPA &amp; Cumulative CGPA</title>
   <meta name="description" content="Calculate Anna University semester GPA and cumulative CGPA using official 10-point grade credits. Over 1M+ views since 2017 and trusted by VIT &amp; engineering students across India for over 9+ years.">
   <meta name="keywords" content="Anna University CGPA calculator, Anna University GPA calculator, AU GPA calculator, Anna University grade point calculator, Regulation 2017 2021 CGPA, Raj Chandra CGPA calculator">
   <meta name="author" content="Raj Chandra">
   <meta name="robots" content="index, follow">
+  <meta name="google-adsense-account" content="ca-pub-8598751574376549">
   <link rel="canonical" href="https://cgpa-calculator.rajchandra.me/college/anna-university.html">
 
   <meta property="og:type" content="website">
@@ -34,9 +35,11 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"></noscript>
 
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8SGELQM6QV"></script>
+  <script async fetchpriority="low" src="https://www.googletagmanager.com/gtag/js?id=G-8SGELQM6QV"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
@@ -126,7 +129,11 @@
   }
   </script>
 
+  <link rel="stylesheet" href="/src/css/vendor/pico.min.css">
   <link rel="stylesheet" href="/src/css/app.css">
+  <link rel="modulepreload" href="/src/js/app.js">
+  <link rel="modulepreload" href="/src/js/math.js">
+  <link rel="modulepreload" href="/src/js/universities.js">
 </head>
 <body data-university="anna">
   <a class="visually-hidden" href="#main-content">Skip to calculator</a>
@@ -134,7 +141,16 @@
   <header class="site-header">
     <div class="header-inner">
       <a class="brand" href="/">
-        <img src="/src/images/icons/icon-96x96.png" width="32" height="32" alt="CGPA Calculator logo">
+        <svg class="brand-mark" width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect x="3" y="3" width="26" height="26" rx="7" stroke="currentColor" stroke-width="2.2"/>
+          <rect x="8" y="8" width="16" height="5" rx="1.75" fill="currentColor"/>
+          <circle cx="10.5" cy="18" r="1.75" fill="currentColor"/>
+          <circle cx="16" cy="18" r="1.75" fill="currentColor"/>
+          <circle cx="21.5" cy="18" r="1.75" fill="currentColor"/>
+          <circle cx="10.5" cy="23" r="1.75" fill="currentColor"/>
+          <circle cx="16" cy="23" r="1.75" fill="currentColor"/>
+          <rect x="19.75" y="21.25" width="3.5" height="3.5" rx="1" fill="currentColor"/>
+        </svg>
         <span>CGPA Calculator</span>
       </a>
       <nav class="uni-nav" aria-label="Universities">
@@ -156,18 +172,20 @@
   </header>
 
   <main id="main-content" class="page-main">
-    <section class="page-hero">
-      <h1>Anna University CGPA Calculator</h1>
-      <p class="hero-trust">Over 1M+ views since 2017 · Trusted by VIT &amp; engineering students across India for over 9+ years · Anna University GPA &amp; CGPA.</p>
-    </section>
+    <div class="workspace-layout">
+      <div class="workspace-main">
+        <section class="page-hero">
+          <h1>Anna University CGPA Calculator</h1>
+          <p class="hero-trust">Over <span class="stat-num">1M+</span> views since <span class="stat-num">2017</span> · Trusted by VIT &amp; engineering students across India for over <span class="stat-num">9+</span> years · Anna University GPA &amp; CGPA.</p>
+        </section>
 
-    <div class="mode-tabs" role="tablist" aria-label="Calculator modes">
-      <button type="button" id="tab-sc" role="tab" class="mode-tab is-active" data-tab="sc" aria-selected="true" tabindex="0">Semester GPA</button>
-      <button type="button" id="tab-gc" role="tab" class="mode-tab" data-tab="gc" aria-selected="false" tabindex="-1">Quick CGPA</button>
-      <button type="button" id="tab-fc" role="tab" class="mode-tab" data-tab="fc" aria-selected="false" tabindex="-1">All-Sem CGPA</button>
-    </div>
+        <div class="mode-tabs" role="tablist" aria-label="Calculator modes">
+          <button type="button" id="tab-sc" role="tab" class="mode-tab is-active" data-tab="sc" aria-selected="true" tabindex="0">Semester GPA</button>
+          <button type="button" id="tab-gc" role="tab" class="mode-tab" data-tab="gc" aria-selected="false" tabindex="-1">Quick CGPA</button>
+          <button type="button" id="tab-fc" role="tab" class="mode-tab" data-tab="fc" aria-selected="false" tabindex="-1">All-Sem CGPA</button>
+        </div>
 
-    <section class="calculator-shell" aria-label="Calculators">
+        <article class="calculator-shell" aria-label="Calculators">
       <section id="sc" class="calculator-panel" role="tabpanel" aria-labelledby="tab-sc">
         <h2 id="sc-heading">Calculate Semester GPA</h2>
         <p class="panel-desc">Select the Anna University grade and credit weight for each subject this semester. Empty rows are skipped.</p>
@@ -246,9 +264,9 @@
           </div>
         </form>
       </section>
-    </section>
+    </article>
 
-    <section class="info-section">
+    <section class="info-section below-fold-section">
       <h2 id="grade-scale-heading">Anna University Grade Scale</h2>
       <div class="table-wrap" tabindex="0" role="region" aria-labelledby="grade-scale-heading">
         <table class="grade-table">
@@ -292,6 +310,28 @@
         </details>
       </div>
     </section>
+      </div>
+
+      <aside id="comments-section" class="comments-sidebar" aria-labelledby="comments-heading">
+        <h2 id="comments-heading">Feedback &amp; Comments</h2>
+        <p class="comments-desc">Share suggestions, report grade-scale updates, or ask questions with fellow students.</p>
+        <div
+          id="giscus-container"
+          class="giscus-host"
+          data-repo="rajchandra3/cgpa-calculator"
+          data-repo-id="R_kgDOGqICXQ"
+          data-category="General"
+          data-category-id="DIC_kwDOGqICXc4DL4Gy"
+          data-mapping="pathname"
+          data-strict="0"
+          data-reactions-enabled="1"
+          data-emit-metadata="0"
+          data-input-position="top"
+          data-lang="en"
+        ></div>
+        <p class="comments-footnote">Open-source comments via <a href="https://github.com/rajchandra3/cgpa-calculator/discussions" target="_blank" rel="noopener noreferrer">GitHub Discussions (Giscus)</a>.</p>
+      </aside>
+    </div>
   </main>
 
   <footer class="site-footer">
@@ -310,7 +350,7 @@
     </div>
   </footer>
 
-  <script src="/src/js/analytics.js" defer></script>
-  <script type="module" src="/src/js/app.js"></script>
+  <script src="/src/js/analytics.js" defer fetchpriority="low"></script>
+  <script type="module" src="/src/js/app.js" fetchpriority="high"></script>
 </body>
 </html>

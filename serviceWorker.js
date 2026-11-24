@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cgpa-calculator-v2';
+const CACHE_NAME = 'cgpa-calculator-v3';
 
 const PRECACHE_URLS = [
   '/',
@@ -6,6 +6,7 @@ const PRECACHE_URLS = [
   '/college/anna-university.html',
   '/college/ktu.html',
   '/college/srm.html',
+  '/src/css/vendor/pico.min.css',
   '/src/css/app.css',
   '/src/js/app.js',
   '/src/js/math.js',
@@ -45,6 +46,37 @@ self.addEventListener('fetch', (event) => {
 
   const requestUrl = new URL(event.request.url);
   if (requestUrl.origin !== self.location.origin) return;
+
+  const isStaticAsset =
+    requestUrl.pathname.startsWith('/src/') || requestUrl.pathname.startsWith('/manifest/');
+
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) =>
+        cache.match(event.request).then((cachedResponse) => {
+          const networkPromise = fetch(event.request)
+            .then((networkResponse) => {
+              if (networkResponse && networkResponse.ok && networkResponse.type === 'basic') {
+                cache.put(event.request, networkResponse.clone());
+              }
+              return networkResponse;
+            })
+            .catch(() => null);
+
+          if (cachedResponse) {
+            event.waitUntil(networkPromise);
+            return cachedResponse;
+          }
+
+          return networkPromise.then((networkResponse) => {
+            if (networkResponse) return networkResponse;
+            return caches.match(event.request, { ignoreSearch: true });
+          });
+        })
+      )
+    );
+    return;
+  }
 
   event.respondWith(
     fetch(event.request)

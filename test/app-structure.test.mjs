@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
-import { resolveTabId } from '../src/js/app.js';
+import { resolveTabId, resolveGiscusTheme } from '../src/js/app.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -89,17 +90,23 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v2 and precaches only existing local assets', () => {
+test('serviceWorker.js uses cgpa-calculator-v3, precaches 18 existing assets including pico.min.css, and uses SWR + network-first', () => {
+  assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
+
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v2'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v3'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
+  assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
+  assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/manifest\/'\)/);
+  assert.match(swSource, /ignoreSearch:\s*true/);
 
   const arrayMatch = swSource.match(/const PRECACHE_URLS = \[([\s\S]*?)\];/);
   assert.ok(arrayMatch, 'PRECACHE_URLS array must exist in serviceWorker.js');
 
   const urls = Array.from(arrayMatch[1].matchAll(/'([^']+)'/g), (m) => m[1]);
-  assert.equal(urls.length, 17);
+  assert.equal(urls.length, 18);
+  assert.equal(urls.includes('/src/css/vendor/pico.min.css'), true);
 
   for (const urlPath of urls) {
     const diskRel = urlPath === '/' ? 'index.html' : urlPath.replace(/^\//, '');
@@ -107,7 +114,130 @@ test('serviceWorker.js uses cgpa-calculator-v2 and precaches only existing local
   }
 });
 
-test('obsolete JS files are deleted and active JS files meet security and hygiene rules', () => {
+test('serviceWorker.js routes static assets stale-while-revalidate and documents network-first with ignoreSearch fallback', async () => {
+  const swSource = readRepoFile('serviceWorker.js');
+  const listeners = new Map();
+  const cacheStore = new Map([
+    ['https://cgpa-calculator.rajchandra.me/src/css/app.css', { ok: true, type: 'basic', tag: 'cached-css' }],
+    ['https://cgpa-calculator.rajchandra.me/', { ok: true, type: 'basic', tag: 'cached-home' }],
+  ]);
+  const waitUntilPromises = [];
+  const putCalls = [];
+
+  const mockCache = {
+    async match(req) {
+      const key = typeof req === 'string' ? req : req.url;
+      return cacheStore.get(key) || undefined;
+    },
+    async put(req, res) {
+      const key = typeof req === 'string' ? req : req.url;
+      putCalls.push(key);
+      cacheStore.set(key, res);
+    },
+    async addAll() {},
+  };
+
+  const mockCaches = {
+    async open() {
+      return mockCache;
+    },
+    async match(req, opts = {}) {
+      const rawUrl = typeof req === 'string' ? req : req.url;
+      if (cacheStore.has(rawUrl)) return cacheStore.get(rawUrl);
+      if (opts.ignoreSearch) {
+        const stripped = rawUrl.split('?')[0];
+        return cacheStore.get(stripped);
+      }
+      return undefined;
+    },
+    async keys() {
+      return ['cgpa-calculator-v2', 'cgpa-calculator-v3'];
+    },
+    async delete() {
+      return true;
+    },
+  };
+
+  let fetchBehavior = async (req) => ({
+    ok: true,
+    type: 'basic',
+    tag: `network:${req.url}`,
+    clone() {
+      return { ok: true, type: 'basic', tag: `cloned:${req.url}` };
+    },
+  });
+
+  const selfObj = {
+    location: { origin: 'https://cgpa-calculator.rajchandra.me' },
+    addEventListener(type, fn) {
+      listeners.set(type, fn);
+    },
+    skipWaiting: async () => {},
+    clients: { claim: async () => {} },
+  };
+
+  vm.runInNewContext(swSource, {
+    self: selfObj,
+    caches: mockCaches,
+    fetch: (req) => fetchBehavior(req),
+    URL,
+    Promise,
+  });
+
+  const onFetch = listeners.get('fetch');
+  assert.equal(typeof onFetch, 'function');
+
+  // Non-GET and cross-origin requests are ignored
+  let responded = false;
+  onFetch({
+    request: { method: 'POST', url: 'https://cgpa-calculator.rajchandra.me/' },
+    respondWith() {
+      responded = true;
+    },
+  });
+  assert.equal(responded, false);
+
+  onFetch({
+    request: { method: 'GET', url: 'https://giscus.app/client.js' },
+    respondWith() {
+      responded = true;
+    },
+  });
+  assert.equal(responded, false);
+
+  // Static /src/* asset returns cached immediately (SWR) and updates cache in background
+  let swrPromise;
+  onFetch({
+    request: { method: 'GET', url: 'https://cgpa-calculator.rajchandra.me/src/css/app.css' },
+    waitUntil(p) {
+      waitUntilPromises.push(p);
+    },
+    respondWith(p) {
+      swrPromise = p;
+    },
+  });
+  const swrRes = await swrPromise;
+  assert.equal(swrRes.tag, 'cached-css');
+  await Promise.all(waitUntilPromises);
+  assert.equal(putCalls.includes('https://cgpa-calculator.rajchandra.me/src/css/app.css'), true);
+
+  // HTML document offline fallback uses ignoreSearch: true
+  fetchBehavior = async () => {
+    throw new Error('offline');
+  };
+  let docPromise;
+  onFetch({
+    request: { method: 'GET', url: 'https://cgpa-calculator.rajchandra.me/?tab=gc' },
+    waitUntil() {},
+    respondWith(p) {
+      docPromise = p;
+    },
+  });
+  const docRes = await docPromise;
+  assert.equal(docRes.tag, 'cached-home');
+});
+
+test('obsolete JS files are deleted and active JS/HTML files meet security and hygiene rules', () => {
   const obsoleteFiles = [
     'src/js/ads.js',
     'src/js/calculator.js',
@@ -128,18 +258,175 @@ test('obsolete JS files are deleted and active JS files meet security and hygien
     'src/js/analytics.js',
     'src/js/app.js',
   ];
-  const forbiddenPattern =
-    /innerHTML|outerHTML|document\.write|insertAdjacentHTML|\beval\(|alert\(|confirm\(|prompt\(|adsbygoogle|pagead2|AW-16729760450|smartlook|UA-99147431|fb-comments|connect\.facebook|files\.rajchandra\.me/;
+  const forbiddenSinkPattern =
+    /innerHTML|outerHTML|document\.write|insertAdjacentHTML|\beval\(|alert\(|confirm\(|prompt\(/;
+  const forbiddenTrackerPattern =
+    /adsbygoogle|pagead2|AW-16729760450|smartlook|UA-99147431|fb-comments|connect\.facebook|files\.rajchandra\.me/;
 
   for (const file of activeJsFiles) {
     assert.equal(repoFileExists(file), true, `Missing active JS file: ${file}`);
     const content = readRepoFile(file);
     assert.equal(
-      forbiddenPattern.test(content),
+      forbiddenSinkPattern.test(content),
       false,
-      `Forbidden pattern detected in ${file}`
+      `Forbidden DOM/dialog pattern detected in ${file}`
+    );
+    assert.equal(
+      forbiddenTrackerPattern.test(content),
+      false,
+      `Forbidden ad/tracker pattern detected in ${file}`
     );
   }
+
+  const htmlFiles = [
+    'index.html',
+    'college/anna-university.html',
+    'college/ktu.html',
+    'college/srm.html',
+    'sitemap.html',
+  ];
+  for (const file of htmlFiles) {
+    const content = readRepoFile(file);
+    assert.equal(
+      forbiddenTrackerPattern.test(content),
+      false,
+      `Forbidden ad/tracker pattern detected in ${file}`
+    );
+  }
+});
+
+test('analytics.js queues Mixpanel events from boot, defers remote script until load + idle, and injects once with fetchPriority low', () => {
+  const analyticsSource = readRepoFile('src/js/analytics.js');
+  const injectedScripts = [];
+  const loadListeners = [];
+  const idleCallbacks = [];
+  const timeouts = [];
+  const gtagCalls = [];
+  const firstScript = {
+    parentNode: {
+      insertBefore(node) {
+        injectedScripts.push(node);
+      },
+    },
+  };
+
+  const mockDoc = {
+    title: 'CGPA Calculator',
+    readyState: 'interactive',
+    createElement(tag) {
+      return { tagName: tag.toUpperCase() };
+    },
+    getElementsByTagName() {
+      return [firstScript];
+    },
+    head: {
+      appendChild(node) {
+        injectedScripts.push(node);
+      },
+    },
+  };
+
+  const mockWindow = {
+    location: { hash: '', pathname: '/', search: '' },
+    document: mockDoc,
+    gtag(...args) {
+      gtagCalls.push(args);
+    },
+    addEventListener(type, fn) {
+      if (type === 'load') loadListeners.push(fn);
+    },
+    requestIdleCallback(fn) {
+      idleCallbacks.push(fn);
+    },
+    setTimeout(fn) {
+      timeouts.push(fn);
+      return timeouts.length;
+    },
+    clearTimeout() {},
+  };
+
+  vm.runInNewContext(analyticsSource, {
+    window: mockWindow,
+    document: mockDoc,
+    history: { replaceState() {} },
+    RegExp,
+    Array,
+    JSON,
+    decodeURIComponent,
+  });
+
+  // Queue ready immediately, script NOT injected before load
+  assert.equal(injectedScripts.length, 0);
+  assert.equal(typeof mockWindow.track, 'function');
+  assert.equal(typeof mockWindow.mixpanel?.track, 'function');
+
+  mockWindow.track('computed_gpa', { gpa: 9.57 });
+  assert.equal(gtagCalls.length, 1);
+  assert.deepEqual(gtagCalls[0], ['event', 'computed_gpa', { gpa: 9.57 }]);
+  assert.equal(
+    mockWindow.mixpanel.some((entry) => Array.isArray(entry) && entry[0] === 'track' && entry[1] === 'computed_gpa'),
+    true
+  );
+
+  // Trigger window.load -> schedules idle callback + fallback timer, still not injected until idle
+  assert.equal(loadListeners.length, 1);
+  loadListeners[0]();
+  assert.equal(injectedScripts.length, 0);
+  assert.equal(idleCallbacks.length, 1);
+  assert.equal(timeouts.length, 1);
+
+  // Run idle callback -> injects script once with fetchPriority = 'low'
+  idleCallbacks[0]();
+  assert.equal(injectedScripts.length, 1);
+  assert.equal(injectedScripts[0].src, 'https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js');
+  assert.equal(injectedScripts[0].async, true);
+  assert.equal(injectedScripts[0].fetchPriority, 'low');
+
+  // Running fallback timer afterwards must NOT inject a second script
+  timeouts[0]();
+  assert.equal(injectedScripts.length, 1);
+
+  // Without requestIdleCallback, script injects immediately on load (once)
+  const noRicScripts = [];
+  const noRicLoadListeners = [];
+  const noRicDoc = {
+    title: 'CGPA Calculator',
+    readyState: 'interactive',
+    createElement(tag) {
+      return { tagName: tag.toUpperCase() };
+    },
+    getElementsByTagName() {
+      return [];
+    },
+    head: {
+      appendChild(node) {
+        noRicScripts.push(node);
+      },
+    },
+  };
+  const noRicWin = {
+    location: { hash: '', pathname: '/', search: '' },
+    document: noRicDoc,
+    addEventListener(type, fn) {
+      if (type === 'load') noRicLoadListeners.push(fn);
+    },
+    clearTimeout() {},
+  };
+  vm.runInNewContext(analyticsSource, {
+    window: noRicWin,
+    document: noRicDoc,
+    history: { replaceState() {} },
+    RegExp,
+    Array,
+    JSON,
+    decodeURIComponent,
+  });
+  assert.equal(noRicScripts.length, 0);
+  noRicLoadListeners[0]();
+  assert.equal(noRicScripts.length, 1);
+  assert.equal(noRicScripts[0].fetchPriority, 'low');
+  noRicLoadListeners[0]();
+  assert.equal(noRicScripts.length, 1);
 });
 
 test('resolveTabId handles legacy ?tab=qcc/ascc/emc and university-specific tabs', () => {
@@ -163,7 +450,15 @@ test('resolveTabId handles legacy ?tab=qcc/ascc/emc and university-specific tabs
   assert.equal(resolveTabId('gc', []), null);
 });
 
-test('all 4 HTML pages match DOM contract IDs expected by src/js/app.js', () => {
+test('resolveGiscusTheme maps light, dark, and system theme modes', () => {
+  assert.equal(resolveGiscusTheme('light'), 'light');
+  assert.equal(resolveGiscusTheme('dark'), 'dark');
+  assert.equal(resolveGiscusTheme('system'), 'preferred_color_scheme');
+  assert.equal(resolveGiscusTheme('other'), 'preferred_color_scheme');
+  assert.equal(resolveGiscusTheme(null), 'preferred_color_scheme');
+});
+
+test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, analytics, and Giscus config', () => {
   const pages = [
     { file: 'index.html', uni: 'vit', hasEc: true },
     { file: 'college/anna-university.html', uni: 'anna', hasEc: false },
@@ -205,13 +500,26 @@ test('all 4 HTML pages match DOM contract IDs expected by src/js/app.js', () => 
     'fcgpa-result',
     'fcgpa',
     'fcgpa-meta',
+    'comments-section',
+    'giscus-container',
   ];
 
   for (const page of pages) {
     const html = readRepoFile(page.file);
     assert.match(html, new RegExp(`data-university="${page.uni}"`));
-    assert.match(html, /<script src="\/src\/js\/analytics\.js" defer><\/script>/);
-    assert.match(html, /<script type="module" src="\/src\/js\/app\.js"><\/script>/);
+    assert.match(html, /<meta name="google-adsense-account" content="ca-pub-8598751574376549">/);
+    assert.match(html, /G-8SGELQM6QV/);
+    assert.match(html, /Google\+Sans/);
+    assert.match(html, /Space\+Grotesk/);
+    assert.match(html, /\/src\/css\/vendor\/pico\.min\.css/);
+    assert.match(html, /<script src="\/src\/js\/analytics\.js" defer fetchpriority="low"><\/script>/);
+    assert.match(html, /<script type="module" src="\/src\/js\/app\.js" fetchpriority="high"><\/script>/);
+
+    assert.match(html, /id="giscus-container"/);
+    assert.match(html, /data-repo="rajchandra3\/cgpa-calculator"/);
+    assert.match(html, /data-repo-id="R_kgDOGqICXQ"/);
+    assert.match(html, /data-category="General"/);
+    assert.match(html, /data-category-id="DIC_kwDOGqICXc4DL4Gy"/);
 
     for (const id of requiredIds) {
       assert.match(html, new RegExp(`id="${id}"`), `${page.file} missing #${id}`);

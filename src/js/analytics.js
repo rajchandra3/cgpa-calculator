@@ -1,6 +1,45 @@
 (function () {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
+  var MIXPANEL_TOKEN = '7ff5ca7b4aa0bef4db830b057c9076a2';
+  var MIXPANEL_SRC = 'https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js';
+  var scriptInjected = false;
+  var fallbackTimer = null;
+
+  function injectMixpanelScript() {
+    if (scriptInjected) return;
+    scriptInjected = true;
+    if (fallbackTimer !== null) {
+      window.clearTimeout(fallbackTimer);
+      fallbackTimer = null;
+    }
+
+    var b = document.createElement('script');
+    b.type = 'text/javascript';
+    b.async = true;
+    b.fetchPriority = 'low';
+    b.src = MIXPANEL_SRC;
+
+    var d = document.getElementsByTagName('script')[0];
+    if (d && d.parentNode) {
+      d.parentNode.insertBefore(b, d);
+    } else if (document.head) {
+      document.head.appendChild(b);
+    } else if (document.documentElement) {
+      document.documentElement.appendChild(b);
+    }
+  }
+
+  function scheduleMixpanelLoad() {
+    if (scriptInjected) return;
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(injectMixpanelScript, { timeout: 1200 });
+      fallbackTimer = window.setTimeout(injectMixpanelScript, 1200);
+    } else {
+      injectMixpanelScript();
+    }
+  }
+
   // Mixpanel loader stub (token 7ff5ca7b4aa0bef4db830b057c9076a2)
   (function (c, a) {
     if (!a.__SV) {
@@ -67,21 +106,17 @@
         a._i.push([token, cfg, name]);
       };
       a.__SV = 1.2;
-      b = c.createElement('script');
-      b.type = 'text/javascript';
-      b.async = true;
-      b.src = 'https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js';
-      d = c.getElementsByTagName('script')[0];
-      if (d && d.parentNode) {
-        d.parentNode.insertBefore(b, d);
-      } else if (c.head) {
-        c.head.appendChild(b);
+
+      if (c.readyState === 'complete') {
+        scheduleMixpanelLoad();
+      } else {
+        b.addEventListener('load', scheduleMixpanelLoad, { once: true });
       }
     }
   })(document, window.mixpanel || []);
 
   if (window.mixpanel && typeof window.mixpanel.init === 'function') {
-    window.mixpanel.init('7ff5ca7b4aa0bef4db830b057c9076a2');
+    window.mixpanel.init(MIXPANEL_TOKEN);
   }
 
   window.track = function track(eventName, props) {

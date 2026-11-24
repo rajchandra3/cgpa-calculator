@@ -31,6 +31,12 @@ export function resolveTabId(rawTab, availableIds) {
   return list[0] || null;
 }
 
+export function resolveGiscusTheme(mode) {
+  if (mode === 'light') return 'light';
+  if (mode === 'dark') return 'dark';
+  return 'preferred_color_scheme';
+}
+
 function safeStorageGet(key) {
   try {
     return window.localStorage.getItem(key);
@@ -278,6 +284,7 @@ function initApp() {
   // 2. Theme Selector & Persistence
   const themeSelector = document.getElementById('theme-selector');
   const metaColorScheme = document.querySelector('meta[name="color-scheme"]');
+  let currentThemeMode = 'system';
 
   function clearLegacyThemeKeys() {
     for (const key of LEGACY_THEME_KEYS) {
@@ -285,10 +292,33 @@ function initApp() {
     }
   }
 
+  function syncGiscusTheme(mode) {
+    const container = document.getElementById('giscus-container');
+    if (!container) return;
+    const theme = resolveGiscusTheme(mode);
+    const script = container.querySelector('script[src="https://giscus.app/client.js"]');
+    if (script) {
+      script.setAttribute('data-theme', theme);
+    }
+    const iframe = container.querySelector('iframe.giscus-frame');
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.postMessage(
+        { giscus: { setConfig: { theme } } },
+        'https://giscus.app'
+      );
+    }
+  }
+
   function applyTheme(mode, { persist = true } = {}) {
     const normalized = mode === 'light' || mode === 'dark' ? mode : 'system';
+    currentThemeMode = normalized;
     if (metaColorScheme) {
       metaColorScheme.setAttribute('content', normalized === 'system' ? 'light dark' : normalized);
+    }
+    if (normalized === 'light' || normalized === 'dark') {
+      document.documentElement.dataset.theme = normalized;
+    } else {
+      delete document.documentElement.dataset.theme;
     }
     if (themeSelector) {
       themeSelector.value = normalized;
@@ -301,6 +331,7 @@ function initApp() {
         safeStorageSet(THEME_STORAGE_KEY, normalized);
       }
     }
+    syncGiscusTheme(normalized);
   }
 
   function resolveInitialTheme() {
@@ -470,13 +501,16 @@ function initApp() {
     });
   }
 
-  function renumberRows({ container, addBtn, minRows, maxRows, badgePrefix, labelPrefix, idPrefix, fieldSpecs }) {
+  function renumberRows({ container, addBtn, minRows, maxRows, labelPrefix, idPrefix, fieldSpecs }) {
     const rows = Array.from(container.querySelectorAll('.row-item'));
     rows.forEach((row, index) => {
       const num = index + 1;
       row.dataset.rowIndex = String(index);
       const indexBadge = row.querySelector('.row-index');
-      if (indexBadge) indexBadge.textContent = `${badgePrefix} ${num}`;
+      if (indexBadge) {
+        indexBadge.textContent = `#${num}`;
+        indexBadge.setAttribute('aria-hidden', 'true');
+      }
 
       for (const spec of fieldSpecs) {
         const control = row.querySelector(`[data-field="${spec.key}"]`);
@@ -501,7 +535,7 @@ function initApp() {
 
       const removeBtn = row.querySelector('.btn-remove');
       if (removeBtn) {
-        removeBtn.setAttribute('aria-label', `Remove ${badgePrefix} ${num}`);
+        removeBtn.setAttribute('aria-label', `Remove ${labelPrefix} ${num}`);
         removeBtn.disabled = rows.length <= minRows;
       }
     });
@@ -532,7 +566,6 @@ function initApp() {
       addBtn: addCourseBtn,
       minRows: GPA_MIN_ROWS,
       maxRows: GPA_MAX_ROWS,
-      badgePrefix: 'Course',
       labelPrefix: 'Course',
       idPrefix: 'gpa',
       fieldSpecs: gpaFieldSpecs,
@@ -542,7 +575,7 @@ function initApp() {
   function createCourseRow(index) {
     const num = index + 1;
     const row = createEl('div', { class: 'row-item', 'data-row-index': index });
-    const rowIndex = createEl('span', { class: 'row-index' }, `Course ${num}`);
+    const rowIndex = createEl('span', { class: 'row-index', 'aria-hidden': 'true' }, `#${num}`);
     const rowFields = createEl('div', { class: 'row-fields' });
 
     const gradeField = createEl('div', { class: 'field' });
@@ -984,7 +1017,7 @@ function initApp() {
 
   const semFieldSpecs = [
     { key: 'gpa', labelSuffix: 'GPA' },
-    { key: 'credits', labelSuffix: 'Credits' },
+    { key: 'credits', labelSuffix: 'credits' },
   ];
 
   function renumberSemRows() {
@@ -994,7 +1027,6 @@ function initApp() {
       addBtn: addSemBtn,
       minRows: SEM_MIN_ROWS,
       maxRows: SEM_MAX_ROWS,
-      badgePrefix: 'Sem',
       labelPrefix: 'Semester',
       idPrefix: 'sem',
       fieldSpecs: semFieldSpecs,
@@ -1004,7 +1036,7 @@ function initApp() {
   function createSemesterRow(index) {
     const num = index + 1;
     const row = createEl('div', { class: 'row-item', 'data-row-index': index });
-    const rowIndex = createEl('span', { class: 'row-index' }, `Sem ${num}`);
+    const rowIndex = createEl('span', { class: 'row-index', 'aria-hidden': 'true' }, `#${num}`);
     const rowFields = createEl('div', { class: 'row-fields' });
 
     const gpaField = createEl('div', { class: 'field' });
@@ -1037,7 +1069,7 @@ function initApp() {
     const creditsLabel = createEl(
       'label',
       { class: 'visually-hidden', for: `sem-credits-${num}`, 'data-field-label': 'credits' },
-      `Semester ${num} Credits`
+      `Semester ${num} credits`
     );
     const creditsEl = createEl('input', {
       type: 'number',
@@ -1061,7 +1093,7 @@ function initApp() {
 
     const removeBtn = createEl(
       'button',
-      { type: 'button', class: 'btn btn-subtle btn-icon btn-remove', 'aria-label': `Remove Sem ${num}` },
+      { type: 'button', class: 'btn btn-subtle btn-icon btn-remove', 'aria-label': `Remove Semester ${num}` },
       '×'
     );
 
@@ -1325,6 +1357,112 @@ function initApp() {
   if (yearEl) {
     yearEl.textContent = String(new Date().getFullYear());
   }
+
+  // 9. Lazy-Loaded & Theme-Synced Giscus Comments
+  function initGiscusComments() {
+    const container = document.getElementById('giscus-container');
+    if (!container) return;
+
+    const {
+      repo = '',
+      repoId = '',
+      category = 'General',
+      categoryId = '',
+      mapping = 'pathname',
+      strict = '0',
+      reactionsEnabled = '1',
+      emitMetadata = '0',
+      inputPosition = 'top',
+      lang = 'en',
+    } = container.dataset;
+
+    if (!repo.trim() || !repoId.trim() || !categoryId.trim()) return;
+
+    let giscusInjected = false;
+    const target = document.getElementById('comments-section') || container;
+
+    function injectGiscusScript() {
+      if (giscusInjected) return;
+      if (container.querySelector('script[src="https://giscus.app/client.js"]')) {
+        giscusInjected = true;
+        return;
+      }
+      giscusInjected = true;
+
+      window.addEventListener('message', function onGiscusReady(event) {
+        if (event.origin !== 'https://giscus.app' || !event.data?.giscus) return;
+        window.removeEventListener('message', onGiscusReady);
+        syncGiscusTheme(currentThemeMode);
+      });
+
+      const script = document.createElement('script');
+      script.src = 'https://giscus.app/client.js';
+      script.async = true;
+      script.setAttribute('crossorigin', 'anonymous');
+      script.setAttribute('data-repo', repo);
+      script.setAttribute('data-repo-id', repoId);
+      script.setAttribute('data-category', category || 'General');
+      script.setAttribute('data-category-id', categoryId);
+      script.setAttribute('data-mapping', mapping);
+      script.setAttribute('data-strict', strict);
+      script.setAttribute('data-reactions-enabled', reactionsEnabled);
+      script.setAttribute('data-emit-metadata', emitMetadata);
+      script.setAttribute('data-input-position', inputPosition);
+      script.setAttribute('data-theme', resolveGiscusTheme(currentThemeMode));
+      script.setAttribute('data-lang', lang);
+      container.appendChild(script);
+    }
+
+    function startObserving() {
+      let triggered = false;
+      let fallbackTimer = null;
+      const runOnce = () => {
+        if (triggered) return;
+        triggered = true;
+        if (fallbackTimer !== null) {
+          window.clearTimeout(fallbackTimer);
+          fallbackTimer = null;
+        }
+        const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+        const rect = typeof target.getBoundingClientRect === 'function' ? target.getBoundingClientRect() : null;
+        const isAlreadyVisible =
+          rect &&
+          (rect.width > 0 || rect.height > 0) &&
+          rect.top <= viewportHeight + 250 &&
+          rect.bottom >= -250;
+
+        if (isAlreadyVisible || typeof window.IntersectionObserver !== 'function') {
+          injectGiscusScript();
+        } else {
+          const observer = new window.IntersectionObserver(
+            (entries) => {
+              if (entries.some((entry) => entry.isIntersecting)) {
+                observer.disconnect();
+                injectGiscusScript();
+              }
+            },
+            { rootMargin: '250px' }
+          );
+          observer.observe(target);
+        }
+      };
+
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(runOnce, { timeout: 1000 });
+        fallbackTimer = window.setTimeout(runOnce, 1000);
+      } else {
+        fallbackTimer = window.setTimeout(runOnce, 150);
+      }
+    }
+
+    if (document.readyState === 'complete') {
+      startObserving();
+    } else {
+      window.addEventListener('load', startObserving, { once: true });
+    }
+  }
+
+  initGiscusComments();
 }
 
 if (typeof document !== 'undefined') {
