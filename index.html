@@ -95,7 +95,7 @@
             "name": "Why do VIT students trust this CGPA calculator?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Built in 2017 for VIT Vellore and Chennai students, this calculator has served over 1M+ views since 2017 and is trusted by VIT students for over 9+ years. It runs locally in your browser with zero ads, offline PWA support, and instant recalculation."
+              "text": "Built in 2017 for VIT Vellore and Chennai students, this calculator has served over 1M+ views since 2017 and is trusted by VIT students for over 9+ years. It runs locally in your browser with a fast, non-intrusive layout, offline PWA support, and instant recalculation."
             }
           },
           {
@@ -167,7 +167,7 @@
 
   <main id="main-content" class="page-main">
     <div class="workspace-layout">
-      <div class="workspace-main">
+      <div class="workspace-center">
         <section class="page-hero">
           <h1>VIT CGPA Calculator</h1>
           <p class="hero-trust">Over <span class="stat-num">1M+</span> views since <span class="stat-num">2017</span> · Trusted by VIT students for over <span class="stat-num">9+</span> years · FFCS GPA, CGPA &amp; expected marks.</p>
@@ -320,56 +320,73 @@
       </section>
     </article>
 
-    <section class="info-section below-fold-section">
-      <h2 id="grade-scale-heading">VIT Grade Scale</h2>
-      <div class="table-wrap" tabindex="0" role="region" aria-labelledby="grade-scale-heading">
-        <table class="grade-table">
-          <caption class="visually-hidden">VIT FFCS 10-point grade scale and credit points</caption>
-          <thead>
-            <tr>
-              <th scope="col">Grade</th>
-              <th scope="col">Grade Points</th>
-              <th scope="col">Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><th scope="row">S</th><td class="num">10</td><td>Outstanding</td></tr>
-            <tr><th scope="row">A</th><td class="num">9</td><td>Excellent</td></tr>
-            <tr><th scope="row">B</th><td class="num">8</td><td>Very Good</td></tr>
-            <tr><th scope="row">C</th><td class="num">7</td><td>Good</td></tr>
-            <tr><th scope="row">D</th><td class="num">6</td><td>Average</td></tr>
-            <tr><th scope="row">E</th><td class="num">5</td><td>Pass</td></tr>
-            <tr><th scope="row">F</th><td class="num">0</td><td>Fail</td></tr>
-            <tr><th scope="row">N</th><td class="num">0</td><td>Debarred / Absent / Not eligible</td></tr>
-          </tbody>
-        </table>
+        <section id="ad-slot-post-calc" class="ad-slot ad-slot--banner" aria-label="Advertisement" data-ad-location="post-calc" data-ad-slot="6993669367" data-ad-format="auto" data-ad-min-width="0">
+          <span class="ad-label">Advertisement</span>
+          <div class="ad-frame"></div>
+        </section>
+
+        <section class="faq-section below-fold-section" aria-labelledby="faq-heading">
+          <h2 id="faq-heading">Frequently Asked Questions</h2>
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary>How is VIT GPA calculated under the FFCS system?</summary>
+              <p>Each course grade is converted to grade points on the VIT 10-point scale (S = 10, A = 9, B = 8, C = 7, D = 6, E = 5, F/N = 0). Your semester GPA equals the sum of (grade points × course credits) divided by total registered credits, rounded to two decimal places.</p>
+            </details>
+            <details class="faq-item">
+              <summary>How does the VIT Expected Marks calculator handle Theory, Lab, and J-Component?</summary>
+              <p>Theory internals are computed as min((CAT 1 + CAT 2) × 0.5 + Internals/DA + Additional Learning, 60), plus FAT × 0.4. If both Lab and J-Component are entered, the final score weights Theory at 60%, Lab at 20%, and J-Component at 20%. If only Lab or only J-Component is entered, Theory is weighted at 75% and that component at 25%. Leave both blank for theory-only courses.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Why do VIT students trust this CGPA calculator?</summary>
+              <p>Built in 2017 for VIT Vellore and Chennai students, this calculator has served over 1M+ views since 2017 and is trusted by VIT students for over 9+ years. It runs locally in your browser with a fast, non-intrusive layout, offline PWA support, and instant recalculation.</p>
+            </details>
+            <details class="faq-item">
+              <summary>What is the difference between Quick CGPA and All-Semester CGPA?</summary>
+              <p>Quick CGPA updates your existing cumulative CGPA using just your prior completed credits, prior CGPA, and current semester credits and GPA. All-Semester CGPA lets you enter individual semester GPAs and credits across 1 to 12+ semesters to compute your cumulative CGPA from scratch.</p>
+            </details>
+          </div>
+        </section>
       </div>
 
-      <h2 id="faq-heading">Frequently Asked Questions</h2>
-      <div class="faq-list">
-        <details class="faq-item">
-          <summary>How is VIT GPA calculated under the FFCS system?</summary>
-          <p>Each course grade is converted to grade points on the VIT 10-point scale (S = 10, A = 9, B = 8, C = 7, D = 6, E = 5, F/N = 0). Your semester GPA equals the sum of (grade points × course credits) divided by total registered credits, rounded to two decimal places.</p>
-        </details>
-        <details class="faq-item">
-          <summary>How does the VIT Expected Marks calculator handle Theory, Lab, and J-Component?</summary>
-          <p>Theory internals are computed as min((CAT 1 + CAT 2) × 0.5 + Internals/DA + Additional Learning, 60), plus FAT × 0.4. If both Lab and J-Component are entered, the final score weights Theory at 60%, Lab at 20%, and J-Component at 20%. If only Lab or only J-Component is entered, Theory is weighted at 75% and that component at 25%. Leave both blank for theory-only courses.</p>
-        </details>
-        <details class="faq-item">
-          <summary>Why do VIT students trust this CGPA calculator?</summary>
-          <p>Built in 2017 for VIT Vellore and Chennai students, this calculator has served over 1M+ views since 2017 and is trusted by VIT students for over 9+ years. It runs locally in your browser with zero ads, offline PWA support, and instant recalculation.</p>
-        </details>
-        <details class="faq-item">
-          <summary>What is the difference between Quick CGPA and All-Semester CGPA?</summary>
-          <p>Quick CGPA updates your existing cumulative CGPA using just your prior completed credits, prior CGPA, and current semester credits and GPA. All-Semester CGPA lets you enter individual semester GPAs and credits across 1 to 12+ semesters to compute your cumulative CGPA from scratch.</p>
-        </details>
-      </div>
-    </section>
-      </div>
+      <aside class="workspace-left" aria-labelledby="grade-scale-heading">
+        <section class="grade-scale-card">
+          <h2 id="grade-scale-heading">VIT Grade Scale</h2>
+          <div class="table-wrap" tabindex="0" role="region" aria-labelledby="grade-scale-heading">
+            <table class="grade-table">
+              <caption class="visually-hidden">VIT FFCS 10-point grade scale and credit points</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Grade</th>
+                  <th scope="col">Points</th>
+                  <th scope="col">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">S</th><td class="num">10</td><td>Outstanding</td></tr>
+                <tr><th scope="row">A</th><td class="num">9</td><td>Excellent</td></tr>
+                <tr><th scope="row">B</th><td class="num">8</td><td>Very Good</td></tr>
+                <tr><th scope="row">C</th><td class="num">7</td><td>Good</td></tr>
+                <tr><th scope="row">D</th><td class="num">6</td><td>Average</td></tr>
+                <tr><th scope="row">E</th><td class="num">5</td><td>Pass</td></tr>
+                <tr><th scope="row">F</th><td class="num">0</td><td>Fail</td></tr>
+                <tr><th scope="row">N</th><td class="num">0</td><td>Debarred / Absent</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-      <aside id="comments-section" class="comments-sidebar" aria-labelledby="comments-heading">
-        <h2 id="comments-heading">Feedback &amp; Comments</h2>
-        <p class="comments-desc">Share suggestions, report grade-scale updates, or ask questions with fellow students.</p>
+        <section id="ad-slot-left-rail" class="ad-slot ad-slot--rail" aria-label="Advertisement" data-ad-location="left-rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-min-width="1120">
+          <span class="ad-label">Advertisement</span>
+          <div class="ad-frame"></div>
+        </section>
+      </aside>
+
+      <aside id="comments-section" class="workspace-right comments-sidebar" aria-labelledby="comments-heading">
+        <div class="comments-header">
+          <h2 id="comments-heading">Discussions &amp; Feedback</h2>
+          <a class="comments-ext-link" href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Open on GitHub &#8599;</a>
+        </div>
+        <p class="comments-desc">Share suggestions, report grade-scale updates, or ask questions in <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/" target="_blank" rel="noopener noreferrer">GitHub Discussions</a>.</p>
         <div
           id="giscus-container"
           class="giscus-host"
@@ -377,14 +394,15 @@
           data-repo-id="R_kgDOGqICXQ"
           data-category="General"
           data-category-id="DIC_kwDOGqICXc4DL4Gy"
-          data-mapping="pathname"
+          data-mapping="number"
+          data-term="5"
           data-strict="0"
           data-reactions-enabled="1"
           data-emit-metadata="0"
           data-input-position="top"
           data-lang="en"
         ></div>
-        <p class="comments-footnote">Open-source comments via <a href="https://github.com/rajchandra3/cgpa-calculator/discussions" target="_blank" rel="noopener noreferrer">GitHub Discussions (Giscus)</a>.</p>
+        <p class="comments-footnote">Open-source comments via <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Discussion #5 (Giscus)</a> · <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/" target="_blank" rel="noopener noreferrer">All Discussions</a>.</p>
       </aside>
     </div>
   </main>

@@ -90,11 +90,12 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v3, precaches 18 existing assets including pico.min.css, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v4, precaches 19 existing assets including pico.min.css and ads-manager.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
+  assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v3'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v4'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -105,8 +106,9 @@ test('serviceWorker.js uses cgpa-calculator-v3, precaches 18 existing assets inc
   assert.ok(arrayMatch, 'PRECACHE_URLS array must exist in serviceWorker.js');
 
   const urls = Array.from(arrayMatch[1].matchAll(/'([^']+)'/g), (m) => m[1]);
-  assert.equal(urls.length, 18);
+  assert.equal(urls.length, 19);
   assert.equal(urls.includes('/src/css/vendor/pico.min.css'), true);
+  assert.equal(urls.includes('/src/js/ads-manager.js'), true);
 
   for (const urlPath of urls) {
     const diskRel = urlPath === '/' ? 'index.html' : urlPath.replace(/^\//, '');
@@ -252,18 +254,22 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
     assert.equal(repoFileExists(file), false, `Obsolete JS file still exists: ${file}`);
   }
 
-  const activeJsFiles = [
+  const allJsFiles = [
     'src/js/universities.js',
     'src/js/math.js',
     'src/js/analytics.js',
     'src/js/app.js',
+    'src/js/ads-manager.js',
   ];
+  const nonAdJsFiles = ['src/js/universities.js', 'src/js/math.js', 'src/js/analytics.js', 'src/js/app.js'];
+
   const forbiddenSinkPattern =
     /innerHTML|outerHTML|document\.write|insertAdjacentHTML|\beval\(|alert\(|confirm\(|prompt\(/;
   const forbiddenTrackerPattern =
-    /adsbygoogle|pagead2|AW-16729760450|smartlook|UA-99147431|fb-comments|connect\.facebook|files\.rajchandra\.me/;
+    /enable_page_level_ads|AW-16729760450|smartlook|UA-99147431|fb-comments|connect\.facebook|files\.rajchandra\.me|data-full-width-responsive="false"/;
+  const forbiddenDirectAdSensePattern = /adsbygoogle|pagead2/;
 
-  for (const file of activeJsFiles) {
+  for (const file of allJsFiles) {
     assert.equal(repoFileExists(file), true, `Missing active JS file: ${file}`);
     const content = readRepoFile(file);
     assert.equal(
@@ -274,9 +280,22 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
     assert.equal(
       forbiddenTrackerPattern.test(content),
       false,
-      `Forbidden ad/tracker pattern detected in ${file}`
+      `Forbidden legacy tracker/ad config detected in ${file}`
     );
   }
+
+  for (const file of nonAdJsFiles) {
+    const content = readRepoFile(file);
+    assert.equal(
+      forbiddenDirectAdSensePattern.test(content),
+      false,
+      `Direct AdSense logic belongs only in ads-manager.js, not ${file}`
+    );
+  }
+
+  const appSource = readRepoFile('src/js/app.js');
+  assert.match(appSource, /trackEvent\('App Installed'/);
+  assert.match(appSource, /import\('\.\/ads-manager\.js'\)/);
 
   const htmlFiles = [
     'index.html',
@@ -290,7 +309,12 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
     assert.equal(
       forbiddenTrackerPattern.test(content),
       false,
-      `Forbidden ad/tracker pattern detected in ${file}`
+      `Forbidden legacy tracker/ad pattern detected in ${file}`
+    );
+    assert.equal(
+      forbiddenDirectAdSensePattern.test(content),
+      false,
+      `AdSense scripts/ins tags must not be hardcoded in HTML: ${file}`
     );
   }
 });
@@ -515,11 +539,55 @@ test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, an
     assert.match(html, /<script src="\/src\/js\/analytics\.js" defer fetchpriority="low"><\/script>/);
     assert.match(html, /<script type="module" src="\/src\/js\/app\.js" fetchpriority="high"><\/script>/);
 
+    assert.match(html, /class="workspace-center"/);
+    assert.match(html, /class="workspace-left"/);
+    assert.match(html, /id="comments-section" class="workspace-right comments-sidebar"/);
+    assert.match(html, /https:\/\/github\.com\/rajchandra3\/cgpa-calculator\/discussions\/5/);
+    assert.match(html, /https:\/\/github\.com\/rajchandra3\/cgpa-calculator\/discussions\//);
+
     assert.match(html, /id="giscus-container"/);
     assert.match(html, /data-repo="rajchandra3\/cgpa-calculator"/);
     assert.match(html, /data-repo-id="R_kgDOGqICXQ"/);
     assert.match(html, /data-category="General"/);
     assert.match(html, /data-category-id="DIC_kwDOGqICXc4DL4Gy"/);
+    assert.match(html, /data-mapping="number"/);
+    assert.match(html, /data-term="5"/);
+
+    // Lean anti-bloat ad slot contract: strictly 2 declarative slots outside forms/calculator/comments
+    const adSlotMatches = html.match(/class="ad-slot\b/g) || [];
+    assert.equal(adSlotMatches.length, 2, `${page.file} must have exactly 2 .ad-slot containers`);
+    assert.match(
+      html,
+      /id="ad-slot-post-calc"[^>]*data-ad-slot="6993669367"[^>]*data-ad-min-width="0"/
+    );
+    assert.match(
+      html,
+      /id="ad-slot-left-rail"[^>]*data-ad-slot="7637288848"[^>]*data-ad-min-width="1120"/
+    );
+    assert.doesNotMatch(html, /360px/);
+
+    const calcShellMatch = html.match(/<article class="calculator-shell"[\s\S]*?<\/article>/);
+    assert.ok(calcShellMatch, `${page.file} missing .calculator-shell`);
+    assert.doesNotMatch(calcShellMatch[0], /ad-slot/);
+
+    const commentsMatch = html.match(/<aside id="comments-section"[\s\S]*?<\/aside>/);
+    assert.ok(commentsMatch, `${page.file} missing #comments-section`);
+    assert.doesNotMatch(commentsMatch[0], /ad-slot/);
+
+    const ldMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    assert.ok(ldMatch, `${page.file} missing JSON-LD`);
+    const ldGraph = JSON.parse(ldMatch[1])['@graph'];
+    const faqSchema = ldGraph.find((node) => node['@type'] === 'FAQPage');
+    assert.ok(faqSchema && Array.isArray(faqSchema.mainEntity), `${page.file} missing FAQPage JSON-LD`);
+    const visibleFaqAnswers = Array.from(
+      html.matchAll(/<details class="faq-item">\s*<summary>[\s\S]*?<\/summary>\s*<p>([\s\S]*?)<\/p>\s*<\/details>/g),
+      (m) => m[1].replace(/&amp;/g, '&').trim()
+    );
+    assert.deepEqual(
+      visibleFaqAnswers,
+      faqSchema.mainEntity.map((q) => q.acceptedAnswer.text),
+      `${page.file} visible FAQ answers must match JSON-LD 1:1`
+    );
 
     for (const id of requiredIds) {
       assert.match(html, new RegExp(`id="${id}"`), `${page.file} missing #${id}`);

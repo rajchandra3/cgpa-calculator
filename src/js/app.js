@@ -1318,6 +1318,7 @@ function initApp() {
     if (installBtn) {
       installBtn.hidden = true;
     }
+    trackEvent('App Installed', { university: config.id });
   });
 
   const standaloneQuery = window.matchMedia?.('(display-mode: standalone)');
@@ -1369,6 +1370,7 @@ function initApp() {
       category = 'General',
       categoryId = '',
       mapping = 'pathname',
+      term = '',
       strict = '0',
       reactionsEnabled = '1',
       emitMetadata = '0',
@@ -1404,6 +1406,9 @@ function initApp() {
       script.setAttribute('data-category', category || 'General');
       script.setAttribute('data-category-id', categoryId);
       script.setAttribute('data-mapping', mapping);
+      if (term.trim()) {
+        script.setAttribute('data-term', term.trim());
+      }
       script.setAttribute('data-strict', strict);
       script.setAttribute('data-reactions-enabled', reactionsEnabled);
       script.setAttribute('data-emit-metadata', emitMetadata);
@@ -1462,7 +1467,65 @@ function initApp() {
     }
   }
 
+  // 10. Deferred Ads Manager (post-interaction or idle; immediate in ?ads=preview)
+  function scheduleAdsManager() {
+    if (!document.querySelector('.ad-slot[data-ad-slot]')) return;
+
+    let adsLoaded = false;
+    let idleTimer = null;
+    const interactionEvents = ['pointerdown', 'keydown', 'change', 'scroll'];
+
+    const cleanup = () => {
+      for (const evt of interactionEvents) {
+        window.removeEventListener(evt, loadAdsOnce, true);
+      }
+      if (idleTimer !== null) {
+        window.clearTimeout(idleTimer);
+        idleTimer = null;
+      }
+    };
+
+    const loadAdsOnce = () => {
+      if (adsLoaded) return;
+      adsLoaded = true;
+      cleanup();
+      import('./ads-manager.js')
+        .then((mod) => mod.initAdsManager({ university: config.id }))
+        .catch(() => {});
+    };
+
+    try {
+      if (new URLSearchParams(window.location.search).get('ads') === 'preview') {
+        loadAdsOnce();
+        return;
+      }
+    } catch {
+      // Ignore invalid search params
+    }
+
+    for (const evt of interactionEvents) {
+      window.addEventListener(evt, loadAdsOnce, { capture: true, passive: true, once: true });
+    }
+
+    const scheduleIdle = () => {
+      if (adsLoaded) return;
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(loadAdsOnce, { timeout: 2000 });
+        idleTimer = window.setTimeout(loadAdsOnce, 2000);
+      } else {
+        idleTimer = window.setTimeout(loadAdsOnce, 1200);
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      scheduleIdle();
+    } else {
+      window.addEventListener('load', scheduleIdle, { once: true });
+    }
+  }
+
   initGiscusComments();
+  scheduleAdsManager();
 }
 
 if (typeof document !== 'undefined') {
