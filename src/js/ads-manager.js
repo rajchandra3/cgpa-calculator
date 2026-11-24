@@ -23,19 +23,15 @@ export function isStagingHost(hostname = '') {
 
 export function getAdPreference(win = window) {
   try {
-    return win?.localStorage?.getItem(AD_PREF_STORAGE_KEY) === '1';
+    return win?.localStorage?.getItem(AD_PREF_STORAGE_KEY) !== '0';
   } catch {
-    return false;
+    return true;
   }
 }
 
 export function setAdPreference(win = window, enabled) {
   try {
-    if (enabled) {
-      win?.localStorage?.setItem(AD_PREF_STORAGE_KEY, '1');
-    } else {
-      win?.localStorage?.removeItem(AD_PREF_STORAGE_KEY);
-    }
+    win?.localStorage?.setItem(AD_PREF_STORAGE_KEY, enabled ? '1' : '0');
   } catch {
     // Ignore blocked storage
   }

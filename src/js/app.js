@@ -6,6 +6,7 @@ import {
   calculateQuickCgpa,
 } from './math.js';
 import {
+  ANNOUNCEMENT_BANNER,
   matchPromo,
   renderAnnouncementBanner,
   renderPersonalPromo,
@@ -1662,7 +1663,7 @@ function initApp() {
         mod.setAdPreference(window, false);
         mod.hideOptInAd();
       } catch {
-        safeStorageRemove(AD_PREF_STORAGE_KEY);
+        safeStorageSet(AD_PREF_STORAGE_KEY, '0');
       }
     }
 
@@ -1692,32 +1693,33 @@ function initApp() {
       return;
     }
 
-    if (safeStorageGet(AD_PREF_STORAGE_KEY) !== '1') {
+    if (safeStorageGet(AD_PREF_STORAGE_KEY) === '0') {
+      syncOptInUi(false, 'Ads off · Display slot hidden');
       return;
     }
 
     let autoStarted = false;
-    const runRememberedOptIn = () => {
+    const runDefaultLeftAd = () => {
       if (autoStarted || userInteracted) return;
       autoStarted = true;
       cancelPendingAutoEnable();
-      enableOptInAd({ trigger: 'saved_preference', persist: false });
+      enableOptInAd({ trigger: 'default_on', persist: false });
     };
 
-    const scheduleRememberedOptIn = () => {
+    const scheduleDefaultLeftAd = () => {
       if (autoStarted || userInteracted) return;
       if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(runRememberedOptIn, { timeout: 1500 });
-        idleTimer = window.setTimeout(runRememberedOptIn, 1500);
+        window.requestIdleCallback(runDefaultLeftAd, { timeout: 1500 });
+        idleTimer = window.setTimeout(runDefaultLeftAd, 1500);
       } else {
-        idleTimer = window.setTimeout(runRememberedOptIn, 1500);
+        idleTimer = window.setTimeout(runDefaultLeftAd, 1500);
       }
     };
 
     if (document.readyState === 'complete') {
-      scheduleRememberedOptIn();
+      scheduleDefaultLeftAd();
     } else {
-      window.addEventListener('load', scheduleRememberedOptIn, { once: true });
+      window.addEventListener('load', scheduleDefaultLeftAd, { once: true });
     }
   }
 
@@ -1749,6 +1751,11 @@ function initApp() {
       previewMode = new URLSearchParams(window.location.search).get('ads') === 'preview';
     } catch {
       previewMode = false;
+    }
+
+    if (!previewMode && !ANNOUNCEMENT_BANNER.adFallbackEnabled) {
+      bannerEl.hidden = true;
+      return;
     }
 
     const mountFallbackAd = (trigger) => {

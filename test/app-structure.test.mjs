@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v6, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v7, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v6'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v7'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -631,8 +631,10 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     );
     assert.match(
       html,
-      /id="ad-optin-btn"[^>]*aria-pressed="false"[^>]*aria-controls="ad-slot-optin"[^>]*>Show Quality Ad<\/button>/
+      /id="ad-optin-btn"[^>]*aria-pressed="true"[^>]*aria-controls="ad-slot-optin"[^>]*>Hide Ad<\/button>/
     );
+    assert.match(html, /<span id="thisYear"><\/span>/);
+    assert.doesNotMatch(html, /<span id="thisYear">\d+<\/span>/);
 
     const adSlotMatches = html.match(/class="[^"]*\bad-slot\b/g) || [];
     assert.equal(adSlotMatches.length, 2, `${page.file} must have strictly 2 .ad-slot containers (announcement + opt-in)`);

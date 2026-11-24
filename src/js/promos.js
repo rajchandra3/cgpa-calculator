@@ -23,7 +23,8 @@
 
 export const ANNOUNCEMENT_BANNER = Object.freeze({
   id: 'custom-announcement',
-  enabled: false, // Set to true to override the top Google Ad banner with this announcement
+  enabled: false, // Set to true to display a custom announcement banner
+  adFallbackEnabled: false, // Set to true to fall back to a top Google Ad banner when enabled is false
   universities: Object.freeze(['*']),
   badge: 'Announcement',
   disclosure: 'By Raj Chandra',
@@ -31,6 +32,10 @@ export const ANNOUNCEMENT_BANNER = Object.freeze({
   ctaLabel: 'Learn more ↗',
   ctaUrl: 'https://rajchandra.me/',
 });
+
+// Master switch for post-calculation Wow-Moment personal/affiliate promos.
+// Flip to `true` when ready to re-enable PERSONAL_PROMOS below.
+export const PERSONAL_PROMOS_ENABLED = false;
 
 export const TAB_ALIASES = Object.freeze({
   gpa: Object.freeze(['sc']),
@@ -180,7 +185,13 @@ export function matchesPromoRule(promo, context = {}) {
   return true;
 }
 
-export function matchPromo(context, promos = PERSONAL_PROMOS, dismissedIds = new Set()) {
+export function matchPromo(
+  context,
+  promos = PERSONAL_PROMOS,
+  dismissedIds = new Set(),
+  { enabled = PERSONAL_PROMOS_ENABLED } = {}
+) {
+  if (!enabled) return null;
   if (!Array.isArray(promos)) return null;
   const dismissed =
     dismissedIds instanceof Set

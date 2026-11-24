@@ -280,16 +280,16 @@ test('pure helpers cover viewport buckets, preview flag, host checks, slot resol
   assert.equal(resolveQualitySlotId(null, 1440), '');
 
   const env = createEnvironment();
+  assert.equal(getAdPreference(env.win), true);
+  setAdPreference(env.win, false);
+  assert.equal(env.storageMap.get(AD_PREF_STORAGE_KEY), '0');
   assert.equal(getAdPreference(env.win), false);
   setAdPreference(env.win, true);
   assert.equal(env.storageMap.get(AD_PREF_STORAGE_KEY), '1');
   assert.equal(getAdPreference(env.win), true);
-  setAdPreference(env.win, false);
-  assert.equal(env.storageMap.has(AD_PREF_STORAGE_KEY), false);
-  assert.equal(getAdPreference(env.win), false);
 
   const blockedEnv = createEnvironment({ storageThrows: true });
-  assert.equal(getAdPreference(blockedEnv.win), false);
+  assert.equal(getAdPreference(blockedEnv.win), true);
   assert.doesNotThrow(() => setAdPreference(blockedEnv.win, true));
 });
 

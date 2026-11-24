@@ -333,10 +333,10 @@
 
       <aside class="workspace-left" aria-label="Ad display preferences">
         <section id="ad-control-card" class="side-card ad-control-card" aria-labelledby="ad-control-heading">
-          <h2 id="ad-control-heading">Optional Display Ad</h2>
-          <p class="side-card-desc">This page stays ad-free by default. Toggle a single standard display slot whenever you choose.</p>
-          <button type="button" id="ad-optin-btn" class="btn btn-secondary ad-optin-btn" aria-pressed="false" aria-controls="ad-slot-optin">Show Quality Ad</button>
-          <p id="ad-optin-status" class="ad-optin-status">Ads off · Zero ad scripts loaded</p>
+          <h2 id="ad-control-heading">Display Ad</h2>
+          <p class="side-card-desc">A single standard display slot in the sidebar. Toggle off anytime for an ad-free view.</p>
+          <button type="button" id="ad-optin-btn" class="btn btn-secondary ad-optin-btn" aria-pressed="true" aria-controls="ad-slot-optin">Hide Ad</button>
+          <p id="ad-optin-status" class="ad-optin-status">Loading display ad…</p>
           <section id="ad-slot-optin" class="ad-slot ad-slot--optin" aria-label="Advertisement" data-ad-location="optin-quality" data-ad-slot-desktop="7637288848" data-ad-slot-mobile="6993669367" data-ad-format="auto" hidden>
             <span class="ad-label">Advertisement</span>
             <div class="ad-frame"></div>
@@ -382,7 +382,7 @@
   </main>
 
   <footer class="site-footer">
-    <p>&copy; 2017–<span id="thisYear">2026</span> <a href="https://rajchandra.me" target="_blank" rel="noopener noreferrer">Raj Chandra</a></p>
+    <p class="footer-copyright"><span>&copy; 2017–<span id="thisYear"></span></span> <a href="https://rajchandra.me" target="_blank" rel="noopener noreferrer">Raj Chandra</a></p>
     <div class="footer-actions">
       <button type="button" id="share-app-btn" class="btn btn-subtle" hidden>Share</button>
       <a href="https://www.linkedin.com/in/rajchandra3/" target="_blank" rel="noopener noreferrer">LinkedIn</a>

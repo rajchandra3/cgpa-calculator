@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   ANNOUNCEMENT_BANNER,
   PERSONAL_PROMOS,
+  PERSONAL_PROMOS_ENABLED,
   TAB_ALIASES,
   expandTabs,
   isSafeHttpUrl,
@@ -187,45 +188,51 @@ test('matchesPromoRule validates enabled flag, URL safety, tabs, universities, r
   assert.equal(matchesPromoRule({ id: 'no-when', ctaUrl: 'https://example.com' }, { tab: 'sc' }), false);
 });
 
-test('matchPromo enforces strict 9.00 vs 9.01 CGPA boundary, aliases, priorities, disabled rules, and dismissals', () => {
+test('matchPromo respects PERSONAL_PROMOS_ENABLED default OFF and enforces strict 9.00 vs 9.01 CGPA boundary, aliases, priorities, disabled rules, and dismissals when enabled', () => {
+  // Default master switch is OFF so personal promos stay hidden until re-enabled
+  assert.equal(PERSONAL_PROMOS_ENABLED, false);
+  assert.equal(ANNOUNCEMENT_BANNER.adFallbackEnabled, false);
+  assert.equal(matchPromo({ tab: 'gc', university: 'vit', result: 9.5, credits: 22 }), null);
+
+  const on = { enabled: true };
   // Strict gt: 9 boundary on Quick CGPA ('gc') and All-Sem ('fc')
   assert.equal(
-    matchPromo({ tab: 'gc', university: 'vit', result: 9.0, credits: 22 })?.id,
+    matchPromo({ tab: 'gc', university: 'vit', result: 9.0, credits: 22 }, PERSONAL_PROMOS, new Set(), on)?.id,
     'creator-fallback'
   );
   assert.equal(
-    matchPromo({ tab: 'gc', university: 'vit', result: 9.01, credits: 22 })?.id,
+    matchPromo({ tab: 'gc', university: 'vit', result: 9.01, credits: 22 }, PERSONAL_PROMOS, new Set(), on)?.id,
     'cgpa-9-plus-day20'
   );
   assert.equal(
-    matchPromo({ tab: 'fc', university: 'anna', result: 9.01, credits: 120 })?.id,
+    matchPromo({ tab: 'fc', university: 'anna', result: 9.01, credits: 120 }, PERSONAL_PROMOS, new Set(), on)?.id,
     'cgpa-9-plus-day20'
   );
 
   // Semester GPA ('sc') gte: 8.5 boundary
   assert.equal(
-    matchPromo({ tab: 'sc', university: 'ktu', result: 8.5, credits: 20 })?.id,
+    matchPromo({ tab: 'sc', university: 'ktu', result: 8.5, credits: 20 }, PERSONAL_PROMOS, new Set(), on)?.id,
     'gpa-8-5-plus-forkfolio'
   );
   assert.equal(
-    matchPromo({ tab: 'sc', university: 'ktu', result: 8.49, credits: 20 })?.id,
+    matchPromo({ tab: 'sc', university: 'ktu', result: 8.49, credits: 20 }, PERSONAL_PROMOS, new Set(), on)?.id,
     'creator-fallback'
   );
 
   // Disabled affiliate template is skipped by default, but activates when enabled: true
   assert.equal(
-    matchPromo({ tab: 'ec', university: 'vit', result: 68 })?.id,
+    matchPromo({ tab: 'ec', university: 'vit', result: 68 }, PERSONAL_PROMOS, new Set(), on)?.id,
     'creator-fallback'
   );
   const withAffiliateEnabled = PERSONAL_PROMOS.map((p) =>
     p.id === 'affiliate-template-expected-marks' ? { ...p, enabled: true } : p
   );
   assert.equal(
-    matchPromo({ tab: 'ec', university: 'vit', result: 74.9 }, withAffiliateEnabled)?.id,
+    matchPromo({ tab: 'ec', university: 'vit', result: 74.9 }, withAffiliateEnabled, new Set(), on)?.id,
     'affiliate-template-expected-marks'
   );
   assert.equal(
-    matchPromo({ tab: 'ec', university: 'srm', result: 70 }, withAffiliateEnabled)?.id,
+    matchPromo({ tab: 'ec', university: 'srm', result: 70 }, withAffiliateEnabled, new Set(), on)?.id,
     'creator-fallback'
   );
 
@@ -234,7 +241,8 @@ test('matchPromo enforces strict 9.00 vs 9.01 CGPA boundary, aliases, priorities
     matchPromo(
       { tab: 'gc', university: 'vit', result: 9.5, credits: 22 },
       PERSONAL_PROMOS,
-      new Set(['cgpa-9-plus-day20'])
+      new Set(['cgpa-9-plus-day20']),
+      on
     )?.id,
     'creator-fallback'
   );
@@ -242,12 +250,13 @@ test('matchPromo enforces strict 9.00 vs 9.01 CGPA boundary, aliases, priorities
     matchPromo(
       { tab: 'gc', university: 'vit', result: 9.5, credits: 22 },
       PERSONAL_PROMOS,
-      ['cgpa-9-plus-day20', 'creator-fallback']
+      ['cgpa-9-plus-day20', 'creator-fallback'],
+      on
     ),
     null
   );
   assert.equal(
-    matchPromo({ tab: 'gc', university: 'vit', result: 9.5 }, PERSONAL_PROMOS, null)?.id,
+    matchPromo({ tab: 'gc', university: 'vit', result: 9.5 }, PERSONAL_PROMOS, null, on)?.id,
     'cgpa-9-plus-day20'
   );
 
@@ -258,9 +267,9 @@ test('matchPromo enforces strict 9.00 vs 9.01 CGPA boundary, aliases, priorities
     { id: 'second', priority: 0, ctaUrl: 'https://example.com/2', when: { tabs: ['*'] } },
     { id: 'third', priority: 5, ctaUrl: 'https://example.com/3', when: { tabs: ['*'] } },
   ];
-  assert.equal(matchPromo({ tab: 'sc' }, tiedPromos)?.id, 'third');
-  assert.equal(matchPromo({ tab: 'sc' }, tiedPromos.slice(0, 3))?.id, 'first');
-  assert.equal(matchPromo({ tab: 'sc' }, 'not-an-array'), null);
+  assert.equal(matchPromo({ tab: 'sc' }, tiedPromos, new Set(), on)?.id, 'third');
+  assert.equal(matchPromo({ tab: 'sc' }, tiedPromos.slice(0, 3), new Set(), on)?.id, 'first');
+  assert.equal(matchPromo({ tab: 'sc' }, 'not-an-array', new Set(), on), null);
 });
 
 test('renderPersonalPromo mounts safe DOM, sets affiliate rel, fires callbacks, and clears invalid states', () => {

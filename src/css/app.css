@@ -1547,6 +1547,17 @@ details.faq-item > p {
 
 .site-footer p {
   margin: 0;
+  color: var(--text-muted);
+}
+
+.footer-copyright {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3125rem;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
 }
 
 .footer-links,
