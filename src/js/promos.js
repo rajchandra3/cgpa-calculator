@@ -47,36 +47,52 @@ export const TAB_ALIASES = Object.freeze({
 
 export const PERSONAL_PROMOS = Object.freeze([
   Object.freeze({
-    id: 'cgpa-9-plus-day20',
+    id: 'personal-day20',
     enabled: true,
     priority: 100,
     when: Object.freeze({
-      tabs: Object.freeze(['cgpa']),
+      tabs: Object.freeze(['*']),
       universities: Object.freeze(['*']),
-      result: Object.freeze({ gt: 9 }),
+      result: Object.freeze({ gte: 0 }),
     }),
-    badge: '9+ Pointer Pick',
+    badge: 'Student Pick',
     disclosure: 'By Raj Chandra',
-    title: '9+ CGPA locked in — track your money like your grades with Day20',
+    title: 'Track your money like your grades with Day20',
     body: 'Built by the creator of this calculator. Plan internships, stipends, and semester budgets in 2 minutes.',
     ctaLabel: 'Explore Day20 ↗',
-    ctaUrl: 'https://day20.rajchandra.me/students/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=cgpa_gt_9',
+    ctaUrl: 'https://day20.rajchandra.me/students/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=personal_promo',
   }),
   Object.freeze({
-    id: 'gpa-8-5-plus-linkedin',
+    id: 'personal-linkedin',
     enabled: true,
-    priority: 80,
+    priority: 100,
     when: Object.freeze({
-      tabs: Object.freeze(['gpa']),
+      tabs: Object.freeze(['*']),
       universities: Object.freeze(['*']),
-      result: Object.freeze({ gte: 8.5 }),
+      result: Object.freeze({ gte: 0 }),
     }),
     badge: 'Connect on LinkedIn',
     disclosure: 'By Raj Chandra',
-    title: 'Strong semester — connect with Raj Chandra on LinkedIn',
+    title: 'Connect with Raj Chandra on LinkedIn',
     body: 'Follow engineering notes, student projects, and career updates from the creator of this calculator.',
     ctaLabel: 'Connect on LinkedIn ↗',
     ctaUrl: 'https://www.linkedin.com/in/rajchandra3/',
+  }),
+  Object.freeze({
+    id: 'personal-twitter',
+    enabled: true,
+    priority: 100,
+    when: Object.freeze({
+      tabs: Object.freeze(['*']),
+      universities: Object.freeze(['*']),
+      result: Object.freeze({ gte: 0 }),
+    }),
+    badge: 'Follow on X',
+    disclosure: 'By Raj Chandra',
+    title: 'Follow Raj Chandra on X (Twitter) for updates',
+    body: 'Building this calculator, Day20, and fast student utilities in public.',
+    ctaLabel: 'Follow @raj_chandra3 ↗',
+    ctaUrl: 'https://x.com/raj_chandra3',
   }),
   // Ready-to-use affiliate template: flip `enabled: true` and replace copy/URL when active.
   Object.freeze({
@@ -94,22 +110,6 @@ export const PERSONAL_PROMOS = Object.freeze([
     body: 'Replace this template with your favorite course, book, or study-tool affiliate link.',
     ctaLabel: 'View Recommended Guide ↗',
     ctaUrl: 'https://rajchandra.me/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=affiliate_template',
-  }),
-  Object.freeze({
-    id: 'creator-twitter-fallback',
-    enabled: true,
-    priority: 10,
-    when: Object.freeze({
-      tabs: Object.freeze(['*']),
-      universities: Object.freeze(['*']),
-      result: Object.freeze({ gte: 0 }),
-    }),
-    badge: 'Follow on X',
-    disclosure: 'By Raj Chandra',
-    title: 'Follow Raj Chandra on X (Twitter) for updates',
-    body: 'Building this calculator, Day20, and fast student utilities in public.',
-    ctaLabel: 'Follow @raj_chandra3 ↗',
-    ctaUrl: 'https://x.com/raj_chandra3',
   }),
 ]);
 
@@ -185,33 +185,66 @@ export function matchesPromoRule(promo, context = {}) {
   return true;
 }
 
-export function matchPromo(
+export function matchPromos(
   context,
   promos = PERSONAL_PROMOS,
   dismissedIds = new Set(),
   { enabled = PERSONAL_PROMOS_ENABLED } = {}
 ) {
-  if (!enabled) return null;
-  if (!Array.isArray(promos)) return null;
+  if (!enabled) return [];
+  if (!Array.isArray(promos)) return [];
   const dismissed =
     dismissedIds instanceof Set
       ? dismissedIds
       : new Set(Array.isArray(dismissedIds) ? dismissedIds : []);
 
-  let best = null;
-  let bestPriority = -Infinity;
-
+  const matches = [];
   for (const promo of promos) {
     if (!promo || dismissed.has(promo.id)) continue;
     if (!matchesPromoRule(promo, context)) continue;
-    const priority = Number.isFinite(promo.priority) ? promo.priority : 0;
-    if (!best || priority > bestPriority) {
-      best = promo;
-      bestPriority = priority;
-    }
+    matches.push({
+      promo,
+      priority: Number.isFinite(promo.priority) ? promo.priority : 0,
+    });
   }
 
-  return best;
+  matches.sort((a, b) => b.priority - a.priority);
+  return matches.map((entry) => entry.promo);
+}
+
+export function matchPromo(
+  context,
+  promos = PERSONAL_PROMOS,
+  dismissedIds = new Set(),
+  options = {}
+) {
+  return matchPromos(context, promos, dismissedIds, options)[0] || null;
+}
+
+export function pickNextPromo(
+  context,
+  {
+    promos = PERSONAL_PROMOS,
+    dismissedIds = new Set(),
+    lastPromoId = '',
+    enabled = PERSONAL_PROMOS_ENABLED,
+    random = Math.random,
+  } = {}
+) {
+  const matches = matchPromos(context, promos, dismissedIds, { enabled });
+  if (matches.length === 0) return null;
+
+  const topPriority = Number.isFinite(matches[0].priority) ? matches[0].priority : 0;
+  const topTier = matches.filter(
+    (p) => (Number.isFinite(p.priority) ? p.priority : 0) === topPriority
+  );
+  if (topTier.length === 1) return topTier[0];
+
+  const pool = topTier.filter((p) => p.id !== lastPromoId);
+  const candidates = pool.length > 0 ? pool : topTier;
+  const rawRoll = Number(random());
+  const roll = Number.isFinite(rawRoll) ? Math.min(Math.max(rawRoll, 0), 0.999999999) : 0;
+  return candidates[Math.floor(roll * candidates.length)];
 }
 
 function clearPromoContainer(container) {

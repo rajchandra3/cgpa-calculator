@@ -9,8 +9,10 @@ import {
   expandTabs,
   isSafeHttpUrl,
   matchPromo,
+  matchPromos,
   matchesNumericRule,
   matchesPromoRule,
+  pickNextPromo,
   renderAnnouncementBanner,
   renderPersonalPromo,
   resolveAnnouncementBanner,
@@ -67,19 +69,19 @@ test('TAB_ALIASES and PERSONAL_PROMOS expose frozen rule definitions and default
   assert.deepEqual(TAB_ALIASES['expected-marks'], ['ec']);
 
   assert.equal(PERSONAL_PROMOS.length, 4);
-  const day20 = PERSONAL_PROMOS.find((p) => p.id === 'cgpa-9-plus-day20');
+  const day20 = PERSONAL_PROMOS.find((p) => p.id === 'personal-day20');
   assert.equal(day20.enabled, true);
   assert.equal(
     day20.ctaUrl,
-    'https://day20.rajchandra.me/students/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=cgpa_gt_9'
+    'https://day20.rajchandra.me/students/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=personal_promo'
   );
-  const linkedin = PERSONAL_PROMOS.find((p) => p.id === 'gpa-8-5-plus-linkedin');
+  const linkedin = PERSONAL_PROMOS.find((p) => p.id === 'personal-linkedin');
   assert.equal(linkedin.enabled, true);
   assert.equal(linkedin.ctaUrl, 'https://www.linkedin.com/in/rajchandra3/');
   const affiliate = PERSONAL_PROMOS.find((p) => p.id === 'affiliate-template-expected-marks');
   assert.equal(affiliate.enabled, false);
   assert.equal(affiliate.disclosure, 'Affiliate');
-  const twitter = PERSONAL_PROMOS.find((p) => p.id === 'creator-twitter-fallback');
+  const twitter = PERSONAL_PROMOS.find((p) => p.id === 'personal-twitter');
   assert.equal(twitter.enabled, true);
   assert.equal(twitter.ctaUrl, 'https://x.com/raj_chandra3');
 });
@@ -200,84 +202,120 @@ test('matchesPromoRule validates enabled flag, URL safety, tabs, universities, r
   assert.equal(matchesPromoRule({ id: 'no-when', ctaUrl: 'https://example.com' }, { tab: 'sc' }), false);
 });
 
-test('matchPromo respects PERSONAL_PROMOS_ENABLED default ON, supports { enabled: false } kill-switch, and enforces strict 9.00 vs 9.01 CGPA boundary, aliases, priorities, disabled rules, and dismissals', () => {
-  // Default master switch is ON with Day20, LinkedIn, and X/Twitter promos active (banner remains OFF)
+test('matchPromos & pickNextPromo show Day20, LinkedIn, and Twitter to everyone across tabs/scores and shuffle without repeating', () => {
   assert.equal(PERSONAL_PROMOS_ENABLED, true);
   assert.equal(ANNOUNCEMENT_BANNER.enabled, false);
   assert.equal(ANNOUNCEMENT_BANNER.adFallbackEnabled, false);
 
   // Explicit kill-switch suppresses all personal promos
-  assert.equal(
-    matchPromo({ tab: 'gc', university: 'vit', result: 9.5, credits: 22 }, PERSONAL_PROMOS, new Set(), {
+  assert.deepEqual(
+    matchPromos({ tab: 'gc', university: 'vit', result: 9.5, credits: 22 }, PERSONAL_PROMOS, new Set(), {
       enabled: false,
     }),
+    []
+  );
+  assert.equal(
+    pickNextPromo({ tab: 'gc', university: 'vit', result: 9.5 }, { enabled: false }),
     null
   );
 
-  // Strict gt: 9 boundary on Quick CGPA ('gc') and All-Sem ('fc')
-  assert.equal(
-    matchPromo({ tab: 'gc', university: 'vit', result: 9.0, credits: 22 })?.id,
-    'creator-twitter-fallback'
-  );
-  assert.equal(
-    matchPromo({ tab: 'gc', university: 'vit', result: 9.01, credits: 22 })?.id,
-    'cgpa-9-plus-day20'
-  );
-  assert.equal(
-    matchPromo({ tab: 'fc', university: 'anna', result: 9.01, credits: 120 })?.id,
-    'cgpa-9-plus-day20'
-  );
+  // Every tab and score (0, 6.5, 9.8) matches all 3 active promos (Day20, LinkedIn, Twitter)
+  for (const ctx of [
+    { tab: 'sc', university: 'vit', result: 0, credits: 4 },
+    { tab: 'gc', university: 'anna', result: 6.5, credits: 80 },
+    { tab: 'ec', university: 'vit', result: 42 },
+    { tab: 'fc', university: 'ktu', result: 9.8, credits: 140 },
+  ]) {
+    const matched = matchPromos(ctx);
+    assert.deepEqual(
+      matched.map((p) => p.id),
+      ['personal-day20', 'personal-linkedin', 'personal-twitter']
+    );
+    assert.equal(matchPromo(ctx)?.id, 'personal-day20');
+  }
 
-  // Semester GPA ('sc') gte: 8.5 boundary -> LinkedIn promo
-  assert.equal(
-    matchPromo({ tab: 'sc', university: 'ktu', result: 8.5, credits: 20 })?.id,
-    'gpa-8-5-plus-linkedin'
-  );
-  assert.equal(
-    matchPromo({ tab: 'sc', university: 'ktu', result: 8.49, credits: 20 })?.id,
-    'creator-twitter-fallback'
-  );
-
-  // Disabled affiliate template is skipped by default, but activates when enabled: true
-  assert.equal(
-    matchPromo({ tab: 'ec', university: 'vit', result: 68 })?.id,
-    'creator-twitter-fallback'
-  );
+  // Disabled affiliate template can still be enabled for targeted rules
   const withAffiliateEnabled = PERSONAL_PROMOS.map((p) =>
-    p.id === 'affiliate-template-expected-marks' ? { ...p, enabled: true } : p
+    p.id === 'affiliate-template-expected-marks' ? { ...p, enabled: true, priority: 150 } : p
   );
   assert.equal(
     matchPromo({ tab: 'ec', university: 'vit', result: 74.9 }, withAffiliateEnabled)?.id,
     'affiliate-template-expected-marks'
   );
-  assert.equal(
-    matchPromo({ tab: 'ec', university: 'srm', result: 70 }, withAffiliateEnabled)?.id,
-    'creator-twitter-fallback'
-  );
 
-  // Dismissed IDs filter out higher-priority rules cleanly
-  assert.equal(
-    matchPromo(
-      { tab: 'gc', university: 'vit', result: 9.5, credits: 22 },
+  // Dismissed IDs filter out dismissed promos across shuffles
+  assert.deepEqual(
+    matchPromos(
+      { tab: 'gc', university: 'vit', result: 7.5 },
       PERSONAL_PROMOS,
-      new Set(['cgpa-9-plus-day20'])
-    )?.id,
-    'creator-twitter-fallback'
+      new Set(['personal-day20'])
+    ).map((p) => p.id),
+    ['personal-linkedin', 'personal-twitter']
   );
   assert.equal(
-    matchPromo(
-      { tab: 'gc', university: 'vit', result: 9.5, credits: 22 },
-      PERSONAL_PROMOS,
-      ['cgpa-9-plus-day20', 'creator-twitter-fallback']
+    pickNextPromo(
+      { tab: 'gc', university: 'vit', result: 7.5 },
+      { dismissedIds: ['personal-day20', 'personal-linkedin', 'personal-twitter'] }
     ),
     null
   );
   assert.equal(
+    pickNextPromo(
+      { tab: 'gc', university: 'vit', result: 7.5 },
+      { dismissedIds: ['personal-day20', 'personal-linkedin'] }
+    )?.id,
+    'personal-twitter'
+  );
+  assert.equal(
     matchPromo({ tab: 'gc', university: 'vit', result: 9.5 }, PERSONAL_PROMOS, null)?.id,
-    'cgpa-9-plus-day20'
+    'personal-day20'
   );
 
-  // Priority tie-breaking preserves first rule order & handles non-finite priority
+  // Consecutive pickNextPromo calls NEVER repeat lastPromoId when 2+ candidates exist
+  const first = pickNextPromo(
+    { tab: 'sc', university: 'vit', result: 7.0 },
+    { lastPromoId: '', random: () => 0 }
+  );
+  assert.equal(first.id, 'personal-day20');
+
+  const second = pickNextPromo(
+    { tab: 'sc', university: 'vit', result: 7.0 },
+    { lastPromoId: first.id, random: () => 0 }
+  );
+  assert.equal(second.id, 'personal-linkedin');
+  assert.notEqual(second.id, first.id);
+
+  const third = pickNextPromo(
+    { tab: 'sc', university: 'vit', result: 7.0 },
+    { lastPromoId: second.id, random: () => 0.99 }
+  );
+  assert.equal(third.id, 'personal-twitter');
+  assert.notEqual(third.id, second.id);
+
+  // Out-of-bounds / non-finite random() and single-item fallback when filtered pool empties
+  assert.equal(
+    pickNextPromo(
+      { tab: 'sc', university: 'vit', result: 7.0 },
+      { lastPromoId: 'personal-day20', random: () => Number.NaN }
+    )?.id,
+    'personal-linkedin'
+  );
+  assert.equal(
+    pickNextPromo(
+      { tab: 'sc', university: 'vit', result: 7.0 },
+      {
+        promos: [
+          { id: 'only-a', priority: 10, ctaUrl: 'https://example.com/a', when: { tabs: ['*'] } },
+          { id: 'only-a', priority: 10, ctaUrl: 'https://example.com/a', when: { tabs: ['*'] } },
+        ],
+        lastPromoId: 'only-a',
+        random: () => 5,
+      }
+    )?.id,
+    'only-a'
+  );
+
+  // Priority sorting & tie-breaking + non-finite priority coverage
   const tiedPromos = [
     null,
     { id: 'first', priority: 'bad', ctaUrl: 'https://example.com/1', when: { tabs: ['*'] } },
@@ -285,7 +323,17 @@ test('matchPromo respects PERSONAL_PROMOS_ENABLED default ON, supports { enabled
     { id: 'third', priority: 5, ctaUrl: 'https://example.com/3', when: { tabs: ['*'] } },
   ];
   assert.equal(matchPromo({ tab: 'sc' }, tiedPromos)?.id, 'third');
-  assert.equal(matchPromo({ tab: 'sc' }, tiedPromos.slice(0, 3))?.id, 'first');
+  assert.equal(
+    pickNextPromo({ tab: 'sc' }, { promos: tiedPromos, lastPromoId: 'first', random: () => 0 })?.id,
+    'third'
+  );
+  assert.deepEqual(
+    pickNextPromo(
+      { tab: 'sc' },
+      { promos: [tiedPromos[1], tiedPromos[2]], lastPromoId: 'second', random: () => -1 }
+    )?.id,
+    'first'
+  );
   assert.equal(matchPromo({ tab: 'sc' }, 'not-an-array'), null);
 });
 
@@ -331,12 +379,12 @@ test('renderPersonalPromo mounts safe DOM, sets affiliate rel, fires callbacks, 
 
   const card = container.children[0];
   assert.equal(card.className, 'personal-promo-card');
-  assert.equal(card.getAttribute('data-promo-id'), 'cgpa-9-plus-day20');
+  assert.equal(card.getAttribute('data-promo-id'), 'personal-day20');
 
   const [meta, title, body, cta] = card.children;
   assert.equal(meta.className, 'personal-promo-meta');
   assert.equal(meta.children[0].className, 'promo-badge');
-  assert.equal(meta.children[0].textContent, '9+ Pointer Pick');
+  assert.equal(meta.children[0].textContent, 'Student Pick');
   assert.equal(meta.children[1].className, 'promo-disclosure');
   assert.equal(meta.children[1].textContent, 'By Raj Chandra');
   const dismissBtn = meta.children[2];
@@ -357,11 +405,11 @@ test('renderPersonalPromo mounts safe DOM, sets affiliate rel, fires callbacks, 
   assert.equal(cta.textContent, day20.ctaLabel);
 
   cta.click();
-  assert.deepEqual(clicks, ['cgpa-9-plus-day20']);
+  assert.deepEqual(clicks, ['personal-day20']);
 
   dismissBtn.click();
   assert.equal(container.hidden, true);
-  assert.deepEqual(dismissals, ['cgpa-9-plus-day20']);
+  assert.deepEqual(dismissals, ['personal-day20']);
 
   // Affiliate promo adds `sponsored` to rel, and fallback container mounts without optional fields or callbacks
   const affiliatePromo = {

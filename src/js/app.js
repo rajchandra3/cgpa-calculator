@@ -7,7 +7,7 @@ import {
 } from './math.js';
 import {
   ANNOUNCEMENT_BANNER,
-  matchPromo,
+  pickNextPromo,
   renderAnnouncementBanner,
   renderPersonalPromo,
   resolveAnnouncementBanner,
@@ -381,32 +381,32 @@ function initApp() {
   const promoSlot = document.getElementById('personal-promo-slot');
   const dismissedPromoIds = new Set();
   let promoDebounceTimer = null;
-  let lastShownPromoKey = '';
+  let lastResultSignature = '';
+  let lastShownPromoId = '';
 
   function clearPersonalPromo() {
     if (promoDebounceTimer !== null) {
       window.clearTimeout(promoDebounceTimer);
       promoDebounceTimer = null;
     }
-    lastShownPromoKey = '';
+    lastResultSignature = '';
     if (promoSlot) {
       renderPersonalPromo(promoSlot, null);
     }
   }
 
-  function applyPersonalPromo({ tab, result, credits }) {
+  function applyPersonalPromo({ tab, result, credits, forceShuffle = false }) {
     if (!promoSlot) return;
-    const promo = matchPromo(
+    const resultSignature = `${tab}:${result}:${credits ?? ''}`;
+    if (!forceShuffle && !promoSlot.hidden && resultSignature === lastResultSignature) {
+      return;
+    }
+    const promo = pickNextPromo(
       { tab, university: config.id, result, credits },
-      undefined,
-      dismissedPromoIds
+      { dismissedIds: dismissedPromoIds, lastPromoId: lastShownPromoId }
     );
     if (!promo) {
       clearPersonalPromo();
-      return;
-    }
-    const promoKey = `${tab}:${promo.id}`;
-    if (promoKey === lastShownPromoKey && !promoSlot.hidden) {
       return;
     }
     const rendered = renderPersonalPromo(promoSlot, promo, {
@@ -419,7 +419,7 @@ function initApp() {
       },
       onDismiss: (dismissedPromo) => {
         dismissedPromoIds.add(dismissedPromo.id);
-        lastShownPromoKey = '';
+        lastResultSignature = '';
         trackEvent('promo_dismissed', {
           promo_id: dismissedPromo.id,
           tab,
@@ -428,7 +428,8 @@ function initApp() {
       },
     });
     if (rendered) {
-      lastShownPromoKey = promoKey;
+      lastResultSignature = resultSignature;
+      lastShownPromoId = promo.id;
       trackEvent('promo_shown', {
         promo_id: promo.id,
         tab,
@@ -437,7 +438,7 @@ function initApp() {
     }
   }
 
-  function schedulePersonalPromo(ctx, { immediate = false } = {}) {
+  function schedulePersonalPromo(ctx, { immediate = false, forceShuffle = immediate } = {}) {
     if (!promoSlot) return;
     if (promoDebounceTimer !== null) {
       window.clearTimeout(promoDebounceTimer);
@@ -448,12 +449,12 @@ function initApp() {
       return;
     }
     if (immediate) {
-      applyPersonalPromo(ctx);
+      applyPersonalPromo({ ...ctx, forceShuffle });
       return;
     }
     promoDebounceTimer = window.setTimeout(() => {
       promoDebounceTimer = null;
-      applyPersonalPromo(ctx);
+      applyPersonalPromo({ ...ctx, forceShuffle });
     }, 350);
   }
 
@@ -761,7 +762,7 @@ function initApp() {
       );
       schedulePersonalPromo(
         { ok: true, tab: 'sc', result: res.gpa, credits: res.totalCredits },
-        { immediate: true }
+        { immediate: true, forceShuffle: isSubmit }
       );
       return res;
     }
