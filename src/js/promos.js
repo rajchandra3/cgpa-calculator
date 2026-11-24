@@ -34,8 +34,8 @@ export const ANNOUNCEMENT_BANNER = Object.freeze({
 });
 
 // Master switch for post-calculation Wow-Moment personal/affiliate promos.
-// Flip to `true` when ready to re-enable PERSONAL_PROMOS below.
-export const PERSONAL_PROMOS_ENABLED = false;
+// Flip to `false` to disable all PERSONAL_PROMOS below without deleting rules.
+export const PERSONAL_PROMOS_ENABLED = true;
 
 export const TAB_ALIASES = Object.freeze({
   gpa: Object.freeze(['sc']),
@@ -63,7 +63,7 @@ export const PERSONAL_PROMOS = Object.freeze([
     ctaUrl: 'https://day20.rajchandra.me/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=cgpa_gt_9',
   }),
   Object.freeze({
-    id: 'gpa-8-5-plus-forkfolio',
+    id: 'gpa-8-5-plus-linkedin',
     enabled: true,
     priority: 80,
     when: Object.freeze({
@@ -71,12 +71,12 @@ export const PERSONAL_PROMOS = Object.freeze([
       universities: Object.freeze(['*']),
       result: Object.freeze({ gte: 8.5 }),
     }),
-    badge: 'High GPA Pick',
+    badge: 'Connect on LinkedIn',
     disclosure: 'By Raj Chandra',
-    title: 'Strong semester — track your investments & net worth in ForkFolio',
-    body: 'Free, privacy-first portfolio tracker built by Raj Chandra for students and young engineers.',
-    ctaLabel: 'Check out ForkFolio ↗',
-    ctaUrl: 'https://forkfolio.rajchandra.me/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=gpa_gte_85',
+    title: 'Strong semester — connect with Raj Chandra on LinkedIn',
+    body: 'Follow engineering notes, student projects, and career updates from the creator of this calculator.',
+    ctaLabel: 'Connect on LinkedIn ↗',
+    ctaUrl: 'https://www.linkedin.com/in/rajchandra3/',
   }),
   // Ready-to-use affiliate template: flip `enabled: true` and replace copy/URL when active.
   Object.freeze({
@@ -96,7 +96,7 @@ export const PERSONAL_PROMOS = Object.freeze([
     ctaUrl: 'https://rajchandra.me/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=affiliate_template',
   }),
   Object.freeze({
-    id: 'creator-fallback',
+    id: 'creator-twitter-fallback',
     enabled: true,
     priority: 10,
     when: Object.freeze({
@@ -104,12 +104,12 @@ export const PERSONAL_PROMOS = Object.freeze([
       universities: Object.freeze(['*']),
       result: Object.freeze({ gte: 0 }),
     }),
-    badge: 'From the Creator',
+    badge: 'Follow on X',
     disclosure: 'By Raj Chandra',
-    title: 'Like fast, clutter-free tools? Explore more apps by Raj Chandra',
-    body: 'Browse other free student and developer utilities I build and maintain.',
-    ctaLabel: 'Visit rajchandra.me ↗',
-    ctaUrl: 'https://rajchandra.me/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=creator_fallback',
+    title: 'Follow Raj Chandra on X (Twitter) for updates',
+    body: 'Building this calculator, Day20, and fast student utilities in public.',
+    ctaLabel: 'Follow @raj_chandra3 ↗',
+    ctaUrl: 'https://x.com/raj_chandra3',
   }),
 ]);
 

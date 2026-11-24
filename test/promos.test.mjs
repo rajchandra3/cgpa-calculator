@@ -67,9 +67,21 @@ test('TAB_ALIASES and PERSONAL_PROMOS expose frozen rule definitions and default
   assert.deepEqual(TAB_ALIASES['expected-marks'], ['ec']);
 
   assert.equal(PERSONAL_PROMOS.length, 4);
+  const day20 = PERSONAL_PROMOS.find((p) => p.id === 'cgpa-9-plus-day20');
+  assert.equal(day20.enabled, true);
+  assert.equal(
+    day20.ctaUrl,
+    'https://day20.rajchandra.me/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=cgpa_gt_9'
+  );
+  const linkedin = PERSONAL_PROMOS.find((p) => p.id === 'gpa-8-5-plus-linkedin');
+  assert.equal(linkedin.enabled, true);
+  assert.equal(linkedin.ctaUrl, 'https://www.linkedin.com/in/rajchandra3/');
   const affiliate = PERSONAL_PROMOS.find((p) => p.id === 'affiliate-template-expected-marks');
   assert.equal(affiliate.enabled, false);
   assert.equal(affiliate.disclosure, 'Affiliate');
+  const twitter = PERSONAL_PROMOS.find((p) => p.id === 'creator-twitter-fallback');
+  assert.equal(twitter.enabled, true);
+  assert.equal(twitter.ctaUrl, 'https://x.com/raj_chandra3');
 });
 
 test('isSafeHttpUrl allows only http/https URLs and rejects unsafe schemes or malformed inputs', () => {
@@ -188,52 +200,59 @@ test('matchesPromoRule validates enabled flag, URL safety, tabs, universities, r
   assert.equal(matchesPromoRule({ id: 'no-when', ctaUrl: 'https://example.com' }, { tab: 'sc' }), false);
 });
 
-test('matchPromo respects PERSONAL_PROMOS_ENABLED default OFF and enforces strict 9.00 vs 9.01 CGPA boundary, aliases, priorities, disabled rules, and dismissals when enabled', () => {
-  // Default master switch is OFF so personal promos stay hidden until re-enabled
-  assert.equal(PERSONAL_PROMOS_ENABLED, false);
+test('matchPromo respects PERSONAL_PROMOS_ENABLED default ON, supports { enabled: false } kill-switch, and enforces strict 9.00 vs 9.01 CGPA boundary, aliases, priorities, disabled rules, and dismissals', () => {
+  // Default master switch is ON with Day20, LinkedIn, and X/Twitter promos active (banner remains OFF)
+  assert.equal(PERSONAL_PROMOS_ENABLED, true);
+  assert.equal(ANNOUNCEMENT_BANNER.enabled, false);
   assert.equal(ANNOUNCEMENT_BANNER.adFallbackEnabled, false);
-  assert.equal(matchPromo({ tab: 'gc', university: 'vit', result: 9.5, credits: 22 }), null);
 
-  const on = { enabled: true };
+  // Explicit kill-switch suppresses all personal promos
+  assert.equal(
+    matchPromo({ tab: 'gc', university: 'vit', result: 9.5, credits: 22 }, PERSONAL_PROMOS, new Set(), {
+      enabled: false,
+    }),
+    null
+  );
+
   // Strict gt: 9 boundary on Quick CGPA ('gc') and All-Sem ('fc')
   assert.equal(
-    matchPromo({ tab: 'gc', university: 'vit', result: 9.0, credits: 22 }, PERSONAL_PROMOS, new Set(), on)?.id,
-    'creator-fallback'
+    matchPromo({ tab: 'gc', university: 'vit', result: 9.0, credits: 22 })?.id,
+    'creator-twitter-fallback'
   );
   assert.equal(
-    matchPromo({ tab: 'gc', university: 'vit', result: 9.01, credits: 22 }, PERSONAL_PROMOS, new Set(), on)?.id,
+    matchPromo({ tab: 'gc', university: 'vit', result: 9.01, credits: 22 })?.id,
     'cgpa-9-plus-day20'
   );
   assert.equal(
-    matchPromo({ tab: 'fc', university: 'anna', result: 9.01, credits: 120 }, PERSONAL_PROMOS, new Set(), on)?.id,
+    matchPromo({ tab: 'fc', university: 'anna', result: 9.01, credits: 120 })?.id,
     'cgpa-9-plus-day20'
   );
 
-  // Semester GPA ('sc') gte: 8.5 boundary
+  // Semester GPA ('sc') gte: 8.5 boundary -> LinkedIn promo
   assert.equal(
-    matchPromo({ tab: 'sc', university: 'ktu', result: 8.5, credits: 20 }, PERSONAL_PROMOS, new Set(), on)?.id,
-    'gpa-8-5-plus-forkfolio'
+    matchPromo({ tab: 'sc', university: 'ktu', result: 8.5, credits: 20 })?.id,
+    'gpa-8-5-plus-linkedin'
   );
   assert.equal(
-    matchPromo({ tab: 'sc', university: 'ktu', result: 8.49, credits: 20 }, PERSONAL_PROMOS, new Set(), on)?.id,
-    'creator-fallback'
+    matchPromo({ tab: 'sc', university: 'ktu', result: 8.49, credits: 20 })?.id,
+    'creator-twitter-fallback'
   );
 
   // Disabled affiliate template is skipped by default, but activates when enabled: true
   assert.equal(
-    matchPromo({ tab: 'ec', university: 'vit', result: 68 }, PERSONAL_PROMOS, new Set(), on)?.id,
-    'creator-fallback'
+    matchPromo({ tab: 'ec', university: 'vit', result: 68 })?.id,
+    'creator-twitter-fallback'
   );
   const withAffiliateEnabled = PERSONAL_PROMOS.map((p) =>
     p.id === 'affiliate-template-expected-marks' ? { ...p, enabled: true } : p
   );
   assert.equal(
-    matchPromo({ tab: 'ec', university: 'vit', result: 74.9 }, withAffiliateEnabled, new Set(), on)?.id,
+    matchPromo({ tab: 'ec', university: 'vit', result: 74.9 }, withAffiliateEnabled)?.id,
     'affiliate-template-expected-marks'
   );
   assert.equal(
-    matchPromo({ tab: 'ec', university: 'srm', result: 70 }, withAffiliateEnabled, new Set(), on)?.id,
-    'creator-fallback'
+    matchPromo({ tab: 'ec', university: 'srm', result: 70 }, withAffiliateEnabled)?.id,
+    'creator-twitter-fallback'
   );
 
   // Dismissed IDs filter out higher-priority rules cleanly
@@ -241,22 +260,20 @@ test('matchPromo respects PERSONAL_PROMOS_ENABLED default OFF and enforces stric
     matchPromo(
       { tab: 'gc', university: 'vit', result: 9.5, credits: 22 },
       PERSONAL_PROMOS,
-      new Set(['cgpa-9-plus-day20']),
-      on
+      new Set(['cgpa-9-plus-day20'])
     )?.id,
-    'creator-fallback'
+    'creator-twitter-fallback'
   );
   assert.equal(
     matchPromo(
       { tab: 'gc', university: 'vit', result: 9.5, credits: 22 },
       PERSONAL_PROMOS,
-      ['cgpa-9-plus-day20', 'creator-fallback'],
-      on
+      ['cgpa-9-plus-day20', 'creator-twitter-fallback']
     ),
     null
   );
   assert.equal(
-    matchPromo({ tab: 'gc', university: 'vit', result: 9.5 }, PERSONAL_PROMOS, null, on)?.id,
+    matchPromo({ tab: 'gc', university: 'vit', result: 9.5 }, PERSONAL_PROMOS, null)?.id,
     'cgpa-9-plus-day20'
   );
 
@@ -267,9 +284,9 @@ test('matchPromo respects PERSONAL_PROMOS_ENABLED default OFF and enforces stric
     { id: 'second', priority: 0, ctaUrl: 'https://example.com/2', when: { tabs: ['*'] } },
     { id: 'third', priority: 5, ctaUrl: 'https://example.com/3', when: { tabs: ['*'] } },
   ];
-  assert.equal(matchPromo({ tab: 'sc' }, tiedPromos, new Set(), on)?.id, 'third');
-  assert.equal(matchPromo({ tab: 'sc' }, tiedPromos.slice(0, 3), new Set(), on)?.id, 'first');
-  assert.equal(matchPromo({ tab: 'sc' }, 'not-an-array', new Set(), on), null);
+  assert.equal(matchPromo({ tab: 'sc' }, tiedPromos)?.id, 'third');
+  assert.equal(matchPromo({ tab: 'sc' }, tiedPromos.slice(0, 3))?.id, 'first');
+  assert.equal(matchPromo({ tab: 'sc' }, 'not-an-array'), null);
 });
 
 test('renderPersonalPromo mounts safe DOM, sets affiliate rel, fires callbacks, and clears invalid states', () => {
@@ -374,8 +391,9 @@ test('resolveAnnouncementBanner & renderAnnouncementBanner handle default disabl
   assert.equal(resolveAnnouncementBanner('vit'), null);
   assert.equal(resolveAnnouncementBanner('vit', null), null);
 
-  // Blank text or unsafe URL rejected
+  // Blank/non-string text or unsafe URL rejected
   assert.equal(resolveAnnouncementBanner('vit', { enabled: true, text: '   ' }), null);
+  assert.equal(resolveAnnouncementBanner('vit', { enabled: true, text: 123 }), null);
   assert.equal(
     resolveAnnouncementBanner('vit', { enabled: true, text: 'Hi', ctaUrl: 'javascript:alert(1)' }),
     null
@@ -394,6 +412,7 @@ test('resolveAnnouncementBanner & renderAnnouncementBanner handle default disabl
   assert.equal(resolveAnnouncementBanner('vit', vitOnly), vitOnly);
   assert.equal(resolveAnnouncementBanner('ktu', vitOnly), null);
   assert.equal(resolveAnnouncementBanner('', vitOnly), null);
+  assert.equal(resolveAnnouncementBanner(null, vitOnly), null);
   assert.equal(
     resolveAnnouncementBanner('vit', { enabled: true, text: 'Bad uni', universities: 'vit' }),
     null
