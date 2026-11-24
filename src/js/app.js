@@ -5,7 +5,12 @@ import {
   calculateGpa,
   calculateQuickCgpa,
 } from './math.js';
-import { matchPromo, renderPersonalPromo } from './promos.js';
+import {
+  matchPromo,
+  renderAnnouncementBanner,
+  renderPersonalPromo,
+  resolveAnnouncementBanner,
+} from './promos.js';
 
 const THEME_STORAGE_KEY = 'color-scheme';
 const AD_PREF_STORAGE_KEY = 'cgpa_ad_optin';
@@ -1716,6 +1721,76 @@ function initApp() {
     }
   }
 
+  function initAnnouncementBanner() {
+    const bannerEl = document.getElementById('announcement-banner');
+    if (!bannerEl) return;
+
+    const customAnnouncement = resolveAnnouncementBanner(config.id);
+    if (customAnnouncement) {
+      const shown = renderAnnouncementBanner(bannerEl, customAnnouncement, {
+        onCtaClick: (item) => {
+          trackEvent('announcement_clicked', {
+            announcement_id: item.id || 'custom-announcement',
+            university: config.id,
+          });
+        },
+      });
+      if (shown) {
+        trackEvent('announcement_shown', {
+          announcement_id: customAnnouncement.id || 'custom-announcement',
+          university: config.id,
+        });
+      }
+      return;
+    }
+
+    let previewMode = false;
+    try {
+      previewMode = new URLSearchParams(window.location.search).get('ads') === 'preview';
+    } catch {
+      previewMode = false;
+    }
+
+    const mountFallbackAd = (trigger) => {
+      import('./ads-manager.js')
+        .then((mod) => mod.activateAnnouncementAd({ university: config.id, trigger }))
+        .catch(() => {});
+    };
+
+    if (previewMode) {
+      mountFallbackAd('preview');
+      return;
+    }
+
+    let triggered = false;
+    let fallbackTimer = null;
+    const runOnce = () => {
+      if (triggered) return;
+      triggered = true;
+      if (fallbackTimer !== null) {
+        window.clearTimeout(fallbackTimer);
+        fallbackTimer = null;
+      }
+      mountFallbackAd('announcement_fallback');
+    };
+
+    const scheduleBannerAd = () => {
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(runOnce, { timeout: 1500 });
+        fallbackTimer = window.setTimeout(runOnce, 1500);
+      } else {
+        fallbackTimer = window.setTimeout(runOnce, 1200);
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      scheduleBannerAd();
+    } else {
+      window.addEventListener('load', scheduleBannerAd, { once: true });
+    }
+  }
+
+  initAnnouncementBanner();
   initGiscusComments();
   initOptInAdControl();
 }

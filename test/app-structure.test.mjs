@@ -90,13 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v5, precaches 20 existing assets including pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v6, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
+  assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v5'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v6'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -107,10 +108,11 @@ test('serviceWorker.js uses cgpa-calculator-v5, precaches 20 existing assets inc
   assert.ok(arrayMatch, 'PRECACHE_URLS array must exist in serviceWorker.js');
 
   const urls = Array.from(arrayMatch[1].matchAll(/'([^']+)'/g), (m) => m[1]);
-  assert.equal(urls.length, 20);
+  assert.equal(urls.length, 21);
   assert.equal(urls.includes('/src/css/vendor/pico.min.css'), true);
   assert.equal(urls.includes('/src/js/ads-manager.js'), true);
   assert.equal(urls.includes('/src/js/promos.js'), true);
+  assert.equal(urls.includes('/src/images/icons/icon-96x96.png'), true);
 
   for (const urlPath of urls) {
     const diskRel = urlPath === '/' ? 'index.html' : urlPath.replace(/^\//, '');
@@ -511,12 +513,12 @@ test('resolveGiscusTheme maps light, dark, and system theme modes', () => {
   assert.equal(resolveGiscusTheme(null), 'preferred_color_scheme');
 });
 
-test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, analytics, and Giscus config', () => {
+test('all 4 HTML pages match DOM contract IDs, header logo/title, independent college pages, per-college Discussions, Contribute above Discussion, Left Ad pane, Announcement Banner, Pico CSS, fonts, AdSense meta, and analytics', () => {
   const pages = [
-    { file: 'index.html', uni: 'vit', hasEc: true },
-    { file: 'college/anna-university.html', uni: 'anna', hasEc: false },
-    { file: 'college/ktu.html', uni: 'ktu', hasEc: false },
-    { file: 'college/srm.html', uni: 'srm', hasEc: false },
+    { file: 'index.html', uni: 'vit', hasEc: true, headerTitle: 'VIT CGPA Calculator', discussionTerm: '5' },
+    { file: 'college/anna-university.html', uni: 'anna', hasEc: false, headerTitle: 'Anna University CGPA Calculator', discussionTerm: '6' },
+    { file: 'college/ktu.html', uni: 'ktu', hasEc: false, headerTitle: 'KTU CGPA Calculator', discussionTerm: '7' },
+    { file: 'college/srm.html', uni: 'srm', hasEc: false, headerTitle: 'SRM CGPA Calculator', discussionTerm: '8' },
   ];
 
   const requiredIds = [
@@ -524,6 +526,7 @@ test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, an
     'install-app-btn',
     'share-app-btn',
     'thisYear',
+    'announcement-banner',
     'gpa-form',
     'gpa-rows',
     'add-course-btn',
@@ -577,24 +580,43 @@ test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, an
     assert.match(html, /<script src="\/src\/js\/analytics\.js" defer fetchpriority="low"><\/script>/);
     assert.match(html, /<script type="module" src="\/src\/js\/app\.js" fetchpriority="high"><\/script>/);
 
-    assert.match(html, /class="workspace-center"/);
-    assert.match(html, /class="workspace-left"/);
-    assert.match(html, /id="comments-section" class="workspace-right comments-sidebar"/);
-    assert.match(html, /https:\/\/github\.com\/rajchandra3\/cgpa-calculator\/discussions\/5/);
-    assert.match(html, /https:\/\/github\.com\/rajchandra3\/cgpa-calculator\/discussions\//);
+    // Header uses original logo image + college H1 title; no cross-college uni-nav or page-hero
+    assert.match(html, /<img class="brand-logo" src="\/src\/images\/icons\/icon-96x96\.png"/);
+    assert.match(html, new RegExp(`<h1 class="brand-title">${page.headerTitle}<\\/h1>`));
+    assert.doesNotMatch(html, /class="uni-nav"/);
+    assert.doesNotMatch(html, /class="page-hero"/);
+    assert.doesNotMatch(html, /class="footer-links"/);
 
+    // Center starts directly with mode chips; Left pane is Ad-only; Right pane has Contribute ABOVE Discussions
+    assert.match(html, /<div class="workspace-center">\s*<div class="mode-tabs"/);
+    const leftMatch = html.match(/<aside class="workspace-left"[\s\S]*?<\/aside>/);
+    assert.ok(leftMatch, `${page.file} missing .workspace-left`);
+    assert.match(leftMatch[0], /id="ad-control-card"/);
+    assert.doesNotMatch(leftMatch[0], /id="contribute-section"/);
+
+    const rightMatch = html.match(/<aside class="workspace-right"[\s\S]*?<\/aside>/);
+    assert.ok(rightMatch, `${page.file} missing .workspace-right`);
+    const contributeIdx = rightMatch[0].indexOf('id="contribute-section"');
+    const commentsIdx = rightMatch[0].indexOf('id="comments-section"');
+    assert.ok(contributeIdx !== -1 && commentsIdx !== -1 && contributeIdx < commentsIdx, `${page.file} must place #contribute-section above #comments-section in .workspace-right`);
+
+    assert.match(html, new RegExp(`https:\\/\\/github\\.com\\/rajchandra3\\/cgpa-calculator\\/discussions\\/${page.discussionTerm}`));
     assert.match(html, /id="giscus-container"/);
     assert.match(html, /data-repo="rajchandra3\/cgpa-calculator"/);
     assert.match(html, /data-repo-id="R_kgDOGqICXQ"/);
     assert.match(html, /data-category="General"/);
     assert.match(html, /data-category-id="DIC_kwDOGqICXc4DL4Gy"/);
     assert.match(html, /data-mapping="number"/);
-    assert.match(html, /data-term="5"/);
+    assert.match(html, new RegExp(`data-term="${page.discussionTerm}"`));
 
-    // Grade Scale card and automatic ads removed; replaced by Contribute card, Wow Promo slot, and 1 hidden opt-in ad slot
+    // Grade Scale card and legacy ad slots removed; Announcement banner + 1 hidden opt-in left-pane ad slot
     assert.doesNotMatch(html, /grade-scale-card/);
     assert.doesNotMatch(html, /ad-slot-post-calc/);
     assert.doesNotMatch(html, /ad-slot-left-rail/);
+    assert.match(
+      html,
+      /<section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement"[^>]*data-ad-location="announcement-banner"[^>]*data-ad-slot="6993669367"[^>]*hidden>/
+    );
     assert.match(
       html,
       /<section id="personal-promo-slot" class="personal-promo"[^>]*hidden><\/section>/
@@ -612,8 +634,8 @@ test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, an
       /id="ad-optin-btn"[^>]*aria-pressed="false"[^>]*aria-controls="ad-slot-optin"[^>]*>Show Quality Ad<\/button>/
     );
 
-    const adSlotMatches = html.match(/class="ad-slot\b/g) || [];
-    assert.equal(adSlotMatches.length, 1, `${page.file} must have strictly 1 .ad-slot container`);
+    const adSlotMatches = html.match(/class="[^"]*\bad-slot\b/g) || [];
+    assert.equal(adSlotMatches.length, 2, `${page.file} must have strictly 2 .ad-slot containers (announcement + opt-in)`);
     assert.match(
       html,
       /<section id="ad-slot-optin" class="ad-slot ad-slot--optin"[^>]*data-ad-location="optin-quality"[^>]*data-ad-slot-desktop="7637288848"[^>]*data-ad-slot-mobile="6993669367"[^>]*hidden>/
@@ -625,7 +647,7 @@ test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, an
     assert.doesNotMatch(calcShellMatch[0], /ad-slot/);
     assert.doesNotMatch(calcShellMatch[0], /personal-promo-slot/);
 
-    const commentsMatch = html.match(/<aside id="comments-section"[\s\S]*?<\/aside>/);
+    const commentsMatch = html.match(/<section id="comments-section"[\s\S]*?<\/section>/);
     assert.ok(commentsMatch, `${page.file} missing #comments-section`);
     assert.doesNotMatch(commentsMatch[0], /ad-slot/);
 

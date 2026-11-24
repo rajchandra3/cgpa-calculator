@@ -6,6 +6,7 @@ import {
   AD_PREF_STORAGE_KEY,
   ADSENSE_SCRIPT_SRC,
   PRODUCTION_HOST,
+  activateAnnouncementAd,
   activateOptInAd,
   getAdPreference,
   getViewportBucket,
@@ -507,4 +508,97 @@ test('?ads=preview renders Quality Ad Preview box for desktop and mobile without
   assert.deepEqual(outMobile, { preview: true, activated: true, slot: '6993669367' });
   assert.equal(mobileEnv.headChildren.length, 0);
   assert.equal(mobileSlot.frame.children[0].children[0].textContent, 'Quality Ad Preview · mobile (6993669367)');
+});
+
+test('activateAnnouncementAd mounts single fallback banner ad, supports preview, reuse, and never touches opt-in status', () => {
+  // Missing slot or empty data-ad-slot returns inactive
+  const emptyEnv = createEnvironment({ slot: null });
+  assert.deepEqual(activateAnnouncementAd({ doc: emptyEnv.doc, win: emptyEnv.win }), {
+    preview: false,
+    activated: false,
+    slot: '',
+  });
+
+  const bannerEl = createFakeElement('section', {
+    id: 'announcement-banner',
+    dataset: { adLocation: 'announcement-banner', adSlot: '6993669367', adFormat: 'auto' },
+    classList: ['is-inactive', 'is-custom-announcement'],
+  });
+  bannerEl.hidden = true;
+  const frame = createFakeElement('div');
+  frame.className = 'ad-frame';
+  bannerEl.appendChild(frame);
+
+  const statusEl = createFakeElement('p', { id: 'ad-optin-status' });
+  statusEl.textContent = 'Ads off · Zero ad scripts loaded';
+
+  const env = createEnvironment({ slot: null, statusEl, width: 1440 });
+  env.doc.getElementById = (id) => {
+    if (id === 'announcement-banner') return bannerEl;
+    if (id === 'ad-optin-status') return statusEl;
+    return null;
+  };
+
+  const first = activateAnnouncementAd({ university: 'vit', doc: env.doc, win: env.win });
+  assert.deepEqual(first, { preview: false, activated: true, slot: '6993669367' });
+  assert.equal(bannerEl.hidden, false);
+  assert.equal(bannerEl.classList.contains('is-custom-announcement'), false);
+  assert.equal(frame.children.length, 1);
+  assert.equal(frame.children[0].getAttribute('data-ad-slot'), '6993669367');
+  assert.equal(frame.children[0].getAttribute('data-adtest'), 'on');
+  assert.equal(env.win.adsbygoogle.length, 1);
+
+  // Second call reuses mounted slot without re-pushing
+  const reused = activateAnnouncementAd({ university: 'vit', doc: env.doc, win: env.win });
+  assert.deepEqual(reused, { preview: false, activated: true, reused: true, slot: '6993669367' });
+  assert.equal(env.win.adsbygoogle.length, 1);
+
+  // Filled/unfilled/error do NOT touch #ad-optin-status
+  frame.children[0].setAttribute('data-ad-status', 'filled');
+  env.mutationObservers[0].trigger();
+  assert.equal(statusEl.textContent, 'Ads off · Zero ad scripts loaded');
+
+  env.headChildren[0].dispatchEvent('error');
+  assert.equal(bannerEl.hidden, true);
+  assert.equal(statusEl.textContent, 'Ads off · Zero ad scripts loaded');
+
+  // Preview mode & production host / querySelector fallback / throwOnPush
+  const previewBanner = createFakeElement('section', {
+    id: 'announcement-banner',
+    dataset: { adLocation: 'announcement-banner', adSlot: '6993669367' },
+  });
+  const previewFrame = createFakeElement('div');
+  previewFrame.className = 'ad-frame';
+  previewBanner.appendChild(previewFrame);
+  const previewEnv = createEnvironment({ slot: null, width: 1440, search: '?ads=preview' });
+  previewEnv.doc.getElementById = () => previewBanner;
+  const previewOut = activateAnnouncementAd({ doc: previewEnv.doc, win: previewEnv.win });
+  assert.deepEqual(previewOut, { preview: true, activated: true, slot: '6993669367' });
+  assert.equal(previewEnv.headChildren.length, 0);
+  assert.match(previewFrame.children[0].children[0].textContent, /Announcement Banner Ad Preview/);
+
+  const prodBanner = createFakeElement('section', {
+    id: 'announcement-banner',
+    dataset: { adSlot: '6993669367' },
+  });
+  const prodEnv = createEnvironment({
+    slot: null,
+    width: 0,
+    hostname: PRODUCTION_HOST,
+    throwOnPush: true,
+    withGetElementById: false,
+  });
+  prodEnv.doc.querySelector = (sel) => {
+    if (sel.includes('announcement-banner')) return prodBanner;
+    return null;
+  };
+  prodEnv.win.innerWidth = 0;
+  prodEnv.win.location = {};
+  delete prodEnv.win.adsbygoogle;
+  const prodOut = activateAnnouncementAd({ doc: prodEnv.doc, win: prodEnv.win });
+  assert.deepEqual(prodOut, { preview: false, activated: true, slot: '6993669367' });
+  assert.equal(prodBanner.children[0].getAttribute('data-adtest'), null);
+  prodBanner.children[0].setAttribute('data-ad-status', 'unfilled');
+  prodEnv.mutationObservers[0].trigger();
+  assert.equal(prodBanner.classList.contains('is-unfilled'), true);
 });

@@ -136,24 +136,9 @@
   <header class="site-header">
     <div class="header-inner">
       <a class="brand" href="/">
-        <svg class="brand-mark" width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          <rect x="3" y="3" width="26" height="26" rx="7" stroke="currentColor" stroke-width="2.2"/>
-          <rect x="8" y="8" width="16" height="5" rx="1.75" fill="currentColor"/>
-          <circle cx="10.5" cy="18" r="1.75" fill="currentColor"/>
-          <circle cx="16" cy="18" r="1.75" fill="currentColor"/>
-          <circle cx="21.5" cy="18" r="1.75" fill="currentColor"/>
-          <circle cx="10.5" cy="23" r="1.75" fill="currentColor"/>
-          <circle cx="16" cy="23" r="1.75" fill="currentColor"/>
-          <rect x="19.75" y="21.25" width="3.5" height="3.5" rx="1" fill="currentColor"/>
-        </svg>
-        <span>CGPA Calculator</span>
+        <img class="brand-logo" src="/src/images/icons/icon-96x96.png" width="32" height="32" alt="">
+        <h1 class="brand-title">VIT CGPA Calculator</h1>
       </a>
-      <nav class="uni-nav" aria-label="Universities">
-        <a class="uni-link is-active" aria-current="page" href="/">VIT</a>
-        <a class="uni-link" href="/college/anna-university.html">Anna Univ</a>
-        <a class="uni-link" href="/college/ktu.html">KTU</a>
-        <a class="uni-link" href="/college/srm.html">SRM</a>
-      </nav>
       <div class="header-actions">
         <label class="visually-hidden" for="theme-selector">Color theme</label>
         <select id="theme-selector" class="theme-select" aria-label="Color theme">
@@ -167,13 +152,13 @@
   </header>
 
   <main id="main-content" class="page-main">
+    <section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement" aria-label="Announcement" data-ad-location="announcement-banner" data-ad-slot="6993669367" data-ad-format="auto" hidden>
+      <span class="ad-label">Advertisement</span>
+      <div class="ad-frame"></div>
+    </section>
+
     <div class="workspace-layout">
       <div class="workspace-center">
-        <section class="page-hero">
-          <h1>VIT CGPA Calculator</h1>
-          <p class="hero-trust">Over <span class="stat-num">1M+</span> views since <span class="stat-num">2017</span> · Trusted by VIT students for over <span class="stat-num">9+</span> years · FFCS GPA, CGPA &amp; expected marks.</p>
-        </section>
-
         <div class="mode-tabs" role="tablist" aria-label="Calculator modes">
           <button type="button" id="tab-sc" role="tab" class="mode-tab is-active" data-tab="sc" aria-selected="true" tabindex="0">Semester GPA</button>
           <button type="button" id="tab-gc" role="tab" class="mode-tab" data-tab="gc" aria-selected="false" tabindex="-1">Quick CGPA</button>
@@ -346,16 +331,7 @@
         </section>
       </div>
 
-      <aside class="workspace-left" aria-label="Open source &amp; ad preferences">
-        <section id="contribute-section" class="side-card contribute-card" aria-labelledby="contribute-heading">
-          <h2 id="contribute-heading">Spot an issue? Contribute</h2>
-          <p class="side-card-desc">Grade scales, credit rules, or formulas look off? This calculator is open source — report an issue or send a PR on GitHub.</p>
-          <div class="side-card-actions">
-            <a id="contribute-repo-link" class="btn btn-secondary" data-contribute-action="repo" href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer">Contribute on GitHub &#8599;</a>
-            <a id="contribute-issue-link" class="btn btn-subtle" data-contribute-action="issue" href="https://github.com/rajchandra3/cgpa-calculator/issues/new" target="_blank" rel="noopener noreferrer">Report an Issue &#8599;</a>
-          </div>
-        </section>
-
+      <aside class="workspace-left" aria-label="Ad display preferences">
         <section id="ad-control-card" class="side-card ad-control-card" aria-labelledby="ad-control-heading">
           <h2 id="ad-control-heading">Optional Display Ad</h2>
           <p class="side-card-desc">This page stays ad-free by default. Toggle a single standard display slot whenever you choose.</p>
@@ -368,41 +344,45 @@
         </section>
       </aside>
 
-      <aside id="comments-section" class="workspace-right comments-sidebar" aria-labelledby="comments-heading">
-        <div class="comments-header">
-          <h2 id="comments-heading">Discussions &amp; Feedback</h2>
-          <a class="comments-ext-link" href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Open on GitHub &#8599;</a>
-        </div>
-        <p class="comments-desc">Share suggestions, report grade-scale updates, or ask questions in <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/" target="_blank" rel="noopener noreferrer">GitHub Discussions</a>.</p>
-        <div
-          id="giscus-container"
-          class="giscus-host"
-          data-repo="rajchandra3/cgpa-calculator"
-          data-repo-id="R_kgDOGqICXQ"
-          data-category="General"
-          data-category-id="DIC_kwDOGqICXc4DL4Gy"
-          data-mapping="number"
-          data-term="5"
-          data-strict="0"
-          data-reactions-enabled="1"
-          data-emit-metadata="0"
-          data-input-position="top"
-          data-lang="en"
-        ></div>
-        <p class="comments-footnote">Open-source comments via <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Discussion #5 (Giscus)</a> · <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/" target="_blank" rel="noopener noreferrer">All Discussions</a>.</p>
+      <aside class="workspace-right" aria-label="Contribute &amp; VIT discussions">
+        <section id="contribute-section" class="side-card contribute-card" aria-labelledby="contribute-heading">
+          <h2 id="contribute-heading">Spot an issue? Contribute</h2>
+          <p class="side-card-desc">VIT FFCS grade scales, credit rules, or formulas look off? This calculator is open source — report an issue or send a PR on GitHub.</p>
+          <div class="side-card-actions">
+            <a id="contribute-repo-link" class="btn btn-secondary" data-contribute-action="repo" href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer">Contribute on GitHub &#8599;</a>
+            <a id="contribute-issue-link" class="btn btn-subtle" data-contribute-action="issue" href="https://github.com/rajchandra3/cgpa-calculator/issues/new" target="_blank" rel="noopener noreferrer">Report an Issue &#8599;</a>
+          </div>
+        </section>
+
+        <section id="comments-section" class="comments-sidebar" aria-labelledby="comments-heading">
+          <div class="comments-header">
+            <h2 id="comments-heading">VIT Discussions &amp; Feedback</h2>
+            <a class="comments-ext-link" href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Open on GitHub &#8599;</a>
+          </div>
+          <p class="comments-desc">Share VIT feedback, report grade-scale updates, or ask questions in <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">VIT Discussion #5</a>.</p>
+          <div
+            id="giscus-container"
+            class="giscus-host"
+            data-repo="rajchandra3/cgpa-calculator"
+            data-repo-id="R_kgDOGqICXQ"
+            data-category="General"
+            data-category-id="DIC_kwDOGqICXc4DL4Gy"
+            data-mapping="number"
+            data-term="5"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-lang="en"
+          ></div>
+          <p class="comments-footnote">Open-source comments via <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Discussion #5 (Giscus)</a>.</p>
+        </section>
       </aside>
     </div>
   </main>
 
   <footer class="site-footer">
     <p>&copy; 2017–<span id="thisYear">2026</span> <a href="https://rajchandra.me" target="_blank" rel="noopener noreferrer">Raj Chandra</a></p>
-    <nav class="footer-links" aria-label="Calculators and resources">
-      <a href="/">VIT CGPA</a>
-      <a href="/college/anna-university.html">Anna University</a>
-      <a href="/college/ktu.html">KTU</a>
-      <a href="/college/srm.html">SRMIST</a>
-      <a href="/sitemap.html">Sitemap</a>
-    </nav>
     <div class="footer-actions">
       <button type="button" id="share-app-btn" class="btn btn-subtle" hidden>Share</button>
       <a href="https://www.linkedin.com/in/rajchandra3/" target="_blank" rel="noopener noreferrer">LinkedIn</a>

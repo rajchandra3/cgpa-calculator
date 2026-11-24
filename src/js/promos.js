@@ -1,7 +1,14 @@
 /**
- * Declarative Wow-Moment Personal & Affiliate Promo Rule Engine.
+ * Declarative Wow-Moment Personal & Affiliate Promo Rule Engine
+ * + Announcement Banner Config.
  *
- * How Raj can add, reorder, or edit promo rules:
+ * Announcement Banner (`ANNOUNCEMENT_BANNER`):
+ * - By default `enabled: false`, so `#announcement-banner` automatically falls back
+ *   to a Google AdSense display banner.
+ * - Set `enabled: true` and fill `badge`, `text`, `ctaLabel`, `ctaUrl`, and `universities`
+ *   to replace the top Google Ad with your own announcement or affiliate push.
+ *
+ * Wow-Moment Promos (`PERSONAL_PROMOS`):
  * 1. Add an entry to PERSONAL_PROMOS below (higher `priority` wins when multiple rules match).
  * 2. Set `enabled: true` (or `false` to disable a template without deleting it).
  * 3. Configure `when`:
@@ -13,6 +20,17 @@
  *    ('Affiliate' automatically adds `rel="noopener noreferrer sponsored"` on the CTA link).
  * 5. Always provide an absolute `https://` or `http://` URL in `ctaUrl`.
  */
+
+export const ANNOUNCEMENT_BANNER = Object.freeze({
+  id: 'custom-announcement',
+  enabled: false, // Set to true to override the top Google Ad banner with this announcement
+  universities: Object.freeze(['*']),
+  badge: 'Announcement',
+  disclosure: 'By Raj Chandra',
+  text: 'Replace this text and set enabled: true to display a custom announcement banner.',
+  ctaLabel: 'Learn more ↗',
+  ctaUrl: 'https://rajchandra.me/',
+});
 
 export const TAB_ALIASES = Object.freeze({
   gpa: Object.freeze(['sc']),
@@ -263,6 +281,85 @@ export function renderPersonalPromo(container, promo, { onCtaClick, onDismiss, d
     container.appendChild(card);
   }
 
+  container.hidden = false;
+  return true;
+}
+
+export function resolveAnnouncementBanner(university, config = ANNOUNCEMENT_BANNER) {
+  if (!config || typeof config !== 'object' || config.enabled !== true) return null;
+  const text = typeof config.text === 'string' ? config.text.trim() : '';
+  if (!text) return null;
+  if (config.ctaUrl && !isSafeHttpUrl(config.ctaUrl)) return null;
+
+  if (config.universities) {
+    const allowed = new Set(
+      (Array.isArray(config.universities) ? config.universities : [])
+        .map((u) => (typeof u === 'string' ? u.trim().toLowerCase() : ''))
+        .filter(Boolean)
+    );
+    const uniId = typeof university === 'string' ? university.trim().toLowerCase() : '';
+    if (!allowed.has('*') && (!uniId || !allowed.has(uniId))) {
+      return null;
+    }
+  }
+
+  return config;
+}
+
+export function renderAnnouncementBanner(
+  container,
+  announcement,
+  { onCtaClick, doc = document } = {}
+) {
+  if (!container) return false;
+  const text = typeof announcement?.text === 'string' ? announcement.text.trim() : '';
+  if (!announcement || !text || (announcement.ctaUrl && !isSafeHttpUrl(announcement.ctaUrl))) {
+    container.hidden = true;
+    clearPromoContainer(container);
+    return false;
+  }
+
+  const bar = doc.createElement('div');
+  bar.className = 'announcement-custom';
+  bar.setAttribute('data-announcement-id', announcement.id || 'custom-announcement');
+
+  if (announcement.badge) {
+    const badge = doc.createElement('span');
+    badge.className = 'promo-badge';
+    badge.textContent = announcement.badge;
+    bar.appendChild(badge);
+  }
+
+  const message = doc.createElement('p');
+  message.className = 'announcement-text';
+  message.textContent = text;
+  bar.appendChild(message);
+
+  if (announcement.ctaUrl) {
+    const cta = doc.createElement('a');
+    cta.className = 'btn btn-secondary announcement-cta';
+    cta.setAttribute('href', announcement.ctaUrl);
+    cta.setAttribute('target', '_blank');
+    const isAffiliate =
+      typeof announcement.disclosure === 'string' &&
+      announcement.disclosure.trim().toLowerCase() === 'affiliate';
+    cta.setAttribute('rel', isAffiliate ? 'noopener noreferrer sponsored' : 'noopener noreferrer');
+    cta.textContent = announcement.ctaLabel || 'Learn more ↗';
+    cta.addEventListener('click', () => {
+      onCtaClick?.(announcement);
+    });
+    bar.appendChild(cta);
+  }
+
+  if (typeof container.replaceChildren === 'function') {
+    container.replaceChildren(bar);
+  } else {
+    container.textContent = '';
+    container.appendChild(bar);
+  }
+
+  container.classList?.add('is-custom-announcement');
+  container.classList?.remove('is-unfilled', 'is-inactive');
   container.hidden = false;
   return true;
 }

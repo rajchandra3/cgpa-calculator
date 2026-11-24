@@ -75,19 +75,19 @@ function trackAdEvent(win, name, props) {
   }
 }
 
-function observeAdStatus(insEl, slotEl, meta, doc, win) {
+function observeAdStatus(insEl, slotEl, meta, doc, win, { updateOptInStatus = true } = {}) {
   if (typeof win?.MutationObserver !== 'function') return;
 
   const observer = new win.MutationObserver(() => {
     const status = insEl.getAttribute('data-ad-status');
     if (status === 'filled') {
       slotEl.classList.remove('is-unfilled');
-      setOptInStatus(doc, 'Ad slot active');
+      if (updateOptInStatus) setOptInStatus(doc, 'Ad slot active');
       trackAdEvent(win, 'ad_slot_filled', meta);
       observer.disconnect();
     } else if (status === 'unfilled') {
       slotEl.classList.add('is-unfilled');
-      setOptInStatus(doc, 'No ad available right now');
+      if (updateOptInStatus) setOptInStatus(doc, 'No ad available right now');
       trackAdEvent(win, 'ad_slot_unfilled', meta);
       observer.disconnect();
     }
@@ -157,7 +157,7 @@ function renderPreviewSlot(slotEl, doc, slotId, viewportWidth) {
   mountIntoFrame(slotEl, box);
 }
 
-function ensureAdSenseScript(doc, win, slotEl, meta) {
+function ensureAdSenseScript(doc, win, slotEl, meta, { updateOptInStatus = true } = {}) {
   const existing = doc.querySelector?.(
     'script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]'
   );
@@ -171,7 +171,7 @@ function ensureAdSenseScript(doc, win, slotEl, meta) {
   script.addEventListener('error', () => {
     slotEl.classList.add('is-unfilled');
     slotEl.hidden = true;
-    setOptInStatus(doc, 'Ad script blocked by browser or extension');
+    if (updateOptInStatus) setOptInStatus(doc, 'Ad script blocked by browser or extension');
     trackAdEvent(win, 'ad_slot_unfilled', {
       ...meta,
       reason: 'script_blocked',
@@ -254,4 +254,84 @@ export function hideOptInAd({ doc = document } = {}) {
   if (!slotEl) return false;
   slotEl.hidden = true;
   return true;
+}
+
+export function activateAnnouncementAd({
+  university = 'vit',
+  trigger = 'announcement_fallback',
+  doc = document,
+  win = window,
+} = {}) {
+  const preview = isPreviewMode(win?.location?.search || '');
+  const slotEl =
+    doc?.getElementById?.('announcement-banner') ||
+    doc?.querySelector?.('.ad-slot[data-ad-location="announcement-banner"]') ||
+    null;
+  const slotId = slotEl?.dataset?.adSlot || '';
+
+  if (!slotEl || !slotId) {
+    return { preview, activated: false, slot: '' };
+  }
+
+  slotEl.hidden = false;
+  slotEl.classList?.remove('is-inactive', 'is-custom-announcement');
+
+  if (mountedSlots.has(slotEl)) {
+    return { preview, activated: true, reused: true, slot: slotId };
+  }
+
+  mountedSlots.add(slotEl);
+
+  const viewportWidth = Number(win?.innerWidth || doc?.documentElement?.clientWidth || 0);
+  const bucket = getViewportBucket(viewportWidth);
+
+  if (preview) {
+    const box = doc.createElement('div');
+    box.className = 'ad-preview-box';
+    const title = doc.createElement('strong');
+    title.textContent = `Announcement Banner Ad Preview · ${bucket} (${slotId})`;
+    const dims = doc.createElement('span');
+    dims.className = 'num';
+    dims.textContent = 'Google Ad fallback · Set ANNOUNCEMENT_BANNER.enabled = true in promos.js to override';
+    box.append(title, dims);
+    mountIntoFrame(slotEl, box);
+    return { preview: true, activated: true, slot: slotId };
+  }
+
+  const staging = isStagingHost(win?.location?.hostname || PRODUCTION_HOST);
+  const meta = {
+    location: slotEl.dataset?.adLocation || 'announcement-banner',
+    slot: slotId,
+    university,
+    viewport_bucket: bucket,
+    trigger,
+  };
+
+  ensureAdSenseScript(doc, win, slotEl, meta, { updateOptInStatus: false });
+
+  const ins = doc.createElement('ins');
+  ins.className = 'adsbygoogle';
+  ins.style.display = 'block';
+  ins.setAttribute('data-ad-client', AD_CLIENT);
+  ins.setAttribute('data-ad-slot', slotId);
+  ins.setAttribute('data-ad-format', slotEl.dataset?.adFormat || 'auto');
+  ins.setAttribute('data-full-width-responsive', 'true');
+  if (staging) {
+    ins.setAttribute('data-adtest', 'on');
+  }
+
+  mountIntoFrame(slotEl, ins);
+
+  try {
+    win.adsbygoogle = win.adsbygoogle || [];
+    win.adsbygoogle.push({});
+  } catch {
+    // Ignore single-slot push errors
+  }
+
+  trackAdEvent(win, 'ad_slot_requested', meta);
+  observeAdStatus(ins, slotEl, meta, doc, win, { updateOptInStatus: false });
+  observeAdViewability(slotEl, meta, win);
+
+  return { preview: false, activated: true, slot: slotId };
 }

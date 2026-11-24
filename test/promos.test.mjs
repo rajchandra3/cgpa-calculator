@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  ANNOUNCEMENT_BANNER,
   PERSONAL_PROMOS,
   TAB_ALIASES,
   expandTabs,
@@ -9,7 +10,9 @@ import {
   matchPromo,
   matchesNumericRule,
   matchesPromoRule,
+  renderAnnouncementBanner,
   renderPersonalPromo,
+  resolveAnnouncementBanner,
 } from '../src/js/promos.js';
 
 function createFakeElement(tagName) {
@@ -354,4 +357,100 @@ test('renderPersonalPromo mounts safe DOM, sets affiliate rel, fires callbacks, 
   affCta.click();
   affMeta.children[1].click();
   assert.equal(fallbackContainer.hidden, true);
+});
+
+test('resolveAnnouncementBanner & renderAnnouncementBanner handle default disabled, university filters, safe URLs, and custom rendering', () => {
+  // Default config is disabled so Google Ad fallback runs
+  assert.equal(ANNOUNCEMENT_BANNER.enabled, false);
+  assert.equal(resolveAnnouncementBanner('vit'), null);
+  assert.equal(resolveAnnouncementBanner('vit', null), null);
+
+  // Blank text or unsafe URL rejected
+  assert.equal(resolveAnnouncementBanner('vit', { enabled: true, text: '   ' }), null);
+  assert.equal(
+    resolveAnnouncementBanner('vit', { enabled: true, text: 'Hi', ctaUrl: 'javascript:alert(1)' }),
+    null
+  );
+
+  // University targeting
+  const vitOnly = {
+    id: 'vit-banner',
+    enabled: true,
+    universities: ['VIT', 123],
+    badge: 'Update',
+    text: 'FAT schedule updated!',
+    ctaLabel: 'See details ↗',
+    ctaUrl: 'https://rajchandra.me/news',
+  };
+  assert.equal(resolveAnnouncementBanner('vit', vitOnly), vitOnly);
+  assert.equal(resolveAnnouncementBanner('ktu', vitOnly), null);
+  assert.equal(resolveAnnouncementBanner('', vitOnly), null);
+  assert.equal(
+    resolveAnnouncementBanner('vit', { enabled: true, text: 'Bad uni', universities: 'vit' }),
+    null
+  );
+
+  const anyUni = { enabled: true, text: 'All students notice' };
+  assert.equal(resolveAnnouncementBanner('srm', anyUni), anyUni);
+  assert.equal(
+    resolveAnnouncementBanner('srm', { enabled: true, universities: ['*'], text: 'Global notice' })?.text,
+    'Global notice'
+  );
+
+  // renderAnnouncementBanner validation & DOM output
+  const doc = createFakeDoc();
+  const container = createFakeElement('section');
+  container.classList = {
+    set: new Set(['is-unfilled']),
+    add(c) { this.set.add(c); },
+    remove(...cs) { cs.forEach((c) => this.set.delete(c)); },
+    contains(c) { return this.set.has(c); },
+  };
+  assert.equal(renderAnnouncementBanner(null, vitOnly, { doc }), false);
+  assert.equal(renderAnnouncementBanner(container, null, { doc }), false);
+  assert.equal(container.hidden, true);
+  assert.equal(
+    renderAnnouncementBanner(container, { text: 'Bad', ctaUrl: 'javascript:void(0)' }, { doc }),
+    false
+  );
+
+  const clicked = [];
+  assert.equal(
+    renderAnnouncementBanner(container, vitOnly, {
+      doc,
+      onCtaClick: (item) => clicked.push(item.id),
+    }),
+    true
+  );
+  assert.equal(container.hidden, false);
+  assert.equal(container.classList.contains('is-custom-announcement'), true);
+  assert.equal(container.classList.contains('is-unfilled'), false);
+  const bar = container.children[0];
+  assert.equal(bar.className, 'announcement-custom');
+  assert.equal(bar.getAttribute('data-announcement-id'), 'vit-banner');
+  assert.equal(bar.children[0].textContent, 'Update');
+  assert.equal(bar.children[1].textContent, 'FAT schedule updated!');
+  assert.equal(bar.children[2].getAttribute('rel'), 'noopener noreferrer');
+  bar.children[2].click();
+  assert.deepEqual(clicked, ['vit-banner']);
+
+  // Fallback without replaceChildren, affiliate disclosure, default CTA label, and text-only banner without CTA
+  const fallback = createFakeElement('section');
+  delete fallback.replaceChildren;
+  assert.equal(
+    renderAnnouncementBanner(
+      fallback,
+      { text: 'Affiliate deal', disclosure: 'Affiliate', ctaUrl: 'https://example.com/deal' },
+      { doc }
+    ),
+    true
+  );
+  assert.equal(fallback.children[0].getAttribute('data-announcement-id'), 'custom-announcement');
+  const affLink = fallback.children[0].children[1];
+  assert.equal(affLink.getAttribute('rel'), 'noopener noreferrer sponsored');
+  assert.equal(affLink.textContent, 'Learn more ↗');
+  affLink.click();
+
+  assert.equal(renderAnnouncementBanner(container, { text: 'Plain notice only' }, { doc }), true);
+  assert.equal(container.children[0].children.length, 1);
 });
