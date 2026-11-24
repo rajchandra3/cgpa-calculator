@@ -1461,7 +1461,7 @@ details.faq-item > p {
   }
 }
 
-@container workspace (inline-size >= 42rem) {
+@container workspace (inline-size >= 49rem) {
   .row-list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1493,7 +1493,7 @@ details.faq-item > p {
 
 @media (min-width: 1120px) {
   .workspace-layout {
-    grid-template-columns: clamp(230px, 18.5vw, 290px) minmax(0, 1fr) clamp(310px, 25vw, 390px);
+    grid-template-columns: clamp(245px, 19vw, 295px) minmax(0, 1fr) clamp(310px, 25vw, 390px);
     grid-template-areas: "left center right";
     gap: clamp(1rem, 1.5vw, 1.5rem);
   }
@@ -1524,13 +1524,13 @@ details.faq-item > p {
   }
 
   .workspace-left .grade-table {
-    font-size: 0.8125rem;
+    font-size: 0.78125rem;
   }
 
   .workspace-left .grade-table thead th,
   .workspace-left .grade-table tbody th,
   .workspace-left .grade-table tbody td {
-    padding: 0.4rem 0.5rem;
+    padding: 0.375rem 0.4375rem;
   }
 
   .ad-slot--rail {
