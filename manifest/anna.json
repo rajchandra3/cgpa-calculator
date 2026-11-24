@@ -1,52 +1,71 @@
 {
-    "name": "Anna University CGPA Calculator",
-    "short_name": "Anna University CGPA Calculator",
-    "description": "A tool to compute their CGPA, GPA and more",
-    "start_url": "/college/anna-university?utm_source=launch&utm_medium=pwa",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#ffffff",
-    "orientation": "portrait",
-    "shortcuts": [
+  "name": "Anna University CGPA Calculator",
+  "short_name": "Anna CGPA",
+  "description": "Accurate Anna University GPA and CGPA calculator with official grade points. Over 1M+ views since 2017 and trusted by engineering students for over 9+ years.",
+  "start_url": "/college/anna-university.html?utm_source=launch&utm_medium=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f5f0",
+  "theme_color": "#1d4ed8",
+  "orientation": "portrait-primary",
+  "shortcuts": [
+    {
+      "name": "Compute Semester GPA",
+      "short_name": "GPA",
+      "description": "Calculate your Anna University semester GPA",
+      "url": "/college/anna-university.html?tab=sc&utm_source=homescreen",
+      "icons": [
         {
-            "name": "Compute GPA",
-            "short_name": "GPA",
-            "description": "Compute your GPA",
-            "url": "/college/anna-university?tab=gc&utm_source=homescreen",
-            "icons": [{ "src": "/src/images/shortcuts/gpa-96x96.png", "sizes": "96x96" }]
-        },
-        {
-            "name": "Quick CGPA Calculator",
-            "short_name": "Quick CGPA Calc",
-            "description": "Compute your CGPA for next semester",
-            "url": "/college/anna-university?tab=qcc&utm_source=homescreen",
-            "icons": [{ "src": "/src/images/shortcuts/qcc-96x96.png", "sizes": "96x96" }]
+          "src": "/src/images/shortcuts/gpa-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
         }
-    ],
-    "icons": [
-      {
-        "src": "/src/images/icons/icon-72x72.png",
-        "type": "image/png", "sizes": "72x72"
-      },
-      {
-        "src": "/src/images/icons/icon-96x96.png",
-        "type": "image/png", "sizes": "96x96"
-      },
-      {
-        "src": "/src/images/icons/icon-128x128.png",
-        "type": "image/png","sizes": "128x128"
-      },
-      {
-        "src": "/src/images/icons/icon-256x256.png",
-        "type": "image/png", "sizes": "256x256"
-      },
-      {
-        "src": "/src/images/icons/icon-512x512.png",
-        "type": "image/png", "sizes": "512x512"
-      },
-      {
-        "src": "/src/images/icons/icon-1024x1024.png",
-        "type": "image/png", "sizes": "1024x1024"
-      }
-    ]
-  }
+      ]
+    },
+    {
+      "name": "Quick CGPA Calculator",
+      "short_name": "Quick CGPA",
+      "description": "Estimate your cumulative CGPA after this semester",
+      "url": "/college/anna-university.html?tab=gc&utm_source=homescreen",
+      "icons": [
+        {
+          "src": "/src/images/shortcuts/qcc-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/src/images/icons/icon-72x72.png",
+      "type": "image/png",
+      "sizes": "72x72"
+    },
+    {
+      "src": "/src/images/icons/icon-96x96.png",
+      "type": "image/png",
+      "sizes": "96x96"
+    },
+    {
+      "src": "/src/images/icons/icon-128x128.png",
+      "type": "image/png",
+      "sizes": "128x128"
+    },
+    {
+      "src": "/src/images/icons/icon-256x256.png",
+      "type": "image/png",
+      "sizes": "256x256"
+    },
+    {
+      "src": "/src/images/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/src/images/icons/icon-1024x1024.png",
+      "type": "image/png",
+      "sizes": "1024x1024"
+    }
+  ]
+}

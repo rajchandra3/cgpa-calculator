@@ -1,1508 +1,396 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="description" content="An online tool to calculate CGPA, GPA and and expected marks calculator, one of the most trusted tools with over 7,00,000 sessions.">
-    <meta name="keywords" content="CGPA calculator VIT, VIT CGPA CALCULATOR, VIT gpa calculator, gpa calculator VIT, devil-coder cgpa calculator, Raj Chandra vit cgpa calculator, VIT marks calculator">
-    <meta name="author" content="Raj Chandra">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1b567e">
-    <title>VIT CGPA Calculator</title>
-    <link rel="icon" type="image/png" href="./src/images/icons/favicon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <script>try{var s=localStorage.getItem('color-scheme')||localStorage.getItem('ui_theme')||localStorage.getItem('theme');if(s==='light'||s==='dark'){document.querySelector('meta[name="color-scheme"]').content=s;document.documentElement.dataset.theme=s;}}catch(e){}</script>
 
-    <!-- ios support -->
-    <link rel="apple-touch-icon" href="/src/images/icons/icon-72x72.png" />
-    <link rel="apple-touch-icon" href="/src/images/icons/icon-96x96.png" />
-    <link rel="apple-touch-icon" href="/src/images/icons/icon-128x128.png" />
-    <link rel="apple-touch-icon" href="/src/images/icons/icon-144x144.png" />
-    <link rel="apple-touch-icon" href="/src/images/icons/icon-152x152.png" />
-    <link rel="apple-touch-icon" href="/src/images/icons/icon-192x192.png" />
-    <link rel="apple-touch-icon" href="/src/images/icons/icon-384x384.png" />
-    <link rel="apple-touch-icon" href="/src/images/icons/icon-512x512.png" />
-    <meta name="apple-mobile-web-app-status-bar" content="#302b63" />
+  <title>VIT CGPA Calculator | GPA, Quick CGPA &amp; Expected Marks</title>
+  <meta name="description" content="Calculate VIT semester GPA, cumulative CGPA, and expected FAT marks under FFCS. Over 1M+ views since 2017 and trusted by VIT students for over 9+ years.">
+  <meta name="keywords" content="VIT CGPA calculator, VIT GPA calculator, FFCS GPA calculator, VIT expected marks calculator, VIT Vellore CGPA calculator, VIT Chennai CGPA calculator, Raj Chandra CGPA calculator">
+  <meta name="author" content="Raj Chandra">
+  <meta name="robots" content="index, follow">
+  <meta name="google-adsense-account" content="ca-pub-8598751574376549">
+  <link rel="canonical" href="https://cgpa-calculator.rajchandra.me/">
 
-    <!-- manifest file -->
-    <link rel="manifest" href="manifest/vit.json" />
-    
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8598751574376549" crossorigin="anonymous"></script>
-    <!-- Auto ads - will automatically place ads in optimal positions -->
-    <script>
-        (adsbygoogle = window.adsbygoogle || []).push({
-            google_ad_client: "ca-pub-8598751574376549",
-            enable_page_level_ads: true
-        });
-    </script>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CGPA Calculator">
+  <meta property="og:title" content="VIT CGPA Calculator | GPA, Quick CGPA &amp; Expected Marks">
+  <meta property="og:description" content="Calculate VIT semester GPA, cumulative CGPA, and expected FAT marks under FFCS. Over 1M+ views since 2017 and trusted by VIT students for over 9+ years.">
+  <meta property="og:url" content="https://cgpa-calculator.rajchandra.me/">
+  <meta property="og:image" content="https://cgpa-calculator.rajchandra.me/src/images/icons/icon-512x512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="VIT CGPA Calculator | GPA, Quick CGPA &amp; Expected Marks">
+  <meta name="twitter:description" content="Calculate VIT semester GPA, cumulative CGPA, and expected FAT marks under FFCS. Over 1M+ views since 2017 and trusted by VIT students for over 9+ years.">
+  <meta name="twitter:image" content="https://cgpa-calculator.rajchandra.me/src/images/icons/icon-512x512.png">
 
-    <!-- Bootstrap -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <!-- Bootstrap JS will be loaded at the end of body -->
+  <link rel="icon" type="image/png" href="/src/images/icons/favicon.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="/src/images/icons/icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="96x96" href="/src/images/icons/icon-96x96.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="/src/images/icons/icon-128x128.png">
+  <link rel="apple-touch-icon" sizes="256x256" href="/src/images/icons/icon-256x256.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/src/images/icons/icon-512x512.png">
+  <link rel="manifest" href="/manifest/vit.json">
 
-    <!-- jQuery (required for the app's JavaScript) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"></noscript>
 
-    <!-- font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Google fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+  <script async fetchpriority="low" src="https://www.googletagmanager.com/gtag/js?id=G-8SGELQM6QV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8SGELQM6QV');
+  </script>
 
-    <!-- Google analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8SGELQM6QV"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-8SGELQM6QV');
-    </script>
-
-    <!-- Schema.org -->
-    <script type='application/ld+json'>
-    {
-      "@context": "http://www.schema.org",
-      "@type": "website",
-      "name": "CGPA Calculator | VIT",
-      "alternateName": "VIT CGPA Calculator",
-      "url": "https://cgpa-calculator.rajchandra.me"
-    }
-    </script>
-
-    <!--Custom CSS-->
-    <link rel="stylesheet" href="./src/css/style.css">
-    <link rel="stylesheet" href="./src/css/mobile.css">
-    <link rel="stylesheet" href="./src/css/ad.css">
-    <link rel="stylesheet" href="https://files.rajchandra.me/css/common.css">
-    
-    <!-- start Mixpanel -->
-    <script type="text/javascript">(function(c,a){if(!a.__SV){var b=window;try{var d,m,j,k=b.location,f=k.hash;d=function(a,b){return(m=a.match(RegExp(b+"=([^&]*)")))?m[1]:null};f&&d(f,"state")&&(j=JSON.parse(decodeURIComponent(d(f,"state"))),"mpeditor"===j.action&&(b.sessionStorage.setItem("_mpcehash",f),history.replaceState(j.desiredHash||"",c.title,k.pathname+k.search)))}catch(n){}var l,h;window.mixpanel=a;a._i=[];a.init=function(b,d,g){function c(b,i){var a=i.split(".");2==a.length&&(b=b[a[0]],i=a[1]);b[i]=function(){b.push([i].concat(Array.prototype.slice.call(arguments,
-    0)))}}var e=a;"undefined"!==typeof g?e=a[g]=[]:g="mixpanel";e.people=e.people||[];e.toString=function(b){var a="mixpanel";"mixpanel"!==g&&(a+="."+g);b||(a+=" (stub)");return a};e.people.toString=function(){return e.toString(1)+".people (stub)"};l="disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");
-    for(h=0;h<l.length;h++)c(e,l[h]);var f="set set_once union unset remove delete".split(" ");e.get_group=function(){function a(c){b[c]=function(){call2_args=arguments;call2=[c].concat(Array.prototype.slice.call(call2_args,0));e.push([d,call2])}}for(var b={},d=["get_group"].concat(Array.prototype.slice.call(arguments,0)),c=0;c<f.length;c++)a(f[c]);return b};a._i.push([b,d,g])};a.__SV=1.2;b=c.createElement("script");b.type="text/javascript";b.async=!0;b.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?
-    MIXPANEL_CUSTOM_LIB_URL:"file:"===c.location.protocol&&"//cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js".match(/^\/\//)?"https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js":"//cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js";d=c.getElementsByTagName("script")[0];d.parentNode.insertBefore(b,d)}})(document,window.mixpanel||[]);
-    mixpanel.init("7ff5ca7b4aa0bef4db830b057c9076a2");</script>
-    <!-- end Mixpanel -->
-    <script language="javascript" type="text/javascript" src="./src/js/mixpanel.js"></script>
-
-    <!-- load js files  -->
-    <script language="javascript" type="text/javascript" src="./src/js/ads.js"></script>
-    <script src="serviceWorker.js"></script>
-
-    <!-- Google Ads Tag -->
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16729760450">
-    </script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'AW-16729760450');
-    </script>
-
-    <!-- Enhanced ad initialization -->
-    <script>
-        // Initialize analytics and tracking
-        function track(eventName, properties = {}) {
-            // Send to Mixpanel if available
-            if (window.mixpanel && typeof window.mixpanel.track === 'function') {
-                window.mixpanel.track(eventName, properties);
-            }
-            
-            // Send to Google Analytics
-            if (window.gtag) {
-                gtag('event', eventName, properties);
-            }
-            
-            // Log for debugging
-            console.log('Track:', eventName, properties);
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "VIT CGPA Calculator",
+        "alternateName": "VIT GPA & Expected Marks Calculator",
+        "url": "https://cgpa-calculator.rajchandra.me/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "description": "Calculate VIT semester GPA, cumulative CGPA, and expected FAT marks under FFCS. Over 1M+ views since 2017 and trusted by VIT students for over 9+ years.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "INR"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Raj Chandra",
+          "url": "https://rajchandra.me"
         }
-        
-        // Initialize tabs based on URL with analytics
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize ad tracking and viewability
-            initAdViewability();
-            
-            // Get tab from URL or default to GPA calculator
-            const urlParams = new URLSearchParams(window.location.search);
-            const tabParam = urlParams.get('tab');
-            
-            // Track page view with tab information
-            track('page_view', {
-                tab: tabParam || 'sc',
-                referrer: document.referrer,
-                device: window.innerWidth <= 768 ? 'mobile' : 'desktop'
-            });
-        });
-        
-        // Track ad viewability with Intersection Observer
-        function initAdViewability() {
-            if ('IntersectionObserver' in window) {
-                // Create observer for ad containers
-                const adObserver = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const adContainer = entry.target;
-                            const adType = adContainer.dataset.adType || 'unknown';
-                            const adLocation = adContainer.dataset.location || 'unknown';
-                            
-                            // Track viewable impression
-                            track('ad_viewable', {
-                                type: adType,
-                                location: adLocation,
-                                calculator: new URLSearchParams(window.location.search).get('tab') || 'sc',
-                                viewport_percentage: Math.round(entry.intersectionRatio * 100)
-                            });
-                            
-                            // Stop observing once viewable
-                            adObserver.unobserve(adContainer);
-                        }
-                    });
-                }, {
-                    threshold: [0.5, 0.75, 1.0], // Track different visibility thresholds
-                    rootMargin: '0px'
-                });
-                
-                // Observe all ad containers
-                document.querySelectorAll('.ad-container, .mid-form-ad, .inline-ad, .lazy-ad').forEach(container => {
-                    adObserver.observe(container);
-                });
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How is VIT GPA calculated under the FFCS system?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Each course grade is converted to grade points on the VIT 10-point scale (S = 10, A = 9, B = 8, C = 7, D = 6, E = 5, F/N = 0). Your semester GPA equals the sum of (grade points × course credits) divided by total registered credits, rounded to two decimal places."
             }
-        }
-        
-        // Make track function globally available
-        window.track = track;
-    </script>
+          },
+          {
+            "@type": "Question",
+            "name": "How does the VIT Expected Marks calculator handle Theory, Lab, and J-Component?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Theory internals are computed as min((CAT 1 + CAT 2) × 0.5 + Internals/DA + Additional Learning, 60), plus FAT × 0.4. If both Lab and J-Component are entered, the final score weights Theory at 60%, Lab at 20%, and J-Component at 20%. If only Lab or only J-Component is entered, Theory is weighted at 75% and that component at 25%. Leave both blank for theory-only courses."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why do VIT students trust this CGPA calculator?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Built in 2017 for VIT Vellore and Chennai students, this calculator has served over 1M+ views since 2017 and is trusted by VIT students for over 9+ years. It runs locally in your browser with a fast, non-intrusive layout, offline PWA support, and instant recalculation."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is the difference between Quick CGPA and All-Semester CGPA?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Quick CGPA updates your existing cumulative CGPA using just your prior completed credits, prior CGPA, and current semester credits and GPA. All-Semester CGPA lets you enter individual semester GPAs and credits across 1 to 12+ semesters to compute your cumulative CGPA from scratch."
+            }
+          }
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "VIT CGPA Calculator",
+            "item": "https://cgpa-calculator.rajchandra.me/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="stylesheet" href="/src/css/vendor/pico.min.css">
+  <link rel="stylesheet" href="/src/css/app.css">
+  <link rel="modulepreload" href="/src/js/app.js">
+  <link rel="modulepreload" href="/src/js/math.js">
+  <link rel="modulepreload" href="/src/js/universities.js">
+  <link rel="modulepreload" href="/src/js/promos.js">
 </head>
-<body onload="track('page_views')">
-    <!-- for facebook -->
-    <div id="fb-root"></div>
-    <script>(function(d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s); js.id = id;
-    js.src = "//connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v2.9";
-    fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));</script>
+<body data-university="vit">
+  <a class="visually-hidden" href="#main-content">Skip to calculator</a>
 
-    <!-- Navigation Bar (to be rendered on top) -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <img src="src/images/icons/icon-96x96.png" width="40" height="40" class="d-inline-block align-middle" alt="VIT Chennai">
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarText">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a id="nav-sc" class="nav-link" href="/?tab=sc" data-tab="sc">GPA CALCULATOR</a>
-                    </li>
-                    <li class="nav-item">
-                        <a id="nav-gc" class="nav-link" href="/?tab=gc" data-tab="gc">QUICK CGPA CALCULATOR</a>
-                    </li>
-                    <li class="nav-item">
-                        <a id="nav-ec" class="nav-link" href="/?tab=ec" data-tab="ec">EXPECTED MARKS CALCULATOR</a>
-                    </li>
-                    <li class="nav-item">
-                        <a id="nav-fc" class="nav-link" href="/?tab=fc" data-tab="fc">ANY SEM CGPA CALCULATOR</a>
-                    </li>
-                </ul>
-                <div class="d-flex align-items-center">
-                    <button id="installButton" class="btn btn-outline-light d-none">Install App</button>
-                </div>
-            </div>
-        </div>
-    </nav>
-    <!-- header -->
-    <div class="col-sm-12 col-md-12 col-lg-12 text-center mb-2 mt-2 pt-2">
-        <div class="header font-weight-bolder">VIT CGPA CALCULATOR</div>
-        <div class="d-flex justify-content-center align-items-center mb-3">
-            <div class="me-2">Theme</div>
-            <select id="theme-selector" class="form-select" style="width: 120px;">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-            </select>
-        </div>
-        <!-- Google Ads -->
-        <div class="google-ads">
-            <div class="ad-container horizontal-ad">
-                <div class="ad-head">Advertisement</div>
-                <div class="ad-content p-2">
-                    <ins class="adsbygoogle"
-                        style="display:block"
-                        data-ad-client="ca-pub-8598751574376549"
-                        data-ad-slot="4654433674"
-                        data-ad-format="auto"
-                        data-full-width-responsive="true"></ins>
-                    <script>
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    </script>
-                </div>
-            </div>
-        </div>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/">
+        <img class="brand-logo" src="/src/images/icons/icon-96x96.png" width="32" height="32" alt="">
+        <h1 class="brand-title">VIT CGPA Calculator</h1>
+      </a>
+      <div class="header-actions">
+        <label class="visually-hidden" for="theme-selector">Color theme</label>
+        <select id="theme-selector" class="theme-select" aria-label="Color theme">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+        <button type="button" id="install-app-btn" class="btn btn-subtle" hidden>Install App</button>
+      </div>
     </div>
-    
-    <!-- GPA Calculator -->
-    <div class="row col-sm-12 col-md-12 col-lg-12 gpa-calculator no-padding calculator-tab" id="sc">
-        <!-- ads for large screens -->
-        <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div><br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div><br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
+  </header>
+
+  <main id="main-content" class="page-main">
+    <section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement" aria-label="Announcement" data-ad-location="announcement-banner" data-ad-slot="6993669367" data-ad-format="auto" hidden>
+      <span class="ad-label">Advertisement</span>
+      <div class="ad-frame"></div>
+    </section>
+
+    <div class="workspace-layout">
+      <div class="workspace-center">
+        <div class="mode-tabs" role="tablist" aria-label="Calculator modes">
+          <button type="button" id="tab-sc" role="tab" class="mode-tab is-active" data-tab="sc" aria-selected="true" tabindex="0">Semester GPA</button>
+          <button type="button" id="tab-gc" role="tab" class="mode-tab" data-tab="gc" aria-selected="false" tabindex="-1">Quick CGPA</button>
+          <button type="button" id="tab-ec" role="tab" class="mode-tab" data-tab="ec" aria-selected="false" tabindex="-1">Expected Marks</button>
+          <button type="button" id="tab-fc" role="tab" class="mode-tab" data-tab="fc" aria-selected="false" tabindex="-1">All-Sem CGPA</button>
         </div>
-        <div class="card-container col-lg-6 p-4 mb-5 centered has-box-shadow gpa-calculator" id="gpa-box">
-            <div class="col-lg-10 col-md-8 col-sm-12 col-xs-12 centered">
-                <h1 class="card-title">CALCULATE GPA</h1><hr>
-                <div class="input-group mb-3 table-row" id="course1">
-                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">Course </span>
-                    <select class="form-select" name="grades" id="g1" style="color: #333; background-color: #fff;">
-                        <option value="0" style="color: #333; background-color: #fff;">Grade</option>
-                        <option value="10" style="color: #333; background-color: #fff;">S</option>
-                        <option value="9" style="color: #333; background-color: #fff;">A</option>
-                        <option value="8" style="color: #333; background-color: #fff;">B</option>
-                        <option value="7" style="color: #333; background-color: #fff;">C</option>
-                        <option value="6" style="color: #333; background-color: #fff;">D</option>
-                        <option value="5" style="color: #333; background-color: #fff;">E</option>
-                        <option value="0" style="color: #333; background-color: #fff;">F</option>
-                        <option value="0" style="color: #333; background-color: #fff;">N</option>
-                    </select>
-                    <select class="form-select" name="credits" id="c1" style="color: #333; background-color: #fff;">
-                        <option value="0" id="c0" style="color: #333; background-color: #fff;">Credits</option>
-                        <option value="1" style="color: #333; background-color: #fff;">1</option>
-                        <option value="1.5" style="color: #333; background-color: #fff;">1.5</option>
-                        <option value="2" style="color: #333; background-color: #fff;">2</option>
-                        <option value="3" style="color: #333; background-color: #fff;">3</option>
-                        <option value="4" style="color: #333; background-color: #fff;">4</option>
-                        <option value="5" style="color: #333; background-color: #fff;">5</option>
-                        <option value="20" style="color: #333; background-color: #fff;">20</option>
-                    </select>
-                </div>
-                <div class="input-group mb-3 table-row" id="course2">
-                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">Course </span>
-                    <select class="form-select" name="grades" id="g2" style="color: #333; background-color: #fff;">
-                        <option value="0" style="color: #333; background-color: #fff;">Grade</option>
-                        <option value="10" style="color: #333; background-color: #fff;">S</option>
-                        <option value="9" style="color: #333; background-color: #fff;">A</option>
-                        <option value="8" style="color: #333; background-color: #fff;">B</option>
-                        <option value="7" style="color: #333; background-color: #fff;">C</option>
-                        <option value="6" style="color: #333; background-color: #fff;">D</option>
-                        <option value="5" style="color: #333; background-color: #fff;">E</option>
-                        <option value="0" style="color: #333; background-color: #fff;">F</option>
-                        <option value="0" style="color: #333; background-color: #fff;">N</option>
-                    </select>
-                    <select class="form-select" name="credits" id="c2" style="color: #333; background-color: #fff;">
-                        <option value="0" id="c0" style="color: #333; background-color: #fff;">Credits</option>
-                        <option value="1" style="color: #333; background-color: #fff;">1</option>
-                        <option value="1.5" style="color: #333; background-color: #fff;">1.5</option>
-                        <option value="2" style="color: #333; background-color: #fff;">2</option>
-                        <option value="3" style="color: #333; background-color: #fff;">3</option>
-                        <option value="4" style="color: #333; background-color: #fff;">4</option>
-                        <option value="5" style="color: #333; background-color: #fff;">5</option>
-                        <option value="20" style="color: #333; background-color: #fff;">20</option>
-                    </select>
-                </div>
-                <div class="input-group mb-3 table-row" id="course3">
-                    <span class="input-group-text">Course </span>
-                    <select class="form-select" name="grades" id="g3">
-                        <option value="0" >Grade</option>
-                        <option value="10" >S</option>
-                        <option value="9">A</option>
-                        <option value="8">B</option>
-                        <option value="7">C</option>
-                        <option value="6">D</option>
-                        <option value="5">E</option>
-                        <option value="0">F</option>
-                        <option value="0">N</option>
-                    </select>
-                    <select class="form-select" name="credits" id="c3">
-                        <option value="0" id="c0">Credits</option>
-                        <option value="1">1</option>
-                        <option value="1.5">1.5</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="20">20</option>
-                    </select>
-                </div>
-                <div class="input-group mb-3 table-row" id="course4">
-                    <span class="input-group-text">Course </span>
-                    <select class="form-select" name="grades" id="g4">
-                        <option value="0" >Grade</option>
-                        <option value="10">S</option>
-                        <option value="9">A</option>
-                        <option value="8">B</option>
-                        <option value="7">C</option>
-                        <option value="6">D</option>
-                        <option value="5">E</option>
-                        <option value="0">F</option>
-                        <option value="0">N</option>
-                    </select>
-                    <select class="form-select" name="credits" id="c4">
-                        <option value="0" id="c0">Credits</option>
-                        <option value="1">1</option>
-                        <option value="1.5">1.5</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="20">20</option>
-                    </select>
-                </div>
-                <div class="input-group mb-3 table-row" id="course5">
-                    <span class="input-group-text">Course </span>
-                    <select class="form-select" name="grades" id="g5">
-                        <option value="0" >Grade</option>
-                        <option value="10">S</option>
-                        <option value="9">A</option>
-                        <option value="8">B</option>
-                        <option value="7">C</option>
-                        <option value="6">D</option>
-                        <option value="5">E</option>
-                        <option value="0">F</option>
-                        <option value="0">N</option>
-                    </select>
-                    <select class="form-select" name="credits" id="c5">
-                        <option value="0" id="c0">Credits</option>
-                        <option value="1">1</option>
-                        <option value="1.5">1.5</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="20">20</option>
-                    </select>
-                </div>
-                
-                <!-- Mid-form ad placement for better viewability -->
-                <div class="mid-form-ad lazy-ad" data-ad-type="mid-form" data-location="gpa_calculator_mid">
-                    <div class="ad-head">Advertisement</div>
-                    <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-pub-8598751574376549"
-                         data-ad-slot="7637288848"
-                         data-ad-format="rectangle"
-                         data-full-width-responsive="false"></ins>
-                    <script>
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    </script>
-                </div>
-                
-                <div class="input-group mb-3 table-row" id="course6">
-                    <span class="input-group-text">Course </span>
-                    <select class="form-select" name="grades" id="g6">
-                        <option value="0" >Grade</option>
-                        <option value="10">S</option>
-                        <option value="9">A</option>
-                        <option value="8">B</option>
-                        <option value="7">C</option>
-                        <option value="6">D</option>
-                        <option value="5">E</option>
-                        <option value="0">F</option>
-                        <option value="0">N</option>
-                    </select>
-                    <select class="form-select" name="credits" id="c6">
-                        <option value="0" id="c0">Credits</option>
-                        <option value="1">1</option>
-                        <option value="1.5">1.5</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="20">20</option>
-                    </select>
-                </div>
-                <div class="input-group mb-3 table-row" id="course7">
-                    <span class="input-group-text">Course </span>
-                    <select class="form-select" name="grades" id="g7">
-                        <option value="0" >Grade</option>
-                        <option value="10">S</option>
-                        <option value="9">A</option>
-                        <option value="8">B</option>
-                        <option value="7">C</option>
-                        <option value="6">D</option>
-                        <option value="5">E</option>
-                        <option value="0">F</option>
-                        <option value="0">N</option>
-                    </select>
-                    <select class="form-select" name="credits" id="c7">
-                        <option value="0" id="c0">Credits</option>
-                        <option value="1">1</option>
-                        <option value="1.5">1.5</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="20">20</option>
-                    </select>
-                </div>
-                <div class="input-group mb-3 table-row" id="course8">
-                    <span class="input-group-text">Course </span>
-                    <select class="form-select" name="grades" id="g8">
-                        <option value="0" >Grade</option>
-                        <option value="10">S</option>
-                        <option value="9">A</option>
-                        <option value="8">B</option>
-                        <option value="7">C</option>
-                        <option value="6">D</option>
-                        <option value="5">E</option>
-                        <option value="0">F</option>
-                        <option value="0">N</option>
-                    </select>
-                    <select class="form-select" name="credits" id="c8">
-                        <option value="0" id="c0">Credits</option>
-                        <option value="1">1</option>
-                        <option value="1.5">1.5</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="20">20</option>
-                    </select>
-                </div>
-                <div class="input-group mb-3 table-row" id="course9">
-                    <span class="input-group-text">Course </span>
-                    <select class="form-select" name="grades" id="g9">
-                        <option value="0" >Grade</option>
-                        <option value="10">S</option>
-                        <option value="9">A</option>
-                        <option value="8">B</option>
-                        <option value="7">C</option>
-                        <option value="6">D</option>
-                        <option value="5">E</option>
-                        <option value="0">F</option>
-                        <option value="0">N</option>
-                    </select>
-                    <select class="form-select" name="credits" id="c9">
-                        <option value="0" id="c0">Credits</option>
-                        <option value="1">1</option>
-                        <option value="1.5">1.5</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="20">20</option>
-                    </select>
-                </div>
-                <div class="input-group mb-3 table-row" id="course10">
-                    <span class="input-group-text">Course </span>
-                    <select class="form-select" name="grades" id="g10">
-                        <option value="0" >Grade</option>
-                        <option value="10">S</option>
-                        <option value="9">A</option>
-                        <option value="8">B</option>
-                        <option value="7">C</option>
-                        <option value="6">D</option>
-                        <option value="5">E</option>
-                        <option value="0">F</option>
-                        <option value="0">N</option>
-                    </select>
-                    <select class="form-select" name="credits" id="c10">
-                        <option value="0" id="c0">Credits</option>
-                        <option value="1">1</option>
-                        <option value="1.5">1.5</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="20">20</option>
-                    </select>
-                </div>
-                <div class="alert alert-primary alert-grades text-center" role="alert">
-                    <b><span id="grades" class="text-info"></span></b>
-                </div>
-                <div class="col-sm-12 ads adsGC">
-                    <script>
-                        document.querySelector('.adsGC').innerHTML = getAds();
-                    </script>
-                </div>
-                <button class="gbtn btn w-100 btn-md btn-primary" id="gbtn" onclick="track('computed_gpa')">Submit</button>
-                <br>
-                <!-- Google Ads -->
-                <div class="google-ads">
-                    <div class="ad-container">
-                        <div class="ad-head">Advertisement</div>
-                        <ins class="adsbygoogle"
-                            style="display:block"
-                            data-ad-client="ca-pub-8598751574376549"
-                            data-ad-slot="6993669367"
-                            data-ad-format="auto"
-                            data-full-width-responsive="true"></ins>
-                        <script>
-                            (adsbygoogle = window.adsbygoogle || []).push({});
-                        </script>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- ads for large screens -->
-        <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div><br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </div>
+
+        <article class="calculator-shell" aria-label="Calculators">
+      <section id="sc" class="calculator-panel" role="tabpanel" aria-labelledby="tab-sc">
+        <h2 id="sc-heading">Calculate Semester GPA</h2>
+        <p class="panel-desc">Select the grade and credit weight for each VIT FFCS course this semester. Empty rows are skipped.</p>
+        <form id="gpa-form" aria-labelledby="sc-heading" novalidate>
+          <div id="gpa-rows" class="row-list"></div>
+          <div class="form-actions">
+            <button type="button" id="add-course-btn" class="btn btn-secondary">Add Course</button>
+            <button type="reset" id="reset-gpa-btn" class="btn btn-subtle">Reset</button>
+            <button type="submit" id="gbtn" class="btn btn-primary">Calculate GPA</button>
+          </div>
+          <p id="gpa-form-error" class="form-error-banner" role="alert" hidden></p>
+          <div id="gpa-result" class="result-panel" aria-live="polite" hidden>
+            <span class="result-label">Semester GPA</span>
+            <output id="grades" class="result-value"></output>
+            <p id="gpa-meta" class="result-meta"></p>
+          </div>
+        </form>
+      </section>
+
+      <section id="gc" class="calculator-panel" role="tabpanel" aria-labelledby="tab-gc" hidden>
+        <h2 id="gc-heading">Quick CGPA Calculator</h2>
+        <p class="panel-desc">Compute your updated VIT CGPA by combining your prior completed credits with this semester's GPA.</p>
+        <form id="quick-cgpa-form" class="field-grid" aria-labelledby="gc-heading" novalidate>
+          <div class="field">
+            <label for="tc">Completed credits (prior semesters)</label>
+            <span id="tc-hint" class="field-hint">Enter 0 to 250</span>
+            <input type="number" id="tc" name="tc" inputmode="decimal" step="any" min="0" max="250" required aria-describedby="tc-hint" aria-invalid="false" data-error="tc-error" placeholder="e.g. 84">
+            <p id="tc-error" class="field-error">Enter prior completed credits between 0 and 250.</p>
+          </div>
+          <div class="field">
+            <label for="cgpa">Current CGPA (prior semesters)</label>
+            <span id="cgpa-hint" class="field-hint">Enter 0 to 10</span>
+            <input type="number" id="cgpa" name="cgpa" inputmode="decimal" step="any" min="0" max="10" required aria-describedby="cgpa-hint" aria-invalid="false" data-error="cgpa-error" placeholder="e.g. 8.75">
+            <p id="cgpa-error" class="field-error">Enter a valid prior CGPA between 0 and 10.</p>
+          </div>
+          <div class="field">
+            <label for="c">Credits this semester</label>
+            <span id="c-hint" class="field-hint">Enter 0 to 39</span>
+            <input type="number" id="c" name="c" inputmode="decimal" step="any" min="0" max="39" required aria-describedby="c-hint" aria-invalid="false" data-error="c-error" placeholder="e.g. 22">
+            <p id="c-error" class="field-error">Enter semester credits between 0 and 39.</p>
+          </div>
+          <div class="field">
+            <label for="gpa">GPA this semester</label>
+            <span id="gpa-hint" class="field-hint">Enter 0 to 10</span>
+            <input type="number" id="gpa" name="gpa" inputmode="decimal" step="any" min="0" max="10" required aria-describedby="gpa-hint" aria-invalid="false" data-error="gpa-error" placeholder="e.g. 9.10">
+            <p id="gpa-error" class="field-error">Enter a valid semester GPA between 0 and 10.</p>
+          </div>
+          <div class="form-actions full-span">
+            <button type="reset" id="reset-qcc-btn" class="btn btn-subtle">Reset</button>
+            <button type="submit" id="submit" class="btn btn-primary">Calculate CGPA</button>
+          </div>
+          <p id="quick-cgpa-error" class="form-error-banner full-span" role="alert" hidden></p>
+          <div id="cgpa-result" class="result-panel full-span" aria-live="polite" hidden>
+            <span class="result-label">Updated CGPA</span>
+            <output id="cgpa-msg" class="result-value"></output>
+            <p id="cgpa-meta" class="result-meta"></p>
+          </div>
+        </form>
+      </section>
+
+      <section id="ec" class="calculator-panel" role="tabpanel" aria-labelledby="tab-ec" hidden>
+        <h2 id="ec-heading">Expected Course Marks</h2>
+        <p class="panel-desc">Theory = min((CAT 1 + CAT 2) &times; 0.5 + Internals/DA + Additional Learning, 60) + FAT &times; 0.4. Leave Lab and J-Component empty when a course does not include them.</p>
+        <form id="expected-marks-form" class="field-grid" aria-labelledby="ec-heading" novalidate>
+          <div class="field">
+            <label for="cat1">CAT 1 marks</label>
+            <span id="cat1-hint" class="field-hint">Required · 0 to 30</span>
+            <input type="number" id="cat1" name="cat1" inputmode="decimal" step="any" min="0" max="30" required aria-describedby="cat1-hint" aria-invalid="false" data-error="cat1-error" placeholder="e.g. 24">
+            <p id="cat1-error" class="field-error">Enter CAT 1 marks between 0 and 30.</p>
+          </div>
+          <div class="field">
+            <label for="cat2">CAT 2 marks</label>
+            <span id="cat2-hint" class="field-hint">Required · 0 to 30</span>
+            <input type="number" id="cat2" name="cat2" inputmode="decimal" step="any" min="0" max="30" required aria-describedby="cat2-hint" aria-invalid="false" data-error="cat2-error" placeholder="e.g. 25">
+            <p id="cat2-error" class="field-error">Enter CAT 2 marks between 0 and 30.</p>
+          </div>
+          <div class="field">
+            <label for="da">Internals / DA marks</label>
+            <span id="da-hint" class="field-hint">Required · 0 to 30</span>
+            <input type="number" id="da" name="da" inputmode="decimal" step="any" min="0" max="30" required aria-describedby="da-hint" aria-invalid="false" data-error="da-error" placeholder="e.g. 28">
+            <p id="da-error" class="field-error">Enter internals or DA marks between 0 and 30.</p>
+          </div>
+          <div class="field">
+            <label for="al">Additional Learning (optional)</label>
+            <span id="al-hint" class="field-hint">Optional · 0 to 10 (defaults to 0)</span>
+            <input type="number" id="al" name="al" inputmode="decimal" step="any" min="0" max="10" aria-describedby="al-hint" aria-invalid="false" data-error="al-error" placeholder="0">
+            <p id="al-error" class="field-error">Enter Additional Learning marks between 0 and 10.</p>
+          </div>
+          <div class="field">
+            <label for="lab">Lab component marks (optional)</label>
+            <span id="lab-hint" class="field-hint">Optional · 0 to 100 (leave blank if none)</span>
+            <input type="number" id="lab" name="lab" inputmode="decimal" step="any" min="0" max="100" aria-describedby="lab-hint" aria-invalid="false" data-error="lab-error" placeholder="Leave blank if none">
+            <p id="lab-error" class="field-error">Enter Lab marks between 0 and 100.</p>
+          </div>
+          <div class="field">
+            <label for="j-comp">J-Component marks (optional)</label>
+            <span id="j-comp-hint" class="field-hint">Optional · 0 to 100 (leave blank if none)</span>
+            <input type="number" id="j-comp" name="jComp" inputmode="decimal" step="any" min="0" max="100" aria-describedby="j-comp-hint" aria-invalid="false" data-error="j-comp-error" placeholder="Leave blank if none">
+            <p id="j-comp-error" class="field-error">Enter J-Component marks between 0 and 100.</p>
+          </div>
+          <div class="field">
+            <label for="fat">Expected FAT marks</label>
+            <span id="fat-hint" class="field-hint">Required · 0 to 100</span>
+            <input type="number" id="fat" name="fat" inputmode="decimal" step="any" min="0" max="100" required aria-describedby="fat-hint" aria-invalid="false" data-error="fat-error" placeholder="e.g. 85">
+            <p id="fat-error" class="field-error">Enter expected FAT marks between 0 and 100.</p>
+          </div>
+          <div class="form-actions full-span">
+            <button type="reset" id="reset-ec-btn" class="btn btn-subtle">Reset</button>
+            <button type="submit" id="ec-submit" class="btn btn-primary">Calculate Marks</button>
+          </div>
+          <p id="ec-form-error" class="form-error-banner full-span" role="alert" hidden></p>
+          <div id="marks-result" class="result-panel full-span" aria-live="polite" hidden>
+            <span class="result-label">Expected Total Marks</span>
+            <output id="marks" class="result-value"></output>
+            <p id="marks-meta" class="result-meta"></p>
+          </div>
+        </form>
+      </section>
+
+      <section id="fc" class="calculator-panel" role="tabpanel" aria-labelledby="tab-fc" hidden>
+        <h2 id="fc-heading">All-Semester CGPA Calculator</h2>
+        <p class="panel-desc">Enter your GPA and total credits for each completed semester. Add up to 12 semesters; empty rows are skipped.</p>
+        <form id="all-sem-form" aria-labelledby="fc-heading" novalidate>
+          <div id="sem-rows" class="row-list"></div>
+          <div class="form-actions">
+            <button type="button" id="add-sem-btn" class="btn btn-secondary">Add Semester</button>
+            <button type="reset" id="reset-fc-btn" class="btn btn-subtle">Reset</button>
+            <button type="submit" id="sem-cgpa-btn" class="btn btn-primary">Calculate CGPA</button>
+          </div>
+          <p id="all-sem-error" class="form-error-banner" role="alert" hidden></p>
+          <div id="fcgpa-result" class="result-panel" aria-live="polite" hidden>
+            <span class="result-label">Cumulative CGPA</span>
+            <output id="fcgpa" class="result-value"></output>
+            <p id="fcgpa-meta" class="result-meta"></p>
+          </div>
+        </form>
+      </section>
+    </article>
+
+        <section id="personal-promo-slot" class="personal-promo" aria-label="Featured recommendation" hidden></section>
+
+        <section class="faq-section below-fold-section" aria-labelledby="faq-heading">
+          <h2 id="faq-heading">Frequently Asked Questions</h2>
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary>How is VIT GPA calculated under the FFCS system?</summary>
+              <p>Each course grade is converted to grade points on the VIT 10-point scale (S = 10, A = 9, B = 8, C = 7, D = 6, E = 5, F/N = 0). Your semester GPA equals the sum of (grade points × course credits) divided by total registered credits, rounded to two decimal places.</p>
+            </details>
+            <details class="faq-item">
+              <summary>How does the VIT Expected Marks calculator handle Theory, Lab, and J-Component?</summary>
+              <p>Theory internals are computed as min((CAT 1 + CAT 2) × 0.5 + Internals/DA + Additional Learning, 60), plus FAT × 0.4. If both Lab and J-Component are entered, the final score weights Theory at 60%, Lab at 20%, and J-Component at 20%. If only Lab or only J-Component is entered, Theory is weighted at 75% and that component at 25%. Leave both blank for theory-only courses.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Why do VIT students trust this CGPA calculator?</summary>
+              <p>Built in 2017 for VIT Vellore and Chennai students, this calculator has served over 1M+ views since 2017 and is trusted by VIT students for over 9+ years. It runs locally in your browser with a fast, non-intrusive layout, offline PWA support, and instant recalculation.</p>
+            </details>
+            <details class="faq-item">
+              <summary>What is the difference between Quick CGPA and All-Semester CGPA?</summary>
+              <p>Quick CGPA updates your existing cumulative CGPA using just your prior completed credits, prior CGPA, and current semester credits and GPA. All-Semester CGPA lets you enter individual semester GPAs and credits across 1 to 12+ semesters to compute your cumulative CGPA from scratch.</p>
+            </details>
+          </div>
+        </section>
+      </div>
+
+      <aside class="workspace-left" aria-label="Ad display preferences">
+        <section id="ad-control-card" class="side-card ad-control-card" aria-labelledby="ad-control-heading">
+          <h2 id="ad-control-heading">Display Ad</h2>
+          <p class="side-card-desc">A single standard display slot in the sidebar. Toggle off anytime for an ad-free view.</p>
+          <button type="button" id="ad-optin-btn" class="btn btn-secondary ad-optin-btn" aria-pressed="true" aria-controls="ad-slot-optin">Hide Ad</button>
+          <p id="ad-optin-status" class="ad-optin-status">Loading display ad…</p>
+          <section id="ad-slot-optin" class="ad-slot ad-slot--optin" aria-label="Advertisement" data-ad-location="optin-quality" data-ad-slot-desktop="7637288848" data-ad-slot-mobile="6993669367" data-ad-format="auto" hidden>
+            <span class="ad-label">Advertisement</span>
+            <div class="ad-frame"></div>
+          </section>
+        </section>
+      </aside>
+
+      <aside class="workspace-right" aria-label="Contribute &amp; VIT discussions">
+        <section id="contribute-section" class="side-card contribute-card" aria-labelledby="contribute-heading">
+          <h2 id="contribute-heading">Spot an issue? Contribute</h2>
+          <p class="side-card-desc">VIT FFCS grade scales, credit rules, or formulas look off? This calculator is open source — report an issue or send a PR on GitHub.</p>
+          <div class="side-card-actions">
+            <a id="contribute-repo-link" class="btn btn-secondary" data-contribute-action="repo" href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer">Contribute on GitHub &#8599;</a>
+            <a id="contribute-issue-link" class="btn btn-subtle" data-contribute-action="issue" href="https://github.com/rajchandra3/cgpa-calculator/issues/new" target="_blank" rel="noopener noreferrer">Report an Issue &#8599;</a>
+          </div>
+        </section>
+
+        <section id="comments-section" class="comments-sidebar" aria-labelledby="comments-heading">
+          <div class="comments-header">
+            <h2 id="comments-heading">VIT Discussions &amp; Feedback</h2>
+            <a class="comments-ext-link" href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Open on GitHub &#8599;</a>
+          </div>
+          <p class="comments-desc">Share VIT feedback, report grade-scale updates, or ask questions in <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">VIT Discussion #5</a>.</p>
+          <div
+            id="giscus-container"
+            class="giscus-host"
+            data-repo="rajchandra3/cgpa-calculator"
+            data-repo-id="R_kgDOGqICXQ"
+            data-category="General"
+            data-category-id="DIC_kwDOGqICXc4DL4Gy"
+            data-mapping="number"
+            data-term="5"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-lang="en"
+          ></div>
+          <p class="comments-footnote">Open-source comments via <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Discussion #5 (Giscus)</a>.</p>
+        </section>
+      </aside>
     </div>
+  </main>
 
-    <!-- quick cgpa calculator -->
-    <div class="row col-sm-12 col-md-12 col-lg-12 centered quick-cgpa-calculator no-padding calculator-tab" id="gc">
-        <!-- ads for large screens -->
-        <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-            <br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </div>
-
-        <div class="card-container col-lg-6 p-4 mb-5 centered has-box-shadow">
-            <div class="col-lg-10 col-md-8 col-sm-12 centered">
-                <h1>QUICK CGPA CALCULATOR</h1>
-                <hr>
-                <div class="input-group mb-3 table-row">
-                    <input type="text" id='tc' class="form-control" maxlength="5" placeholder="Credits till last Sem?" aria-label="Credits Input">
-                    <span class="input-group-text">max 250 </span>
-                </div>
-                
-                <div class="input-group mb-3 table-row">
-                    <input type="text" id='cgpa' class="form-control" maxlength="4" placeholder="CGPA till last Sem?" aria-label="CGPA Input">
-                    <span class="input-group-text">max 10 </span>
-                </div>
-                
-                <!-- Mid-form ad placement for better engagement -->
-                <div class="mid-form-ad lazy-ad" data-ad-type="mid-form" data-location="quick_cgpa_mid">
-                    <div class="ad-head">Advertisement</div>
-                    <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-pub-8598751574376549"
-                         data-ad-slot="6993669367"
-                         data-ad-format="rectangle"
-                         data-full-width-responsive="false"></ins>
-                    <script>
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    </script>
-                </div>
-                
-                <div class="input-group mb-3 table-row">
-                    <input type="text" id='c' class="form-control" maxlength="4" placeholder="Credits in this Sem?" aria-label="This Sem Credits">
-                    <span class="input-group-text">max 39 </span>
-                </div>
-                
-                <div class="input-group mb-3 table-row">
-                    <input type="text" id='gpa' class="form-control" maxlength="4" placeholder="GPA this semester?" aria-label="This Sem GPA">
-                    <span class="input-group-text">max 10 </span>
-                </div>
-                <div class="alert alert-primary text-center alert-cgpa-msg result-container" role="alert">
-                    <b><span class="cgpa-msg" id="cgpa-msg"></span></b>
-                </div>
-                <div class="col-sm-12 ads adsQCC"></div>
-                <button class="btn w-100 btn-md btn-primary" id="submit" onclick="track('computed_qcc')">Submit</button>
-                <br>
-
-                <!-- Google Ads -->
-                <div class="google-ads p-3">
-                    <div class="ad-container">
-                        <div class="ad-head">Advertisement</div>
-                        <ins class="adsbygoogle"
-                            style="display:block"
-                            data-ad-client="ca-pub-8598751574376549"
-                            data-ad-slot="6993669367"
-                            data-ad-format="auto"
-                            data-full-width-responsive="true"></ins>
-                        <script>
-                            (adsbygoogle = window.adsbygoogle || []).push({});
-                        </script>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- ads for large screens -->
-        <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div><br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </div>
+  <footer class="site-footer">
+    <p class="footer-copyright"><span>&copy; 2017–<span id="thisYear"></span></span> <a href="https://rajchandra.me" target="_blank" rel="noopener noreferrer">Raj Chandra</a></p>
+    <div class="footer-actions">
+      <button type="button" id="share-app-btn" class="btn btn-subtle" hidden>Share</button>
+      <a href="https://www.linkedin.com/in/rajchandra3/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      <a href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer">GitHub</a>
     </div>
+  </footer>
 
-    <!--Marks Predictor-->
-    <div class="row col-sm-12 col-md-12 col-lg-12 centered marks-predictor no-padding calculator-tab" id="ec">
-        <!-- ads for large screens -->
-        <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div><br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div><br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </div>
-        <!-- main content -->
-        <div class="card-container col-lg-6 col-sm-12 p-4 mb-5 centered has-box-shadow">
-            <div class="col-lg-10 col-md-8 col-sm-12 centered">
-                <h1>COMPUTE EXPECTED MARKS</h1>
-                <hr>
-                <form>
-                    <div class="mb-3 row">
-                        <label for="cat1" class="col-sm-6 col-form-label text-end">Marks in CAT 1 : </label>
-                        <div class="col-sm-6">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="cat1" placeholder="Your score in CAT 1" aria-label="Marks Input" aria-describedby="cat1-addon">
-                                <span class="input-group-text" id="cat1-addon">&nbsp; max 30 </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label for="cat2" class="col-sm-6 col-form-label text-end">Marks in CAT 2 : </label>
-                        <div class="col-sm-6">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="cat2" placeholder="Your score in CAT 2" aria-label="Marks Input" aria-describedby="cat2-addon">
-                                <span class="input-group-text" id="cat2-addon">&nbsp; max 30 </span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Mid-form ad placement -->
-                    <div class="mid-form-ad lazy-ad" data-ad-type="mid-form" data-location="expected_marks_mid">
-                        <div class="ad-head">Advertisement</div>
-                        <ins class="adsbygoogle"
-                             style="display:block"
-                             data-ad-client="ca-pub-8598751574376549"
-                             data-ad-slot="7637288848"
-                             data-ad-format="rectangle"
-                             data-full-width-responsive="false"></ins>
-                        <script>
-                            (adsbygoogle = window.adsbygoogle || []).push({});
-                        </script>
-                    </div>
-                    
-                    <div class="mb-3 row">
-                        <label for="da" class="col-sm-6 col-form-label text-end">Marks in Internals : </label>
-                        <div class="col-sm-6">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="da" placeholder="Your score in DA(s)" aria-label="Marks Input" aria-describedby="da-addon">
-                                <span class="input-group-text" id="da-addon">&nbsp; max 30 </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label for="al" class="col-sm-6 col-form-label text-end">Additional Learning : </label>
-                        <div class="col-sm-6">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="al" placeholder="Your score in AL" aria-label="Marks Input" aria-describedby="al-addon">
-                                <span class="input-group-text" id="al-addon">&nbsp; max 10 </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label for="lab" class="col-sm-6 col-form-label text-end">Marks in Lab : </label>
-                        <div class="col-sm-6">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="lab" placeholder="Your score in Lab" aria-label="Marks Input" aria-describedby="lab-addon">
-                                <span class="input-group-text" id="lab-addon"> max 100 </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3 row">
-                        <label for="j-comp" class="col-sm-6 col-form-label text-end">Marks in J Component : </label>
-                        <div class="col-sm-6">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="j-comp" placeholder="Your score in Project" aria-label="Marks Input" aria-describedby="j-comp-addon">
-                                <span class="input-group-text" id="j-comp-addon">max 100 </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label for="fat" class="col-sm-6 col-form-label text-end">Expected Marks in FAT :</label>
-                        <div class="col-sm-6">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="fat" placeholder="Say 98" aria-label="Marks Input" aria-describedby="fat-addon">
-                                <span class="input-group-text" id="fat-addon">max 100 </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="alert alert-primary text-center alert-marks result-container" role="alert">
-                        <b><span id="marks"></span></b>
-                    </div>
-                    <div class="col-sm-12 ads adsEMC"></div>
-                    <div class="mb-3 row">
-                        <div class="col-sm-12 pt-2">
-                            <button type="button" onclick="getMarks() || track('computed_emc')" class="btn btn-primary w-100">Submit</button>
-                            <br>
-                            <small id="projHelp" class="form-text text-danger">*If the course doesn't have J-Component/L-Component you can leave it empty.</small>
-                        </div>
-                    </div>
-                    <!-- Google Ads -->
-                    <div class="google-ads">
-                        <div class="ad-container">
-                            <div class="ad-head">Advertisement</div>
-                            <ins class="adsbygoogle"
-                                 style="display:block"
-                                 data-ad-client="ca-pub-8598751574376549"
-                                 data-ad-slot="6993669367"
-                                 data-ad-format="auto"
-                                 data-full-width-responsive="true"></ins>
-                            <script>
-                                (adsbygoogle = window.adsbygoogle || []).push({});
-                            </script>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- ads for large screens -->
-        <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div><br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div><br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </div>
-    </div>
-
-    <!--All semester CGPA calculator-->
-    <div class="row col-sm-12 col-md-12 col-lg-12 centered n-sem-cgpa-calculator no-padding calculator-tab" id="fc">
-         <!-- ads for large screens -->
-         <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div><br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div><br>
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </div>
-        <!-- main content -->
-        <div class="card-container col-lg-6 p-4 mb-5 centered has-box-shadow">
-            <div class="col-lg-10 col-md-8 col-sm-12 centered">
-                <h1 class="card-title">CALCULATE YOUR CGPA FOR ANY NUMBER OF SEMESTERS</h1><hr>
-                <div class="input-group mb-3 table-row" id="sem1">
-                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">1st Sem</span>
-                    <input type="text" id="gpa1" class="form-control fgpa" name="fgpa1" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
-                    <input type="text" id="fc1" class="form-control fcredits" name="fcredit1" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
-                </div>
-                <div class="input-group mb-3 table-row" id="sem2">
-                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">2nd Sem</span>
-                    <input type="text" id="gpa2" class="form-control fgpa" name="fgpa2" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
-                    <input type="text" id="fc2" class="form-control fcredits" name="fcredit2" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
-                </div>
-                <div class="input-group mb-3 table-row" id="sem3">
-                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">3rd Sem</span>
-                    <input type="text" id="gpa3" class="form-control fgpa" name="fgpa3" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
-                    <input type="text" id="fc3" class="form-control fcredits" name="fcredit3" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
-                </div>
-                <div class="input-group mb-3 table-row" id="sem4">
-                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">4th Sem</span>
-                    <input type="text" id="gpa4" class="form-control fgpa" name="fgpa4" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
-                    <input type="text" id="fc4" class="form-control fcredits" name="fcredit4" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
-                </div>
-                
-                <!-- Mid-form ad placement -->
-                <div class="mid-form-ad lazy-ad" data-ad-type="mid-form" data-location="all_sem_cgpa_mid">
-                    <div class="ad-head">Advertisement</div>
-                    <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-pub-8598751574376549"
-                         data-ad-slot="7637288848"
-                         data-ad-format="rectangle"
-                         data-full-width-responsive="false"></ins>
-                    <script>
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    </script>
-                </div>
-                
-                <div class="input-group mb-3 table-row" id="sem5">
-                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">5th Sem</span>
-                    <input type="text" id="gpa5" class="form-control fgpa" name="fgpa5" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
-                    <input type="text" id="fc5" class="form-control fcredits" name="fcredit5" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
-                </div>
-                <div class="input-group mb-3 table-row" id="sem6">
-                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">6th Sem</span>
-                    <input type="text" id="gpa6" class="form-control fgpa" name="fgpa6" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
-                    <input type="text" id="fc6" class="form-control fcredits" name="fcredit6" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
-                </div>
-                <div class="input-group mb-3 table-row" id="sem7">
-                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">7th Sem</span>
-                    <input type="text" id="gpa7" class="form-control fgpa" name="fgpa7" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
-                    <input type="text" id="fc7" class="form-control fcredits" name="fcredit7" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
-                </div>
-                <div class="input-group mb-3 table-row" id="sem8">
-                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">8th Sem</span>
-                    <input type="text" id="gpa8" class="form-control fgpa" name="fgpa8" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
-                    <input type="text" id="fc8" class="form-control fcredits" name="fcredit8" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
-                </div>
-                <div class="alert alert-primary text-center alert-fcgpa" role="alert">
-                    <b><span class="text-info" id="fcgpa"></span></b>
-                </div>
-                <div class="col-sm-12 ads adsASCC"></div>
-                <button class="btn w-100 btn-md btn-primary clearfix" id="sem-cgpa-btn" onclick="track('computed_ascc')">Submit</button>
-                <br>
-                <!-- Google Ads -->
-                <div class="google-ads p-3">
-                    <div class="ad-container">
-                        <div class="ad-head">Advertisement</div>
-                        <ins class="adsbygoogle"
-                             style="display:block"
-                             data-ad-client="ca-pub-8598751574376549"
-                             data-ad-slot="6993669367"
-                             data-ad-format="auto"
-                             data-full-width-responsive="true"></ins>
-                        <script>
-                            (adsbygoogle = window.adsbygoogle || []).push({});
-                        </script>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- ads for large screens -->
-        <div class="vertical-ads d-none col-md-4 col-lg-3 d-md-block d-lg-block d-xl-block">
-           <div class="ad-container">
-               <div class="ad-head">Advertisement</div>
-               <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-           </div><br>
-           <div class="ad-container">
-               <div class="ad-head">Advertisement</div>
-               <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-           </div><br>
-           <div class="ad-container">
-               <div class="ad-head">Advertisement</div>
-               <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-8598751574376549"
-                    data-ad-slot="7637288848"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-           </div>
-       </div>
-    </div>
-
-    <!-- Modal -->
-    <div class="modal fade" id="modal-error" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title text-danger id="modal-title">Error</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="modal-body"></div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Got it</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- fb like and share -->
-    <div class="row col-sm-12 col-md-12 col-lg-12 centered no-padding">
-        <!-- ads for large screens -->
-        <div class="vertical-ads d-none col-md-3 col-lg-3 d-md-block d-lg-block d-xl-block">
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </div>
-
-        <div class="card-container col-lg-6 centered p-4 mb-5 has-box-shadow"  style="min-height: 400px;">
-            <div class="card card-outline-primary mb-6 ">
-                <div class="common-share-btn-container text-center text-muted mt-3"><small>Did the app help you, consider sharing it with your friends.</small></div>
-                <div class="card-block card-block-outline-info" >
-                    <div 
-                        class="fb-comments" 
-                        data-href="https://devil-coder.github.io/vit_grades/" 
-                        data-width="100%" 
-                        data-lazy="true"
-                        data-numposts="5"
-                        data-colorscheme="dark"
-                        data-order-by="reverse_time"
-                        >
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ads for large screens -->
-        <div class="vertical-ads d-none col-md-3 col-lg-3 d-md-block d-lg-block d-xl-block">
-            <div class="ad-container">
-                <div class="ad-head">Advertisement</div>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8598751574376549"
-                     data-ad-slot="7637288848"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </div>
-    </div>
-    <!-- footer for VIT Cgpa Calculator -->
-    <div class="col-lg-12 common-footer-container bg-dark">
-        <footer class="p-4">
-            &copy; 2017 - <span id="thisYear"></span> <a href="https://www.rajchandra.me">Raj Chandra</a>. All Rights Reserved. <br>
-            <a href="https://www.facebook.com/raj.chandra.963"><i class="fa-brands fa-facebook" aria-hidden="true" style="font-size: 23px; color: white;" target="_blank"></i></a> &nbsp;
-            <a href="https://www.linkedin.com/in/rajchandra3/" target="_blank"><i class="fa-brands fa-linkedin" aria-hidden="true" style="font-size: 23px; color: white;"></i></a>
-        </footer>
-    </div>
-    
-    <!-- Install App Container -->
-    <div title="Install App" class="install-app-container install-app-button float-container pointer hidden">
-        <i class="fa-solid fa-download my-float"></i>
-    </div>
-    
-    <!-- script for year in footer -->
-    <script>
-        var d = new Date();
-        document.getElementById('thisYear').innerHTML = d.getFullYear();
-    </script>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-
-    <!-- Custom script for manual tracking -->
-    <script>
-        gtag('event', 'manual_event_PAGE_VIEW', {
-            page_name: "VIT_CGPA_CALCULATOR"
-        });
-    </script>
-    <!-- main script file  -->
-    <script src="./src/js/ui.js"></script>
-    <script src="./src/js/installPWA.js"></script>
-    <script language="javascript" type="text/javascript" src="./src/js/requests.js"></script>
-    <script language="javascript" type="text/javascript" src="./src/js/calculator.js"></script>
-    <script type="module" src="https://files.rajchandra.me/js/config.js"></script>
-    <script type="text/javascript" src="https://files.rajchandra.me/js/footer.js"></script>
-    <script type="text/javascript" src="https://files.rajchandra.me/js/share_btn.js"></script>
-    
-    <!-- Initialize ads with analytics-driven optimization -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set up global error handler for ad loading issues
-            window.addEventListener('error', function(e) {
-                // Check if error is related to ad loading
-                if (e.target && (e.target.src || e.target.href)) {
-                    const resource = e.target.src || e.target.href;
-                    if (resource.includes('adsbygoogle') || resource.includes('pagead2.googlesyndication.com')) {
-                        console.log('AdSense resource failed to load:', resource);
-                        
-                        // Find the closest ad container
-                        const adContainer = e.target.closest('.ad-container, .mid-form-ad, .lazy-ad, .interstitial-content');
-                        if (adContainer) {
-                            // Log the error
-                            console.log('Ad container with loading error:', adContainer);
-                            
-                            // Add error class to container for styling
-                            adContainer.classList.add('ad-load-error');
-                            
-                            // Show loading error message
-                            if (!adContainer.querySelector('.ad-error-message')) {
-                                const errorMessage = document.createElement('div');
-                                errorMessage.className = 'ad-error-message';
-                                errorMessage.innerHTML = 'Ad loading failed. <span class="retry-link">Try again</span>';
-                                
-                                // Style the message
-                                errorMessage.style.padding = '10px';
-                                errorMessage.style.margin = '10px auto';
-                                errorMessage.style.backgroundColor = 'rgba(0,0,0,0.05)';
-                                errorMessage.style.borderRadius = '4px';
-                                errorMessage.style.fontSize = '13px';
-                                errorMessage.style.color = '#666';
-                                errorMessage.style.textAlign = 'center';
-                                
-                                // Add a retry link
-                                const retryLink = errorMessage.querySelector('.retry-link');
-                                if (retryLink) {
-                                    retryLink.style.color = '#0d6efd';
-                                    retryLink.style.cursor = 'pointer';
-                                    retryLink.style.textDecoration = 'underline';
-                                    
-                                    // Add retry functionality
-                                    retryLink.addEventListener('click', function() {
-                                        // Find the adsbygoogle element
-                                        const adElement = adContainer.querySelector('.adsbygoogle');
-                                        if (adElement) {
-                                            // Remove the error message
-                                            errorMessage.remove();
-                                            
-                                            // Create a new ad element
-                                            const newAd = document.createElement('ins');
-                                            newAd.className = 'adsbygoogle';
-                                            
-                                            // Copy attributes from the original element
-                                            Array.from(adElement.attributes).forEach(attr => {
-                                                if (attr.name !== 'data-adsbygoogle-status') {
-                                                    newAd.setAttribute(attr.name, attr.value);
-                                                }
-                                            });
-                                            
-                                            // Replace the ad element
-                                            adElement.parentNode.replaceChild(newAd, adElement);
-                                            
-                                            // Try to load the ad again
-                                            try {
-                                                (adsbygoogle = window.adsbygoogle || []).push({});
-                                                adContainer.classList.remove('ad-load-error');
-                                                adContainer.classList.add('processing');
-                                                
-                                                // Show loading message
-                                                const loadingMessage = document.createElement('div');
-                                                loadingMessage.className = 'ad-loading-message';
-                                                loadingMessage.textContent = 'Loading advertisement...';
-                                                loadingMessage.style.padding = '5px';
-                                                loadingMessage.style.color = '#666';
-                                                loadingMessage.style.textAlign = 'center';
-                                                loadingMessage.style.fontSize = '12px';
-                                                adContainer.appendChild(loadingMessage);
-                                                
-                                                // Remove loading message after timeout
-                                                setTimeout(() => {
-                                                    if (adContainer.contains(loadingMessage)) {
-                                                        loadingMessage.remove();
-                                                    }
-                                                }, 5000);
-                                            } catch (e) {
-                                                console.error('Error reloading ad:', e);
-                                                adContainer.appendChild(errorMessage);
-                                            }
-                                        }
-                                    });
-                                }
-                                
-                                adContainer.appendChild(errorMessage);
-                            }
-                        }
-                    }
-                }
-            }, true);
-            
-            // Set up fallback for critical ad spots if regular ads fail to load
-            function setupFallbackAds() {
-                // Check for failed ad loads after 8 seconds (enough time for retries)
-                setTimeout(() => {
-                    document.querySelectorAll('.ad-container.ad-load-error, .mid-form-ad.ad-load-error').forEach(container => {
-                        // Only apply fallback if no successful ad is loaded
-                        if (!container.classList.contains('loaded')) {
-                            console.log('Applying fallback ad to:', container);
-                            
-                            // Clear the container
-                            container.innerHTML = '';
-                            container.classList.remove('ad-load-error');
-                            container.classList.add('fallback-ad');
-                            
-                            // Create fallback ad header
-                            const fallbackHeader = document.createElement('div');
-                            fallbackHeader.className = 'ad-head';
-                            fallbackHeader.textContent = 'Advertisement';
-                            
-                            // Create fallback ad content - here we use a simple text ad
-                            // In production, you could load a simple static banner or affiliate link
-                            const fallbackContent = document.createElement('div');
-                            fallbackContent.className = 'fallback-ad-content';
-                            fallbackContent.innerHTML = `
-                                <div style="padding: 15px; text-align: center;">
-                                    <h5 style="margin-bottom: 10px; color: #333;">Student Resources</h5>
-                                    <p style="font-size: 14px; margin-bottom: 10px; color: #666;">
-                                        Find study materials and productivity tools to help with your academic journey.
-                                    </p>
-                                    <a href="https://www.amazon.in/s?k=student+resources&tag=craj0318g-21" target="_blank" 
-                                        style="display: inline-block; padding: 5px 15px; background-color: #0d6efd; color: white; 
-                                                text-decoration: none; border-radius: 4px; font-size: 14px;">
-                                        Browse Resources
-                                    </a>
-                                </div>
-                            `;
-                            
-                            // Add the fallback content to the container
-                            container.appendChild(fallbackHeader);
-                            container.appendChild(fallbackContent);
-                            
-                            // Track fallback impression
-                            try {
-                                if (typeof track === 'function') {
-                                    track('fallback_ad_shown', {
-                                        location: container.dataset.location || 'unknown',
-                                        calculator: new URLSearchParams(window.location.search).get('tab') || 'sc'
-                                    });
-                                }
-                            } catch (e) {
-                                console.error('Error tracking fallback ad impression:', e);
-                            }
-                        }
-                    });
-                }, 8000);
-            }
-            
-            // Initialize fallback system
-            setupFallbackAds();
-            
-            // Re-initialize the original ad optimization functions
-            setTimeout(() => {
-                try {
-                    // First check if AdSense is available
-                    if (typeof adsbygoogle !== 'undefined') {
-                        console.log('AdSense is available, initializing ad optimization');
-                        
-                        // Check if optimized ads function is available
-                        if (typeof optimizeAdsByUserBehavior === 'function') {
-                            const adConfig = optimizeAdsByUserBehavior();
-                            
-                            // Initialize lazy ads with our enhanced retry mechanism
-                            if (typeof initLazyAds === 'function') {
-                                initLazyAds();
-                            }
-                            
-                            // Create sticky ad with appropriate delay
-                            if (typeof createStickyAd === 'function' && adConfig) {
-                                setTimeout(createStickyAd, adConfig.stickyAdDelay || 3000);
-                            }
-                            
-                            // Preload high priority ads if function exists
-                            if (typeof preloadHighPriorityAds === 'function') {
-                                setTimeout(preloadHighPriorityAds, 500);
-                            }
-                            
-                            // Set up viewability tracking for all ad containers
-                            const setupViewabilityTracking = () => {
-                                if ('IntersectionObserver' in window) {
-                                    const adContainers = document.querySelectorAll('.ad-container, .mid-form-ad, .lazy-ad');
-                                    
-                                    const viewabilityObserver = new IntersectionObserver((entries) => {
-                                        entries.forEach(entry => {
-                                            if (entry.isIntersecting) {
-                                                const container = entry.target;
-                                                
-                                                // If ad hasn't loaded yet, try to initialize it
-                                                if (!container.classList.contains('loaded') && !container.classList.contains('processing')) {
-                                                    try {
-                                                        console.log('Ad container came into view, trying to load:', container.dataset.location);
-                                                        container.classList.add('processing');
-                                                        
-                                                        const adInsElement = container.querySelector('.adsbygoogle');
-                                                        if (adInsElement && !adInsElement.getAttribute('data-adsbygoogle-status')) {
-                                                            // Push to AdSense
-                                                            (adsbygoogle = window.adsbygoogle || []).push({});
-                                                            
-                                                            // Check if ad loads successfully
-                                                            setTimeout(async () => {
-                                                                if (typeof checkAdRendered === 'function') {
-                                                                    const isRendered = await checkAdRendered(container);
-                                                                    
-                                                                    if (!isRendered && typeof retryLoadAd === 'function') {
-                                                                        retryLoadAd(container, 1);
-                                                                    } else if (isRendered) {
-                                                                        container.classList.add('loaded');
-                                                                        container.classList.remove('processing');
-                                                                    }
-                                                                }
-                                                            }, 2000);
-                                                        }
-                                                    } catch (e) {
-                                                        console.error('Error initializing ad on scroll:', e);
-                                                    }
-                                                }
-                                                
-                                                // Stop observing once we've taken action
-                                                viewabilityObserver.unobserve(container);
-                                            }
-                                        });
-                                    }, {
-                                        threshold: 0.2,
-                                        rootMargin: '100px 0px'
-                                    });
-                                    
-                                    // Start observing all ad containers
-                                    adContainers.forEach(container => {
-                                        if (!container.classList.contains('loaded') && !container.classList.contains('processing')) {
-                                            viewabilityObserver.observe(container);
-                                        }
-                                    });
-                                }
-                            };
-                            
-                            // Set up viewability tracking after a short delay
-                            setTimeout(setupViewabilityTracking, 1000);
-                            
-                            // Track calculator tab usage
-                            const calculatorTabs = document.querySelectorAll('[id="sc"], [id="gc"], [id="ec"], [id="fc"]');
-                            calculatorTabs.forEach(tab => {
-                                const calculatorId = tab.id;
-                                const forms = tab.querySelectorAll('form');
-                                
-                                forms.forEach(form => {
-                                    form.addEventListener('submit', function(e) {
-                                        try {
-                                            if (typeof track === 'function') {
-                                                track('calculator_used', {
-                                                    calculator: calculatorId,
-                                                    inputs: form.querySelectorAll('input').length,
-                                                    testGroup: window.adConfig?.isTestGroup ? 'test' : 'control'
-                                                });
-                                            }
-                                        } catch (err) {
-                                            console.error('Error tracking calculator usage:', err);
-                                        }
-                                    });
-                                });
-                            });
-                        } else {
-                            console.log('AdSense not available, possibly blocked');
-                            
-                            // Hide all ad containers if AdSense is not available
-                            document.querySelectorAll('.ad-container, .mid-form-ad, .lazy-ad, .inline-ad').forEach(container => {
-                                container.style.display = 'none';
-                            });
-                            
-                            // Add class to body for CSS adjustments
-                            document.body.classList.add('ads-disabled');
-                            
-                            // Track adblock detection
-                            try {
-                                if (typeof track === 'function') {
-                                    track('ad_blocker_detected', {
-                                        calculator: new URLSearchParams(window.location.search).get('tab') || 'sc'
-                                    });
-                                }
-                            } catch (e) {
-                                console.error('Error tracking ad blocker detection:', e);
-                            }
-                        }
-                    } else {
-                        console.log('AdSense not available, possibly blocked');
-                        
-                        // Hide all ad containers if AdSense is not available
-                        document.querySelectorAll('.ad-container, .mid-form-ad, .lazy-ad, .inline-ad').forEach(container => {
-                            container.style.display = 'none';
-                        });
-                        
-                        // Add class to body for CSS adjustments
-                        document.body.classList.add('ads-disabled');
-                        
-                        // Track adblock detection
-                        try {
-                            if (typeof track === 'function') {
-                                track('ad_blocker_detected', {
-                                    calculator: new URLSearchParams(window.location.search).get('tab') || 'sc'
-                                });
-                            }
-                        } catch (e) {
-                            console.error('Error tracking ad blocker detection:', e);
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error initializing ad system:', e);
-                }
-            }, 100);
-        });
-    </script>
-
+  <script src="/src/js/analytics.js" defer fetchpriority="low"></script>
+  <script type="module" src="/src/js/app.js" fetchpriority="high"></script>
 </body>
 </html>
