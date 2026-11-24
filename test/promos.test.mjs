@@ -71,7 +71,7 @@ test('TAB_ALIASES and PERSONAL_PROMOS expose frozen rule definitions and default
   assert.equal(day20.enabled, true);
   assert.equal(
     day20.ctaUrl,
-    'https://day20.rajchandra.me/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=cgpa_gt_9'
+    'https://day20.rajchandra.me/students/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=cgpa_gt_9'
   );
   const linkedin = PERSONAL_PROMOS.find((p) => p.id === 'gpa-8-5-plus-linkedin');
   assert.equal(linkedin.enabled, true);

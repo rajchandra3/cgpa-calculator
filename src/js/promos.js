@@ -60,7 +60,7 @@ export const PERSONAL_PROMOS = Object.freeze([
     title: '9+ CGPA locked in — track your money like your grades with Day20',
     body: 'Built by the creator of this calculator. Plan internships, stipends, and semester budgets in 2 minutes.',
     ctaLabel: 'Explore Day20 ↗',
-    ctaUrl: 'https://day20.rajchandra.me/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=cgpa_gt_9',
+    ctaUrl: 'https://day20.rajchandra.me/students/?utm_source=cgpa-calculator&utm_medium=wow-promo&utm_campaign=cgpa_gt_9',
   }),
   Object.freeze({
     id: 'gpa-8-5-plus-linkedin',
