@@ -90,12 +90,13 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v4, precaches 19 existing assets including pico.min.css and ads-manager.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v5, precaches 20 existing assets including pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
+  assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v4'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v5'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -106,9 +107,10 @@ test('serviceWorker.js uses cgpa-calculator-v4, precaches 19 existing assets inc
   assert.ok(arrayMatch, 'PRECACHE_URLS array must exist in serviceWorker.js');
 
   const urls = Array.from(arrayMatch[1].matchAll(/'([^']+)'/g), (m) => m[1]);
-  assert.equal(urls.length, 19);
+  assert.equal(urls.length, 20);
   assert.equal(urls.includes('/src/css/vendor/pico.min.css'), true);
   assert.equal(urls.includes('/src/js/ads-manager.js'), true);
+  assert.equal(urls.includes('/src/js/promos.js'), true);
 
   for (const urlPath of urls) {
     const diskRel = urlPath === '/' ? 'index.html' : urlPath.replace(/^\//, '');
@@ -258,16 +260,25 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
     'src/js/universities.js',
     'src/js/math.js',
     'src/js/analytics.js',
+    'src/js/promos.js',
     'src/js/app.js',
     'src/js/ads-manager.js',
   ];
-  const nonAdJsFiles = ['src/js/universities.js', 'src/js/math.js', 'src/js/analytics.js', 'src/js/app.js'];
+  const nonAdJsFiles = [
+    'src/js/universities.js',
+    'src/js/math.js',
+    'src/js/analytics.js',
+    'src/js/promos.js',
+    'src/js/app.js',
+  ];
 
   const forbiddenSinkPattern =
     /innerHTML|outerHTML|document\.write|insertAdjacentHTML|\beval\(|alert\(|confirm\(|prompt\(/;
   const forbiddenTrackerPattern =
     /enable_page_level_ads|AW-16729760450|smartlook|UA-99147431|fb-comments|connect\.facebook|files\.rajchandra\.me|data-full-width-responsive="false"/;
   const forbiddenDirectAdSensePattern = /adsbygoogle|pagead2/;
+  const forbiddenAdGuiltPattern =
+    /watch this ad|support us by|click the ad|click on ad|disable your ad ?blocker|turn off adblock/i;
 
   for (const file of allJsFiles) {
     assert.equal(repoFileExists(file), true, `Missing active JS file: ${file}`);
@@ -281,6 +292,11 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
       forbiddenTrackerPattern.test(content),
       false,
       `Forbidden legacy tracker/ad config detected in ${file}`
+    );
+    assert.equal(
+      forbiddenAdGuiltPattern.test(content),
+      false,
+      `AdSense policy guilt phrasing detected in ${file}`
     );
   }
 
@@ -296,6 +312,14 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
   const appSource = readRepoFile('src/js/app.js');
   assert.match(appSource, /trackEvent\('App Installed'/);
   assert.match(appSource, /import\('\.\/ads-manager\.js'\)/);
+  assert.match(appSource, /from '\.\/promos\.js'/);
+  assert.doesNotMatch(appSource, /scheduleAdsManager/);
+  assert.match(appSource, /contribute_clicked/);
+  assert.match(appSource, /ad_optin_enabled/);
+  assert.match(appSource, /ad_optin_disabled/);
+  assert.match(appSource, /promo_shown/);
+  assert.match(appSource, /promo_clicked/);
+  assert.match(appSource, /promo_dismissed/);
 
   const htmlFiles = [
     'index.html',
@@ -315,6 +339,11 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
       forbiddenDirectAdSensePattern.test(content),
       false,
       `AdSense scripts/ins tags must not be hardcoded in HTML: ${file}`
+    );
+    assert.equal(
+      forbiddenAdGuiltPattern.test(content),
+      false,
+      `AdSense policy guilt phrasing detected in ${file}`
     );
   }
 });
@@ -524,6 +553,14 @@ test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, an
     'fcgpa-result',
     'fcgpa',
     'fcgpa-meta',
+    'personal-promo-slot',
+    'contribute-section',
+    'contribute-repo-link',
+    'contribute-issue-link',
+    'ad-control-card',
+    'ad-optin-btn',
+    'ad-optin-status',
+    'ad-slot-optin',
     'comments-section',
     'giscus-container',
   ];
@@ -536,6 +573,7 @@ test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, an
     assert.match(html, /Google\+Sans/);
     assert.match(html, /Space\+Grotesk/);
     assert.match(html, /\/src\/css\/vendor\/pico\.min\.css/);
+    assert.match(html, /<link rel="modulepreload" href="\/src\/js\/promos\.js">/);
     assert.match(html, /<script src="\/src\/js\/analytics\.js" defer fetchpriority="low"><\/script>/);
     assert.match(html, /<script type="module" src="\/src\/js\/app\.js" fetchpriority="high"><\/script>/);
 
@@ -553,22 +591,39 @@ test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, an
     assert.match(html, /data-mapping="number"/);
     assert.match(html, /data-term="5"/);
 
-    // Lean anti-bloat ad slot contract: strictly 2 declarative slots outside forms/calculator/comments
-    const adSlotMatches = html.match(/class="ad-slot\b/g) || [];
-    assert.equal(adSlotMatches.length, 2, `${page.file} must have exactly 2 .ad-slot containers`);
+    // Grade Scale card and automatic ads removed; replaced by Contribute card, Wow Promo slot, and 1 hidden opt-in ad slot
+    assert.doesNotMatch(html, /grade-scale-card/);
+    assert.doesNotMatch(html, /ad-slot-post-calc/);
+    assert.doesNotMatch(html, /ad-slot-left-rail/);
     assert.match(
       html,
-      /id="ad-slot-post-calc"[^>]*data-ad-slot="6993669367"[^>]*data-ad-min-width="0"/
+      /<section id="personal-promo-slot" class="personal-promo"[^>]*hidden><\/section>/
     );
     assert.match(
       html,
-      /id="ad-slot-left-rail"[^>]*data-ad-slot="7637288848"[^>]*data-ad-min-width="1120"/
+      /id="contribute-repo-link"[^>]*data-contribute-action="repo"[^>]*href="https:\/\/github\.com\/rajchandra3\/cgpa-calculator"/
+    );
+    assert.match(
+      html,
+      /id="contribute-issue-link"[^>]*data-contribute-action="issue"[^>]*href="https:\/\/github\.com\/rajchandra3\/cgpa-calculator\/issues\/new"/
+    );
+    assert.match(
+      html,
+      /id="ad-optin-btn"[^>]*aria-pressed="false"[^>]*aria-controls="ad-slot-optin"[^>]*>Show Quality Ad<\/button>/
+    );
+
+    const adSlotMatches = html.match(/class="ad-slot\b/g) || [];
+    assert.equal(adSlotMatches.length, 1, `${page.file} must have strictly 1 .ad-slot container`);
+    assert.match(
+      html,
+      /<section id="ad-slot-optin" class="ad-slot ad-slot--optin"[^>]*data-ad-location="optin-quality"[^>]*data-ad-slot-desktop="7637288848"[^>]*data-ad-slot-mobile="6993669367"[^>]*hidden>/
     );
     assert.doesNotMatch(html, /360px/);
 
     const calcShellMatch = html.match(/<article class="calculator-shell"[\s\S]*?<\/article>/);
     assert.ok(calcShellMatch, `${page.file} missing .calculator-shell`);
     assert.doesNotMatch(calcShellMatch[0], /ad-slot/);
+    assert.doesNotMatch(calcShellMatch[0], /personal-promo-slot/);
 
     const commentsMatch = html.match(/<aside id="comments-section"[\s\S]*?<\/aside>/);
     assert.ok(commentsMatch, `${page.file} missing #comments-section`);
@@ -602,4 +657,18 @@ test('all 4 HTML pages match DOM contract IDs, Pico CSS, fonts, AdSense meta, an
       assert.doesNotMatch(html, /id="expected-marks-form"/);
     }
   }
+});
+
+test('src/css/app.css keeps .row-list single-column at all viewports and cleans up obsolete rules', () => {
+  const css = readRepoFile('src/css/app.css');
+  assert.doesNotMatch(css, /\.row-list\s*\{[^}]*grid-template-columns\s*:/);
+  assert.doesNotMatch(css, /@container[\s\S]*?\.row-list[\s\S]*?repeat\(2/);
+  assert.doesNotMatch(css, /\.grade-scale-card/);
+  assert.doesNotMatch(css, /\.ad-slot--banner/);
+  assert.doesNotMatch(css, /\.ad-slot--rail/);
+  assert.match(css, /\.table-wrap/);
+  assert.match(css, /\.grade-table/);
+  assert.match(css, /\.side-card/);
+  assert.match(css, /\.ad-slot--optin/);
+  assert.match(css, /\.personal-promo-card/);
 });

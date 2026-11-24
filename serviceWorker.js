@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cgpa-calculator-v4';
+const CACHE_NAME = 'cgpa-calculator-v5';
 
 const PRECACHE_URLS = [
   '/',
@@ -13,6 +13,7 @@ const PRECACHE_URLS = [
   '/src/js/universities.js',
   '/src/js/analytics.js',
   '/src/js/ads-manager.js',
+  '/src/js/promos.js',
   '/manifest/vit.json',
   '/manifest/anna.json',
   '/manifest/ktu.json',

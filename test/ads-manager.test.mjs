@@ -3,13 +3,17 @@ import assert from 'node:assert/strict';
 
 import {
   AD_CLIENT,
+  AD_PREF_STORAGE_KEY,
   ADSENSE_SCRIPT_SRC,
   PRODUCTION_HOST,
+  activateOptInAd,
+  getAdPreference,
   getViewportBucket,
-  initAdsManager,
+  hideOptInAd,
   isPreviewMode,
   isStagingHost,
-  shouldActivateSlot,
+  resolveQualitySlotId,
+  setAdPreference,
 } from '../src/js/ads-manager.js';
 
 function createClassList(initial = []) {
@@ -24,22 +28,20 @@ function createClassList(initial = []) {
     contains(name) {
       return set.has(name);
     },
-    toArray() {
-      return Array.from(set);
-    },
   };
 }
 
-function createFakeElement(tagName, { id = '', dataset = {}, classList = [] } = {}) {
+function createFakeElement(tagName, { id = '', dataset = {}, classList = [], hidden = false } = {}) {
   const attrs = new Map();
   const listeners = new Map();
-  const el = {
+  return {
     tagName: tagName.toUpperCase(),
     id,
     dataset: { ...dataset },
     style: {},
     className: '',
     textContent: '',
+    hidden,
     children: [],
     classList: createClassList(classList),
     setAttribute(name, value) {
@@ -72,30 +74,63 @@ function createFakeElement(tagName, { id = '', dataset = {}, classList = [] } = 
       return null;
     },
   };
-  return el;
+}
+
+function createOptInSlot({
+  id = 'ad-slot-optin',
+  location = 'optin-quality',
+  desktopSlot = '7637288848',
+  mobileSlot = '6993669367',
+  legacySlot = '',
+  withFrame = true,
+  hidden = true,
+  classList = ['is-inactive'],
+} = {}) {
+  const dataset = {
+    adLocation: location,
+    adFormat: 'auto',
+  };
+  if (desktopSlot) dataset.adSlotDesktop = desktopSlot;
+  if (mobileSlot) dataset.adSlotMobile = mobileSlot;
+  if (legacySlot) dataset.adSlot = legacySlot;
+
+  const slotEl = createFakeElement('section', { id, dataset, hidden, classList });
+  let frame = null;
+  if (withFrame) {
+    frame = createFakeElement('div');
+    frame.className = 'ad-frame';
+    slotEl.appendChild(frame);
+  }
+  return { slotEl, frame };
 }
 
 function createEnvironment({
-  slots = [],
+  slot = null,
+  statusEl = null,
   width = 1440,
   hostname = 'cgpa-staging.rajchandra.me',
   search = '',
   useReplaceChildren = true,
   withObservers = true,
+  withGetElementById = true,
+  existingScript = false,
   throwOnPush = false,
   throwOnTrack = false,
+  storageThrows = false,
 } = {}) {
   const headChildren = [];
+  if (existingScript) {
+    headChildren.push({ src: ADSENSE_SCRIPT_SRC });
+  }
   const trackEvents = [];
   const mutationObservers = [];
   const intersectionObservers = [];
   const scheduledTimeouts = new Map();
+  const storageMap = new Map();
   let nextTimerId = 1;
 
-  for (const s of slots) {
-    if (!useReplaceChildren && s.frame) {
-      delete s.frame.replaceChildren;
-    }
+  if (slot?.frame && !useReplaceChildren) {
+    delete slot.frame.replaceChildren;
   }
 
   const doc = {
@@ -109,11 +144,10 @@ function createEnvironment({
     createElement(tag) {
       return createFakeElement(tag);
     },
-    querySelectorAll(sel) {
-      if (sel === '.ad-slot[data-ad-slot]') return slots.map((s) => s.slotEl);
-      return [];
-    },
     querySelector(sel) {
+      if (sel === '.ad-slot[data-ad-location="optin-quality"]') {
+        return slot ? slot.slotEl : null;
+      }
       if (sel.includes('adsbygoogle.js')) {
         return headChildren.find((c) => String(c.src || '').includes('adsbygoogle.js')) || null;
       }
@@ -121,9 +155,31 @@ function createEnvironment({
     },
   };
 
+  if (withGetElementById) {
+    doc.getElementById = (id) => {
+      if (id === 'ad-slot-optin') return slot ? slot.slotEl : null;
+      if (id === 'ad-optin-status') return statusEl;
+      return null;
+    };
+  }
+
   const win = {
     innerWidth: width,
     location: { hostname, search },
+    localStorage: {
+      getItem(k) {
+        if (storageThrows) throw new Error('blocked');
+        return storageMap.has(k) ? storageMap.get(k) : null;
+      },
+      setItem(k, v) {
+        if (storageThrows) throw new Error('blocked');
+        storageMap.set(k, String(v));
+      },
+      removeItem(k) {
+        if (storageThrows) throw new Error('blocked');
+        storageMap.delete(k);
+      },
+    },
     adsbygoogle: throwOnPush
       ? {
           push() {
@@ -190,37 +246,17 @@ function createEnvironment({
     mutationObservers,
     intersectionObservers,
     scheduledTimeouts,
+    storageMap,
   };
 }
 
-function buildSlot(id, location, slotId, minWidth, { withFrame = true } = {}) {
-  const slotEl = createFakeElement('section', {
-    id,
-    dataset: {
-      adLocation: location,
-      adSlot: slotId,
-      adFormat: 'auto',
-      adMinWidth: String(minWidth),
-    },
-  });
-  let frame = null;
-  if (withFrame) {
-    frame = createFakeElement('div');
-    frame.className = 'ad-frame';
-    slotEl.appendChild(frame);
-  }
-  return { slotEl, frame };
-}
-
-test('pure helper checks handle viewport gates, preview query, host, and buckets', () => {
-  assert.equal(shouldActivateSlot({ dataset: { adMinWidth: '1120' } }, 320), false);
-  assert.equal(shouldActivateSlot({ dataset: { adMinWidth: '1120' } }, 768), false);
-  assert.equal(shouldActivateSlot({ dataset: { adMinWidth: '1120' } }, 1024), false);
-  assert.equal(shouldActivateSlot({ dataset: { adMinWidth: '1120' } }, 1119), false);
-  assert.equal(shouldActivateSlot({ dataset: { adMinWidth: '1120' } }, 1120), true);
-  assert.equal(shouldActivateSlot({ dataset: { adMinWidth: '1120' } }, 1440), true);
-  assert.equal(shouldActivateSlot({ dataset: { adMinWidth: 'abc' } }, 375), true);
-  assert.equal(shouldActivateSlot(null, 375), true);
+test('pure helpers cover viewport buckets, preview flag, host checks, slot resolution, and storage preference', () => {
+  assert.equal(AD_PREF_STORAGE_KEY, 'cgpa_ad_optin');
+  assert.equal(getViewportBucket(1440), 'desktop');
+  assert.equal(getViewportBucket(1120), 'desktop');
+  assert.equal(getViewportBucket(1024), 'tablet');
+  assert.equal(getViewportBucket(768), 'tablet');
+  assert.equal(getViewportBucket(375), 'mobile');
 
   assert.equal(isPreviewMode('?ads=preview'), true);
   assert.equal(isPreviewMode('?tab=sc&ads=preview'), true);
@@ -232,76 +268,113 @@ test('pure helper checks handle viewport gates, preview query, host, and buckets
   assert.equal(isStagingHost(PRODUCTION_HOST), false);
   assert.equal(isStagingHost(), true);
 
-  assert.equal(getViewportBucket(1440), 'desktop');
-  assert.equal(getViewportBucket(1120), 'desktop');
-  assert.equal(getViewportBucket(1024), 'tablet');
-  assert.equal(getViewportBucket(768), 'tablet');
-  assert.equal(getViewportBucket(375), 'mobile');
+  const dualSlot = { dataset: { adSlotDesktop: '7637288848', adSlotMobile: '6993669367' } };
+  assert.equal(resolveQualitySlotId(dualSlot, 1440), '7637288848');
+  assert.equal(resolveQualitySlotId(dualSlot, 1120), '7637288848');
+  assert.equal(resolveQualitySlotId(dualSlot, 1119), '6993669367');
+  assert.equal(resolveQualitySlotId(dualSlot, 375), '6993669367');
+  assert.equal(resolveQualitySlotId({ dataset: { adSlot: 'fallback' } }, 1440), 'fallback');
+  assert.equal(resolveQualitySlotId({ dataset: { adSlot: 'fallback' } }, 375), 'fallback');
+  assert.equal(resolveQualitySlotId({ dataset: {} }, 375), '');
+  assert.equal(resolveQualitySlotId(null, 1440), '');
+
+  const env = createEnvironment();
+  assert.equal(getAdPreference(env.win), false);
+  setAdPreference(env.win, true);
+  assert.equal(env.storageMap.get(AD_PREF_STORAGE_KEY), '1');
+  assert.equal(getAdPreference(env.win), true);
+  setAdPreference(env.win, false);
+  assert.equal(env.storageMap.has(AD_PREF_STORAGE_KEY), false);
+  assert.equal(getAdPreference(env.win), false);
+
+  const blockedEnv = createEnvironment({ storageThrows: true });
+  assert.equal(getAdPreference(blockedEnv.win), false);
+  assert.doesNotThrow(() => setAdPreference(blockedEnv.win, true));
 });
 
-test('initAdsManager returns early when no slots or no eligible slots exist', () => {
-  const emptyEnv = createEnvironment({ slots: [] });
-  assert.deepEqual(initAdsManager({ doc: emptyEnv.doc, win: emptyEnv.win }), {
+test('activateOptInAd and hideOptInAd return safely when slot or slot ID is missing', () => {
+  const emptyEnv = createEnvironment({ slot: null });
+  assert.deepEqual(activateOptInAd({ doc: emptyEnv.doc, win: emptyEnv.win }), {
     preview: false,
-    activated: [],
+    activated: false,
+    slot: '',
   });
+  assert.equal(hideOptInAd({ doc: emptyEnv.doc }), false);
 
-  const desktopOnly = buildSlot('ad-slot-left-rail', 'left-rail', '7637288848', 1120);
-  const mobileEnv = createEnvironment({ slots: [desktopOnly], width: 375 });
-  assert.deepEqual(initAdsManager({ doc: mobileEnv.doc, win: mobileEnv.win }), {
+  const unconfigured = createOptInSlot({ desktopSlot: '', mobileSlot: '', legacySlot: '' });
+  const unconfEnv = createEnvironment({ slot: unconfigured });
+  assert.deepEqual(activateOptInAd({ doc: unconfEnv.doc, win: unconfEnv.win }), {
     preview: false,
-    activated: [],
+    activated: false,
+    slot: '',
   });
-  assert.equal(desktopOnly.slotEl.classList.contains('is-inactive'), true);
-  assert.equal(mobileEnv.headChildren.length, 0);
 });
 
-test('Desktop mounts 2 responsive slots once with staging data-adtest="on", telemetry, fill, and viewability', () => {
-  const postCalc = buildSlot('ad-slot-post-calc', 'post-calc', '6993669367', 0);
-  const leftRail = buildSlot('ad-slot-left-rail', 'left-rail', '7637288848', 1120);
-  const env = createEnvironment({ slots: [postCalc, leftRail], width: 1440 });
+test('Desktop opt-in mounts 1 rail slot once with staging data-adtest, status sync, viewability, and hide/re-show guard', () => {
+  const slot = createOptInSlot();
+  const statusEl = createFakeElement('p', { id: 'ad-optin-status' });
+  const env = createEnvironment({ slot, statusEl, width: 1440 });
 
-  const first = initAdsManager({ university: 'vit', doc: env.doc, win: env.win });
-  assert.deepEqual(first, { preview: false, activated: ['6993669367', '7637288848'] });
+  const first = activateOptInAd({
+    university: 'vit',
+    trigger: 'user_click',
+    doc: env.doc,
+    win: env.win,
+  });
+  assert.deepEqual(first, { preview: false, activated: true, slot: '7637288848' });
+  assert.equal(slot.slotEl.hidden, false);
+  assert.equal(slot.slotEl.classList.contains('is-inactive'), false);
+
   assert.equal(env.headChildren.length, 1);
   assert.equal(env.headChildren[0].src, ADSENSE_SCRIPT_SRC);
   assert.equal(env.headChildren[0].async, true);
   assert.equal(env.headChildren[0].crossOrigin, 'anonymous');
   assert.equal(env.headChildren[0].fetchPriority, 'low');
-  assert.equal(env.win.adsbygoogle.length, 2);
 
-  for (const s of [postCalc, leftRail]) {
-    assert.equal(s.frame.children.length, 1);
-    const ins = s.frame.children[0];
-    assert.equal(ins.getAttribute('data-ad-client'), AD_CLIENT);
-    assert.equal(ins.getAttribute('data-full-width-responsive'), 'true');
-    assert.equal(ins.getAttribute('data-adtest'), 'on');
-  }
+  assert.equal(slot.frame.children.length, 1);
+  const ins = slot.frame.children[0];
+  assert.equal(ins.getAttribute('data-ad-client'), AD_CLIENT);
+  assert.equal(ins.getAttribute('data-ad-slot'), '7637288848');
+  assert.equal(ins.getAttribute('data-full-width-responsive'), 'true');
+  assert.equal(ins.getAttribute('data-adtest'), 'on');
+  assert.equal(env.win.adsbygoogle.length, 1);
 
-  assert.equal(env.trackEvents.length, 2);
-  assert.equal(env.trackEvents[0].name, 'ad_slot_requested');
-  assert.equal(env.trackEvents[0].props.viewport_bucket, 'desktop');
+  assert.equal(env.trackEvents.length, 1);
+  assert.deepEqual(env.trackEvents[0], {
+    name: 'ad_slot_requested',
+    props: {
+      location: 'optin-quality',
+      slot: '7637288848',
+      university: 'vit',
+      viewport_bucket: 'desktop',
+      trigger: 'user_click',
+    },
+  });
 
-  // Re-running must never double-push or duplicate script
-  const second = initAdsManager({ university: 'vit', doc: env.doc, win: env.win });
-  assert.deepEqual(second, { preview: false, activated: [] });
+  // Hide preserves mounted DOM; re-activating reveals without pushing or loading script again
+  assert.equal(hideOptInAd({ doc: env.doc }), true);
+  assert.equal(slot.slotEl.hidden, true);
+  assert.equal(slot.frame.children.length, 1);
+
+  const reused = activateOptInAd({
+    university: 'vit',
+    trigger: 'user_click',
+    doc: env.doc,
+    win: env.win,
+  });
+  assert.deepEqual(reused, { preview: false, activated: true, reused: true, slot: '7637288848' });
+  assert.equal(slot.slotEl.hidden, false);
   assert.equal(env.headChildren.length, 1);
-  assert.equal(env.win.adsbygoogle.length, 2);
+  assert.equal(env.win.adsbygoogle.length, 1);
 
-  // MutationObserver: status filled -> ignored status -> status unfilled
-  const ins0 = postCalc.frame.children[0];
-  ins0.setAttribute('data-ad-status', 'pending');
+  // MutationObserver: pending -> filled -> unfilled status sync
+  ins.setAttribute('data-ad-status', 'pending');
   env.mutationObservers[0].trigger();
-  ins0.setAttribute('data-ad-status', 'filled');
+  ins.setAttribute('data-ad-status', 'filled');
   env.mutationObservers[0].trigger();
-  assert.equal(postCalc.slotEl.classList.contains('is-unfilled'), false);
-  assert.equal(env.trackEvents.some((e) => e.name === 'ad_slot_filled' && e.props.slot === '6993669367'), true);
-
-  const ins1 = leftRail.frame.children[0];
-  ins1.setAttribute('data-ad-status', 'unfilled');
-  env.mutationObservers[1].trigger();
-  assert.equal(leftRail.slotEl.classList.contains('is-unfilled'), true);
-  assert.equal(env.trackEvents.some((e) => e.name === 'ad_slot_unfilled' && e.props.slot === '7637288848'), true);
+  assert.equal(slot.slotEl.classList.contains('is-unfilled'), false);
+  assert.equal(statusEl.textContent, 'Ad slot active');
+  assert.equal(env.trackEvents.some((e) => e.name === 'ad_slot_filled' && e.props.slot === '7637288848'), true);
 
   // IntersectionObserver dwell cancellation followed by >=1000ms viewable confirmation
   env.intersectionObservers[0].trigger([{ isIntersecting: true, intersectionRatio: 0.6 }]);
@@ -310,19 +383,32 @@ test('Desktop mounts 2 responsive slots once with staging data-adtest="on", tele
   assert.equal(env.scheduledTimeouts.size, 0);
 
   env.intersectionObservers[0].trigger([{ isIntersecting: true, intersectionRatio: 0.8 }]);
-  // Duplicate intersecting check keeps existing timer
   env.intersectionObservers[0].trigger([{ isIntersecting: true, intersectionRatio: 0.9 }]);
   assert.equal(env.scheduledTimeouts.size, 1);
   const [{ fn }] = Array.from(env.scheduledTimeouts.values());
   fn();
-  assert.equal(env.trackEvents.some((e) => e.name === 'ad_slot_viewable' && e.props.slot === '6993669367'), true);
+  assert.equal(env.trackEvents.some((e) => e.name === 'ad_slot_viewable' && e.props.slot === '7637288848'), true);
+
+  // Unfilled state on fresh slot sets .is-unfilled and updates #ad-optin-status
+  const unfilledSlot = createOptInSlot({ id: 'ad-slot-optin' });
+  const unfilledStatus = createFakeElement('p', { id: 'ad-optin-status' });
+  const unfilledEnv = createEnvironment({ slot: unfilledSlot, statusEl: unfilledStatus, width: 375 });
+  const mobRes = activateOptInAd({ university: 'anna', doc: unfilledEnv.doc, win: unfilledEnv.win });
+  assert.deepEqual(mobRes, { preview: false, activated: true, slot: '6993669367' });
+  const mobIns = unfilledSlot.frame.children[0];
+  mobIns.setAttribute('data-ad-status', 'unfilled');
+  unfilledEnv.mutationObservers[0].trigger();
+  assert.equal(unfilledSlot.slotEl.classList.contains('is-unfilled'), true);
+  assert.equal(unfilledStatus.textContent, 'No ad available right now');
+  assert.equal(unfilledEnv.trackEvents.some((e) => e.name === 'ad_slot_unfilled' && e.props.slot === '6993669367'), true);
 });
 
-test('Mobile/Tablet skips left-rail and Production omits data-adtest while script block collapses slots', () => {
-  const postCalc = buildSlot('ad-slot-post-calc', 'post-calc', '6993669367', 0, { withFrame: false });
-  const leftRail = buildSlot('ad-slot-left-rail', 'left-rail', '7637288848', 1120);
+test('Production omits data-adtest, supports querySelector/appendChild fallbacks, existing script, and script block handling', () => {
+  const slot = createOptInSlot({ withFrame: false });
+  const statusEl = createFakeElement('p', { id: 'ad-optin-status' });
   const env = createEnvironment({
-    slots: [postCalc, leftRail],
+    slot,
+    statusEl,
     width: 1024,
     hostname: PRODUCTION_HOST,
     withObservers: false,
@@ -330,50 +416,95 @@ test('Mobile/Tablet skips left-rail and Production omits data-adtest while scrip
     throwOnTrack: true,
   });
 
-  const res = initAdsManager({ university: 'ktu', doc: env.doc, win: env.win });
-  assert.deepEqual(res, { preview: false, activated: ['6993669367'] });
-  assert.equal(leftRail.slotEl.classList.contains('is-inactive'), true);
-  assert.equal(postCalc.slotEl.children[0].getAttribute('data-adtest'), null);
+  const res = activateOptInAd({ university: 'ktu', doc: env.doc, win: env.win });
+  assert.deepEqual(res, { preview: false, activated: true, slot: '6993669367' });
+  assert.equal(slot.slotEl.children[0].getAttribute('data-adtest'), null);
 
-  // Use appendChild path in normal mode too when replaceChildren is absent
-  const slotWithFrame = buildSlot('slot-no-rc', 'post-calc', '6993669367', 0);
-  const envNoRc = createEnvironment({ slots: [slotWithFrame], width: 768, useReplaceChildren: false });
-  assert.deepEqual(initAdsManager({ doc: envNoRc.doc, win: envNoRc.win }), {
-    preview: false,
-    activated: ['6993669367'],
-  });
-  assert.equal(slotWithFrame.frame.children.length, 1);
-
-  // Simulate ad-blocker blocking script load
+  // Script blocked collapses slot, updates status, and fires ad_slot_unfilled with script_blocked
   env.headChildren[0].dispatchEvent('error');
-  assert.equal(postCalc.slotEl.classList.contains('is-unfilled'), true);
+  assert.equal(slot.slotEl.classList.contains('is-unfilled'), true);
+  assert.equal(slot.slotEl.hidden, true);
+  assert.equal(statusEl.textContent, 'Ad script blocked by browser or extension');
+
+  // querySelector fallback (without getElementById), existing script, and appendChild without replaceChildren
+  const fallbackSlot = createOptInSlot();
+  const fallbackEnv = createEnvironment({
+    slot: fallbackSlot,
+    width: 768,
+    useReplaceChildren: false,
+    withGetElementById: false,
+    existingScript: true,
+  });
+  assert.deepEqual(activateOptInAd({ doc: fallbackEnv.doc, win: fallbackEnv.win }), {
+    preview: false,
+    activated: true,
+    slot: '6993669367',
+  });
+  assert.equal(fallbackEnv.headChildren.length, 1);
+  assert.equal(fallbackSlot.frame.children.length, 1);
+
+  // Fallbacks for missing win.innerWidth, missing hostname/id/adLocation/adFormat, undefined adsbygoogle, and doc.body/doc.documentElement
+  const bodyChildren = [];
+  const minimalSlotA = createOptInSlot({ id: '', location: '', mobileSlot: '6993669367' });
+  delete minimalSlotA.slotEl.dataset.adLocation;
+  delete minimalSlotA.slotEl.dataset.adFormat;
+  const bodyEnv = createEnvironment({ slot: minimalSlotA, width: 768 });
+  delete bodyEnv.doc.head;
+  bodyEnv.doc.body = {
+    appendChild(node) {
+      bodyChildren.push(node);
+      return node;
+    },
+  };
+  bodyEnv.win.innerWidth = 0;
+  bodyEnv.win.location = {};
+  delete bodyEnv.win.adsbygoogle;
+  const bodyRes = activateOptInAd({ doc: bodyEnv.doc, win: bodyEnv.win });
+  assert.deepEqual(bodyRes, { preview: false, activated: true, slot: '6993669367' });
+  assert.equal(bodyChildren.length, 1);
+  assert.equal(bodyEnv.trackEvents[0].props.location, 'optin-quality');
+  assert.equal(minimalSlotA.frame.children[0].getAttribute('data-ad-format'), 'auto');
+  assert.equal(minimalSlotA.frame.children[0].getAttribute('data-adtest'), null);
+
+  const docElChildren = [];
+  const minimalSlotB = createOptInSlot({ id: 'custom-slot', location: '', mobileSlot: '6993669367' });
+  delete minimalSlotB.slotEl.dataset.adLocation;
+  const docElEnv = createEnvironment({ slot: minimalSlotB, width: 0 });
+  delete docElEnv.doc.head;
+  docElEnv.doc.documentElement.appendChild = (node) => {
+    docElChildren.push(node);
+    return node;
+  };
+  const docElRes = activateOptInAd({ doc: docElEnv.doc, win: docElEnv.win });
+  assert.deepEqual(docElRes, { preview: false, activated: true, slot: '6993669367' });
+  assert.equal(docElChildren.length, 1);
+  assert.equal(docElEnv.trackEvents[0].props.location, 'custom-slot');
+  assert.equal(docElEnv.trackEvents[0].props.viewport_bucket, 'mobile');
 });
 
-test('?ads=preview renders wireframe boxes cleanly without loading adsbygoogle.js', () => {
-  const postCalc = buildSlot('ad-slot-post-calc', 'post-calc', '6993669367', 0);
-  const leftRail = buildSlot('ad-slot-left-rail', 'left-rail', '7637288848', 1120);
-  const desktopPreview = createEnvironment({
-    slots: [postCalc, leftRail],
+test('?ads=preview renders Quality Ad Preview box for desktop and mobile without injecting adsbygoogle.js', () => {
+  const desktopSlot = createOptInSlot();
+  const desktopEnv = createEnvironment({
+    slot: desktopSlot,
     width: 1440,
     search: '?ads=preview',
   });
+  const outDesktop = activateOptInAd({ doc: desktopEnv.doc, win: desktopEnv.win });
+  assert.deepEqual(outDesktop, { preview: true, activated: true, slot: '7637288848' });
+  assert.equal(desktopEnv.headChildren.length, 0);
+  assert.equal(desktopSlot.slotEl.hidden, false);
+  assert.equal(desktopSlot.frame.children[0].className, 'ad-preview-box');
+  assert.equal(desktopSlot.frame.children[0].children[0].textContent, 'Quality Ad Preview · desktop (7637288848)');
 
-  const outDesktop = initAdsManager({ doc: desktopPreview.doc, win: desktopPreview.win });
-  assert.deepEqual(outDesktop, { preview: true, activated: ['6993669367', '7637288848'] });
-  assert.equal(desktopPreview.headChildren.length, 0);
-  assert.equal(postCalc.frame.children[0].className, 'ad-preview-box');
-  assert.equal(leftRail.frame.children[0].className, 'ad-preview-box');
-
-  const mobilePostCalc = buildSlot('ad-slot-post-calc', 'post-calc', '6993669367', 0);
-  const mobileLeftRail = buildSlot('ad-slot-left-rail', 'left-rail', '7637288848', 1120);
-  const mobilePreview = createEnvironment({
-    slots: [mobilePostCalc, mobileLeftRail],
+  const mobileSlot = createOptInSlot();
+  const mobileEnv = createEnvironment({
+    slot: mobileSlot,
     width: 375,
     search: '?ads=preview',
     useReplaceChildren: false,
   });
-
-  const outMobile = initAdsManager({ doc: mobilePreview.doc, win: mobilePreview.win });
-  assert.deepEqual(outMobile, { preview: true, activated: ['6993669367'] });
-  assert.equal(mobileLeftRail.slotEl.classList.contains('is-inactive'), true);
+  const outMobile = activateOptInAd({ doc: mobileEnv.doc, win: mobileEnv.win });
+  assert.deepEqual(outMobile, { preview: true, activated: true, slot: '6993669367' });
+  assert.equal(mobileEnv.headChildren.length, 0);
+  assert.equal(mobileSlot.frame.children[0].children[0].textContent, 'Quality Ad Preview · mobile (6993669367)');
 });

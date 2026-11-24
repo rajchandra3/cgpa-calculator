@@ -134,6 +134,7 @@
   <link rel="modulepreload" href="/src/js/app.js">
   <link rel="modulepreload" href="/src/js/math.js">
   <link rel="modulepreload" href="/src/js/universities.js">
+  <link rel="modulepreload" href="/src/js/promos.js">
 </head>
 <body data-university="anna">
   <a class="visually-hidden" href="#main-content">Skip to calculator</a>
@@ -266,10 +267,7 @@
       </section>
     </article>
 
-        <section id="ad-slot-post-calc" class="ad-slot ad-slot--banner" aria-label="Advertisement" data-ad-location="post-calc" data-ad-slot="6993669367" data-ad-format="auto" data-ad-min-width="0">
-          <span class="ad-label">Advertisement</span>
-          <div class="ad-frame"></div>
-        </section>
+        <section id="personal-promo-slot" class="personal-promo" aria-label="Featured recommendation" hidden></section>
 
         <section class="faq-section below-fold-section" aria-labelledby="faq-heading">
           <h2 id="faq-heading">Frequently Asked Questions</h2>
@@ -294,35 +292,25 @@
         </section>
       </div>
 
-      <aside class="workspace-left" aria-labelledby="grade-scale-heading">
-        <section class="grade-scale-card">
-          <h2 id="grade-scale-heading">Anna University Grade Scale</h2>
-          <div class="table-wrap" tabindex="0" role="region" aria-labelledby="grade-scale-heading">
-            <table class="grade-table">
-              <caption class="visually-hidden">Anna University 10-point grade scale and grade points</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Grade</th>
-                  <th scope="col">Points</th>
-                  <th scope="col">Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><th scope="row">O</th><td class="num">10</td><td>Outstanding</td></tr>
-                <tr><th scope="row">A+</th><td class="num">9</td><td>Excellent</td></tr>
-                <tr><th scope="row">A</th><td class="num">8</td><td>Very Good</td></tr>
-                <tr><th scope="row">B+</th><td class="num">7</td><td>Good</td></tr>
-                <tr><th scope="row">B</th><td class="num">6</td><td>Average</td></tr>
-                <tr><th scope="row">C</th><td class="num">5</td><td>Satisfactory</td></tr>
-                <tr><th scope="row">U / RA</th><td class="num">0</td><td>Re-appearance / Fail</td></tr>
-              </tbody>
-            </table>
+      <aside class="workspace-left" aria-label="Open source &amp; ad preferences">
+        <section id="contribute-section" class="side-card contribute-card" aria-labelledby="contribute-heading">
+          <h2 id="contribute-heading">Spot an issue? Contribute</h2>
+          <p class="side-card-desc">Grade scales, credit rules, or formulas look off? This calculator is open source — report an issue or send a PR on GitHub.</p>
+          <div class="side-card-actions">
+            <a id="contribute-repo-link" class="btn btn-secondary" data-contribute-action="repo" href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer">Contribute on GitHub &#8599;</a>
+            <a id="contribute-issue-link" class="btn btn-subtle" data-contribute-action="issue" href="https://github.com/rajchandra3/cgpa-calculator/issues/new" target="_blank" rel="noopener noreferrer">Report an Issue &#8599;</a>
           </div>
         </section>
 
-        <section id="ad-slot-left-rail" class="ad-slot ad-slot--rail" aria-label="Advertisement" data-ad-location="left-rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-min-width="1120">
-          <span class="ad-label">Advertisement</span>
-          <div class="ad-frame"></div>
+        <section id="ad-control-card" class="side-card ad-control-card" aria-labelledby="ad-control-heading">
+          <h2 id="ad-control-heading">Optional Display Ad</h2>
+          <p class="side-card-desc">This page stays ad-free by default. Toggle a single standard display slot whenever you choose.</p>
+          <button type="button" id="ad-optin-btn" class="btn btn-secondary ad-optin-btn" aria-pressed="false" aria-controls="ad-slot-optin">Show Quality Ad</button>
+          <p id="ad-optin-status" class="ad-optin-status">Ads off · Zero ad scripts loaded</p>
+          <section id="ad-slot-optin" class="ad-slot ad-slot--optin" aria-label="Advertisement" data-ad-location="optin-quality" data-ad-slot-desktop="7637288848" data-ad-slot-mobile="6993669367" data-ad-format="auto" hidden>
+            <span class="ad-label">Advertisement</span>
+            <div class="ad-frame"></div>
+          </section>
         </section>
       </aside>
 

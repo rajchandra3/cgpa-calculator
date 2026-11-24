@@ -5,8 +5,10 @@ import {
   calculateGpa,
   calculateQuickCgpa,
 } from './math.js';
+import { matchPromo, renderPersonalPromo } from './promos.js';
 
 const THEME_STORAGE_KEY = 'color-scheme';
+const AD_PREF_STORAGE_KEY = 'cgpa_ad_optin';
 const LEGACY_THEME_KEYS = ['ui_theme', 'theme'];
 const LEGACY_TAB_MAP = Object.freeze({
   qcc: 'gc',
@@ -369,6 +371,86 @@ function initApp() {
     }
   });
 
+  // Wow-Moment Personal & Affiliate Promo Slot
+  const promoSlot = document.getElementById('personal-promo-slot');
+  const dismissedPromoIds = new Set();
+  let promoDebounceTimer = null;
+  let lastShownPromoKey = '';
+
+  function clearPersonalPromo() {
+    if (promoDebounceTimer !== null) {
+      window.clearTimeout(promoDebounceTimer);
+      promoDebounceTimer = null;
+    }
+    lastShownPromoKey = '';
+    if (promoSlot) {
+      renderPersonalPromo(promoSlot, null);
+    }
+  }
+
+  function applyPersonalPromo({ tab, result, credits }) {
+    if (!promoSlot) return;
+    const promo = matchPromo(
+      { tab, university: config.id, result, credits },
+      undefined,
+      dismissedPromoIds
+    );
+    if (!promo) {
+      clearPersonalPromo();
+      return;
+    }
+    const promoKey = `${tab}:${promo.id}`;
+    if (promoKey === lastShownPromoKey && !promoSlot.hidden) {
+      return;
+    }
+    const rendered = renderPersonalPromo(promoSlot, promo, {
+      onCtaClick: (clickedPromo) => {
+        trackEvent('promo_clicked', {
+          promo_id: clickedPromo.id,
+          tab,
+          university: config.id,
+        });
+      },
+      onDismiss: (dismissedPromo) => {
+        dismissedPromoIds.add(dismissedPromo.id);
+        lastShownPromoKey = '';
+        trackEvent('promo_dismissed', {
+          promo_id: dismissedPromo.id,
+          tab,
+          university: config.id,
+        });
+      },
+    });
+    if (rendered) {
+      lastShownPromoKey = promoKey;
+      trackEvent('promo_shown', {
+        promo_id: promo.id,
+        tab,
+        university: config.id,
+      });
+    }
+  }
+
+  function schedulePersonalPromo(ctx, { immediate = false } = {}) {
+    if (!promoSlot) return;
+    if (promoDebounceTimer !== null) {
+      window.clearTimeout(promoDebounceTimer);
+      promoDebounceTimer = null;
+    }
+    if (!ctx || !ctx.ok) {
+      clearPersonalPromo();
+      return;
+    }
+    if (immediate) {
+      applyPersonalPromo(ctx);
+      return;
+    }
+    promoDebounceTimer = window.setTimeout(() => {
+      promoDebounceTimer = null;
+      applyPersonalPromo(ctx);
+    }, 350);
+  }
+
   // 3. Tab Navigation & URL Sync
   const tablist = document.querySelector('[role="tablist"]');
   const tabButtons = Array.from(document.querySelectorAll('[role="tab"][data-tab]'));
@@ -410,6 +492,7 @@ function initApp() {
     }
 
     if (trackChange) {
+      clearPersonalPromo();
       trackEvent('tab_change', { calculator: target, university: config.id });
     }
 
@@ -670,10 +753,15 @@ function initApp() {
         `${res.courseCount} ${courseWord} · ${res.totalCredits} credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
+      schedulePersonalPromo(
+        { ok: true, tab: 'sc', result: res.gpa, credits: res.totalCredits },
+        { immediate: true }
+      );
       return res;
     }
 
     hideResult(gpaResultBox, gpaValueEl, gpaMetaEl);
+    clearPersonalPromo();
 
     if (!isSubmit) {
       entries.forEach(({ gradeSelect, creditsSelect, grade, credits }) => {
@@ -792,6 +880,7 @@ function initApp() {
     wireResetButton('reset-gpa-btn', gpaForm, () => {
       setBanner(gpaErrorBanner, '');
       hideResult(gpaResultBox, gpaValueEl, gpaMetaEl);
+      clearPersonalPromo();
     });
   }
 
@@ -819,6 +908,7 @@ function initApp() {
 
     if (!isSubmit && allBlank) {
       hideResult(quickResultBox, quickValueEl, quickMetaEl);
+      clearPersonalPromo();
       if (quickForm?.dataset.submitted !== 'true') {
         setBanner(quickErrorBanner, '');
       }
@@ -846,10 +936,15 @@ function initApp() {
         `${res.totalCredits} total credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
+      schedulePersonalPromo(
+        { ok: true, tab: 'gc', result: res.cgpa, credits: res.totalCredits },
+        { immediate: isSubmit }
+      );
       return res;
     }
 
     hideResult(quickResultBox, quickValueEl, quickMetaEl);
+    clearPersonalPromo();
     if (!isSubmit) return res;
 
     setBanner(quickErrorBanner, res.error);
@@ -901,6 +996,7 @@ function initApp() {
     wireResetButton('reset-qcc-btn', quickForm, () => {
       setBanner(quickErrorBanner, '');
       hideResult(quickResultBox, quickValueEl, quickMetaEl);
+      clearPersonalPromo();
     });
   }
 
@@ -926,6 +1022,7 @@ function initApp() {
 
     if (!isSubmit && allBlank) {
       hideResult(ecResultBox, ecValueEl, ecMetaEl);
+      clearPersonalPromo();
       if (ecForm?.dataset.submitted !== 'true') {
         setBanner(ecErrorBanner, '');
       }
@@ -956,10 +1053,12 @@ function initApp() {
         `Internals: ${res.internals}/60 · ${res.modeLabel}`,
         { scroll: isSubmit }
       );
+      schedulePersonalPromo({ ok: true, tab: 'ec', result: res.marks }, { immediate: isSubmit });
       return res;
     }
 
     hideResult(ecResultBox, ecValueEl, ecMetaEl);
+    clearPersonalPromo();
     if (!isSubmit) return res;
 
     setBanner(ecErrorBanner, res.error);
@@ -1003,6 +1102,7 @@ function initApp() {
     wireResetButton('reset-ec-btn', ecForm, () => {
       setBanner(ecErrorBanner, '');
       hideResult(ecResultBox, ecValueEl, ecMetaEl);
+      clearPersonalPromo();
     });
   }
 
@@ -1135,10 +1235,15 @@ function initApp() {
         `${res.semesterCount} ${semWord} · ${res.totalCredits} credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
+      schedulePersonalPromo(
+        { ok: true, tab: 'fc', result: res.cgpa, credits: res.totalCredits },
+        { immediate: isSubmit }
+      );
       return res;
     }
 
     hideResult(allSemResultBox, allSemValueEl, allSemMetaEl);
+    clearPersonalPromo();
 
     if (!isSubmit) {
       entries.forEach(({ gpaEl, creditsEl, gpa, credits }) => {
@@ -1273,6 +1378,7 @@ function initApp() {
     wireResetButton('reset-fc-btn', allSemForm, () => {
       setBanner(allSemErrorBanner, '');
       hideResult(allSemResultBox, allSemValueEl, allSemMetaEl);
+      clearPersonalPromo();
     });
   }
 
@@ -1467,65 +1573,151 @@ function initApp() {
     }
   }
 
-  // 10. Deferred Ads Manager (post-interaction or idle; immediate in ?ads=preview)
-  function scheduleAdsManager() {
-    if (!document.querySelector('.ad-slot[data-ad-slot]')) return;
+  // 10. Contribute Section Telemetry & Opt-In Quality Display Ad Controller (Default OFF)
+  const contributeSection = document.getElementById('contribute-section');
+  if (contributeSection) {
+    contributeSection.addEventListener('click', (e) => {
+      const actionEl = e.target?.closest?.('[data-contribute-action]');
+      if (!actionEl) return;
+      const action = actionEl.dataset.contributeAction;
+      if (!action) return;
+      trackEvent('contribute_clicked', { action, university: config.id });
+    });
+  }
 
-    let adsLoaded = false;
+  function initOptInAdControl() {
+    const optInBtn = document.getElementById('ad-optin-btn');
+    const optInStatus = document.getElementById('ad-optin-status');
+    const optInSlot = document.getElementById('ad-slot-optin');
+    if (!optInBtn && !optInSlot) return;
+
+    let adsEnabled = false;
+    let userInteracted = false;
     let idleTimer = null;
-    const interactionEvents = ['pointerdown', 'keydown', 'change', 'scroll'];
 
-    const cleanup = () => {
-      for (const evt of interactionEvents) {
-        window.removeEventListener(evt, loadAdsOnce, true);
+    function syncOptInUi(enabled, statusText) {
+      adsEnabled = Boolean(enabled);
+      if (optInBtn) {
+        optInBtn.setAttribute('aria-pressed', adsEnabled ? 'true' : 'false');
+        optInBtn.textContent = adsEnabled ? 'Hide Ad' : 'Show Quality Ad';
       }
+      if (optInStatus && statusText) {
+        optInStatus.textContent = statusText;
+      }
+    }
+
+    function cancelPendingAutoEnable() {
       if (idleTimer !== null) {
         window.clearTimeout(idleTimer);
         idleTimer = null;
       }
-    };
+    }
 
-    const loadAdsOnce = () => {
-      if (adsLoaded) return;
-      adsLoaded = true;
-      cleanup();
-      import('./ads-manager.js')
-        .then((mod) => mod.initAdsManager({ university: config.id }))
-        .catch(() => {});
-    };
-
-    try {
-      if (new URLSearchParams(window.location.search).get('ads') === 'preview') {
-        loadAdsOnce();
-        return;
+    async function enableOptInAd({ trigger = 'user_click', persist = true } = {}) {
+      syncOptInUi(true, 'Loading display ad…');
+      try {
+        const mod = await import('./ads-manager.js');
+        if (!adsEnabled) {
+          if (persist) mod.setAdPreference(window, false);
+          mod.hideOptInAd();
+          return;
+        }
+        if (persist) {
+          mod.setAdPreference(window, true);
+        }
+        const res = mod.activateOptInAd({ university: config.id, trigger });
+        if (!adsEnabled) {
+          mod.hideOptInAd();
+          return;
+        }
+        if (!res.activated) {
+          syncOptInUi(false, 'Ad slot unavailable');
+        } else if (res.preview) {
+          syncOptInUi(true, 'Quality ad preview active · Zero ad scripts loaded');
+        } else if (optInSlot?.classList.contains('is-unfilled')) {
+          syncOptInUi(true, 'No ad available right now');
+        } else {
+          syncOptInUi(true, 'Ad slot active');
+        }
+      } catch {
+        if (adsEnabled) {
+          syncOptInUi(false, 'Ads off · Unable to load ad module');
+        }
       }
+    }
+
+    async function disableOptInAd() {
+      syncOptInUi(false, 'Ads off · Display slot hidden');
+      if (optInSlot) {
+        optInSlot.hidden = true;
+      }
+      try {
+        const mod = await import('./ads-manager.js');
+        if (adsEnabled) return;
+        mod.setAdPreference(window, false);
+        mod.hideOptInAd();
+      } catch {
+        safeStorageRemove(AD_PREF_STORAGE_KEY);
+      }
+    }
+
+    if (optInBtn) {
+      optInBtn.addEventListener('click', () => {
+        userInteracted = true;
+        cancelPendingAutoEnable();
+        if (!adsEnabled) {
+          trackEvent('ad_optin_enabled', { university: config.id });
+          enableOptInAd({ trigger: 'user_click', persist: true });
+        } else {
+          trackEvent('ad_optin_disabled', { university: config.id });
+          disableOptInAd();
+        }
+      });
+    }
+
+    let previewMode = false;
+    try {
+      previewMode = new URLSearchParams(window.location.search).get('ads') === 'preview';
     } catch {
-      // Ignore invalid search params
+      previewMode = false;
     }
 
-    for (const evt of interactionEvents) {
-      window.addEventListener(evt, loadAdsOnce, { capture: true, passive: true, once: true });
+    if (previewMode) {
+      enableOptInAd({ trigger: 'preview', persist: false });
+      return;
     }
 
-    const scheduleIdle = () => {
-      if (adsLoaded) return;
+    if (safeStorageGet(AD_PREF_STORAGE_KEY) !== '1') {
+      return;
+    }
+
+    let autoStarted = false;
+    const runRememberedOptIn = () => {
+      if (autoStarted || userInteracted) return;
+      autoStarted = true;
+      cancelPendingAutoEnable();
+      enableOptInAd({ trigger: 'saved_preference', persist: false });
+    };
+
+    const scheduleRememberedOptIn = () => {
+      if (autoStarted || userInteracted) return;
       if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(loadAdsOnce, { timeout: 2000 });
-        idleTimer = window.setTimeout(loadAdsOnce, 2000);
+        window.requestIdleCallback(runRememberedOptIn, { timeout: 1500 });
+        idleTimer = window.setTimeout(runRememberedOptIn, 1500);
       } else {
-        idleTimer = window.setTimeout(loadAdsOnce, 1200);
+        idleTimer = window.setTimeout(runRememberedOptIn, 1500);
       }
     };
 
     if (document.readyState === 'complete') {
-      scheduleIdle();
+      scheduleRememberedOptIn();
     } else {
-      window.addEventListener('load', scheduleIdle, { once: true });
+      window.addEventListener('load', scheduleRememberedOptIn, { once: true });
     }
   }
 
   initGiscusComments();
-  scheduleAdsManager();
+  initOptInAdControl();
 }
 
 if (typeof document !== 'undefined') {
