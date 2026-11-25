@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v11, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v12, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v11'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v12'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -462,12 +462,19 @@ test('analytics.js queues Mixpanel events from boot, defers remote script until 
     { promo_id: 'personal-day20', tab: 'sc', university: 'vit', transport_type: 'beacon' },
   ]);
 
+  mockWindow.track('ui_version_switched', { from: 'v2', to: 'legacy', university: 'vit' });
+  assert.deepEqual(gtagCalls[5], [
+    'event',
+    'ui_version_switched',
+    { from: 'v2', to: 'legacy', university: 'vit', transport_type: 'beacon' },
+  ]);
+
   mockWindow.track('123_custom', { ok: true });
-  assert.deepEqual(gtagCalls[5], ['event', 'e_123_custom', { ok: true }]);
+  assert.deepEqual(gtagCalls[6], ['event', 'e_123_custom', { ok: true }]);
 
   assert.equal(typeof mockWindow.setAnalyticsUserProperties, 'function');
   mockWindow.setAnalyticsUserProperties({ university: 'vit', launchMode: 'standalone' });
-  assert.deepEqual(gtagCalls[6], [
+  assert.deepEqual(gtagCalls[7], [
     'set',
     'user_properties',
     { university: 'vit', launch_mode: 'standalone' },
@@ -742,13 +749,49 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
 
     if (page.hasEc) {
       assert.match(html, /id="expected-marks-form"/);
+      assert.match(html, /id="legacy-ui-link"[^>]*href="\/legacy\/"/);
+      assert.match(html, /cgpa_ui_version/);
       for (const ecId of ['cat1', 'cat2', 'da', 'al', 'lab', 'j-comp', 'fat', 'ec-submit']) {
         assert.match(html, new RegExp(`id="${ecId}"`), `${page.file} missing #${ecId}`);
       }
     } else {
       assert.doesNotMatch(html, /id="expected-marks-form"/);
+      assert.doesNotMatch(html, /id="legacy-ui-link"/);
     }
   }
+});
+
+test('VIT /legacy/ Classic UI snapshot exists, is ad-free/noindex, and has safe JS + 2.0 switch toggle', () => {
+  const legacyFiles = [
+    'legacy/index.html',
+    'legacy/js/legacy.js',
+    'legacy/css/style.css',
+    'legacy/css/mobile.css',
+    'legacy/css/themes/light.css',
+    'legacy/css/themes/dark.css',
+  ];
+  for (const file of legacyFiles) {
+    assert.equal(repoFileExists(file), true, `Missing legacy file: ${file}`);
+  }
+
+  const legacyHtml = readRepoFile('legacy/index.html');
+  assert.match(legacyHtml, /<meta name="robots" content="noindex, follow">/);
+  assert.match(legacyHtml, /<link rel="canonical" href="https:\/\/cgpa-calculator\.rajchandra\.me\/">/);
+  assert.match(legacyHtml, /G-8SGELQM6QV/);
+  assert.match(legacyHtml, /\/src\/js\/analytics\.js/);
+  assert.match(legacyHtml, /id="switch-to-v2-btn"/);
+  assert.match(legacyHtml, /id="banner-switch-v2"/);
+  assert.match(legacyHtml, /id="gbtn"/);
+  assert.match(legacyHtml, /id="submit"/);
+  assert.match(legacyHtml, /id="ec-submit"/);
+  assert.match(legacyHtml, /id="sem-cgpa-btn"/);
+  assert.match(legacyHtml, /<span id="thisYear"><\/span>/);
+  assert.doesNotMatch(legacyHtml, /adsbygoogle|pagead2|fb-comments|connect\.facebook|AW-16729760450|files\.rajchandra\.me/);
+
+  const legacyJs = readRepoFile('legacy/js/legacy.js');
+  assert.doesNotMatch(legacyJs, /innerHTML|outerHTML|document\.write|insertAdjacentHTML|\beval\(|alert\(/);
+  assert.match(legacyJs, /ui_version_switched/);
+  assert.match(legacyJs, /calculation_completed/);
 });
 
 test('src/css/app.css keeps .row-list single-column at all viewports and cleans up obsolete rules', () => {

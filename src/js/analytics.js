@@ -124,6 +124,7 @@
     contribute_clicked: true,
     discussions_clicked: true,
     announcement_clicked: true,
+    ui_version_switched: true,
   };
 
   function toSnakeCase(raw, maxLen) {

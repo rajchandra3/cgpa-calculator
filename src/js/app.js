@@ -15,6 +15,7 @@ import {
 
 const THEME_STORAGE_KEY = 'color-scheme';
 const AD_PREF_STORAGE_KEY = 'cgpa_ad_optin';
+const UI_VERSION_STORAGE_KEY = 'cgpa_ui_version';
 const LEGACY_THEME_KEYS = ['ui_theme', 'theme'];
 const LEGACY_TAB_MAP = Object.freeze({
   qcc: 'gc',
@@ -1588,8 +1589,39 @@ function initApp() {
   } else if (standaloneQuery?.matches) {
     launchMode = 'standalone';
   }
-  setUserProperties({ university: config.id, launch_mode: launchMode });
+  setUserProperties({ university: config.id, launch_mode: launchMode, ui_version: 'v2' });
   trackEvent('App Launched', { mode: launchMode, university: config.id });
+
+  const legacyUiLink = document.getElementById('legacy-ui-link');
+  if (legacyUiLink) {
+    try {
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.get('ui') === 'v2') {
+        safeStorageSet(UI_VERSION_STORAGE_KEY, 'v2');
+        currentUrl.searchParams.delete('ui');
+        window.history.replaceState({}, '', currentUrl.toString());
+      }
+    } catch {
+      // Ignore URL cleanup errors
+    }
+
+    legacyUiLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      safeStorageSet(UI_VERSION_STORAGE_KEY, 'legacy');
+      trackEvent('ui_version_switched', {
+        from: 'v2',
+        to: 'legacy',
+        university: config.id,
+      });
+      const activeBtn = document.querySelector('[role="tab"][aria-selected="true"][data-tab]');
+      const activeTabId = activeBtn?.dataset?.tab;
+      const targetUrl = new URL('/legacy/', window.location.origin);
+      if (activeTabId && activeTabId !== 'sc') {
+        targetUrl.searchParams.set('tab', activeTabId);
+      }
+      window.location.assign(targetUrl.toString());
+    });
+  }
 
   standaloneQuery?.addEventListener?.('change', (evt) => {
     const mode = evt.matches ? 'standalone' : 'browser tab';

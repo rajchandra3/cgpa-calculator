@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, follow">
+    <meta name="description" content="Classic v1 interface of the VIT CGPA Calculator for semester GPA, quick CGPA, expected marks, and all-semester CGPA.">
+    <meta name="author" content="Raj Chandra">
+    <meta name="theme-color" content="#1b567e">
+    <title>VIT CGPA Calculator (Classic UI)</title>
+    <link rel="canonical" href="https://cgpa-calculator.rajchandra.me/">
+    <link rel="icon" type="image/png" href="/src/images/icons/favicon.png">
+    <link rel="apple-touch-icon" href="/src/images/icons/icon-96x96.png">
+    <link rel="apple-touch-icon" href="/src/images/icons/icon-256x256.png">
+    <link rel="apple-touch-icon" href="/src/images/icons/icon-512x512.png">
+    <link rel="manifest" href="/manifest/vit.json">
+
+    <!-- Bootstrap 5.3.2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- Font Awesome 6.4.2 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+
+    <!-- Google Analytics 4 -->
+    <script async fetchpriority="low" src="https://www.googletagmanager.com/gtag/js?id=G-8SGELQM6QV"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-8SGELQM6QV');
+    </script>
+
+    <!-- Classic v1 Styles -->
+    <link rel="stylesheet" href="/legacy/css/style.css">
+    <link rel="stylesheet" href="/legacy/css/mobile.css">
+    <style>
+        .legacy-v2-banner {
+            max-width: 720px;
+            margin: 0 auto 1rem;
+            padding: 0.5rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .calculator-tab {
+            justify-content: center;
+        }
+    </style>
+
+    <!-- jQuery (used by classic v1 UI) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="/src/js/analytics.js" defer fetchpriority="low"></script>
+</head>
+<body data-university="vit" data-ui-version="legacy">
+    <!-- Classic Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/legacy/">
+                <img src="/src/images/icons/icon-96x96.png" width="40" height="40" class="d-inline-block align-middle" alt="VIT CGPA Calculator">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarText">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a id="nav-sc" class="nav-link" href="/legacy/?tab=sc" data-tab="sc">GPA CALCULATOR</a>
+                    </li>
+                    <li class="nav-item">
+                        <a id="nav-gc" class="nav-link" href="/legacy/?tab=gc" data-tab="gc">QUICK CGPA CALCULATOR</a>
+                    </li>
+                    <li class="nav-item">
+                        <a id="nav-ec" class="nav-link" href="/legacy/?tab=ec" data-tab="ec">EXPECTED MARKS CALCULATOR</a>
+                    </li>
+                    <li class="nav-item">
+                        <a id="nav-fc" class="nav-link" href="/legacy/?tab=fc" data-tab="fc">ANY SEM CGPA CALCULATOR</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center gap-2">
+                    <a id="switch-to-v2-btn" class="btn btn-sm btn-info fw-semibold" href="/?ui=v2">Switch to 2.0 UI</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Classic Header -->
+    <div class="col-sm-12 col-md-12 col-lg-12 text-center mb-2 mt-2 pt-2">
+        <div class="header font-weight-bolder">VIT CGPA CALCULATOR</div>
+        <div class="d-flex justify-content-center align-items-center gap-2 mb-3 flex-wrap">
+            <label for="theme-selector" class="mb-0">Theme</label>
+            <select id="theme-selector" class="form-select" style="width: 120px;">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+            </select>
+        </div>
+        <div class="legacy-v2-banner alert alert-secondary d-flex justify-content-between align-items-center flex-wrap gap-2 text-start">
+            <span>You&rsquo;re using the <strong>Classic v1 UI</strong> (ad-free snapshot).</span>
+            <a id="banner-switch-v2" class="btn btn-sm btn-primary" href="/?ui=v2">Try the new 2.0 UI</a>
+        </div>
+    </div>
+
+    <!-- Calculator Tabs -->
+<div class="row col-sm-12 col-md-12 col-lg-12 gpa-calculator no-padding calculator-tab" id="sc">
+        <!-- ads for large screens -->
+        
+        <div class="card-container col-lg-6 mx-auto p-4 mb-5 centered has-box-shadow gpa-calculator" id="gpa-box">
+            <div class="col-lg-10 col-md-8 col-sm-12 col-xs-12 centered">
+                <h1 class="card-title">CALCULATE GPA</h1><hr>
+                <div class="input-group mb-3 table-row" id="course1">
+                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">Course </span>
+                    <select class="form-select" name="grades" id="g1" style="color: #333; background-color: #fff;">
+                        <option value="0" style="color: #333; background-color: #fff;">Grade</option>
+                        <option value="10" style="color: #333; background-color: #fff;">S</option>
+                        <option value="9" style="color: #333; background-color: #fff;">A</option>
+                        <option value="8" style="color: #333; background-color: #fff;">B</option>
+                        <option value="7" style="color: #333; background-color: #fff;">C</option>
+                        <option value="6" style="color: #333; background-color: #fff;">D</option>
+                        <option value="5" style="color: #333; background-color: #fff;">E</option>
+                        <option value="0" style="color: #333; background-color: #fff;">F</option>
+                        <option value="0" style="color: #333; background-color: #fff;">N</option>
+                    </select>
+                    <select class="form-select" name="credits" id="c1" style="color: #333; background-color: #fff;">
+                        <option value="0" id="c0" style="color: #333; background-color: #fff;">Credits</option>
+                        <option value="1" style="color: #333; background-color: #fff;">1</option>
+                        <option value="1.5" style="color: #333; background-color: #fff;">1.5</option>
+                        <option value="2" style="color: #333; background-color: #fff;">2</option>
+                        <option value="3" style="color: #333; background-color: #fff;">3</option>
+                        <option value="4" style="color: #333; background-color: #fff;">4</option>
+                        <option value="5" style="color: #333; background-color: #fff;">5</option>
+                        <option value="20" style="color: #333; background-color: #fff;">20</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3 table-row" id="course2">
+                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">Course </span>
+                    <select class="form-select" name="grades" id="g2" style="color: #333; background-color: #fff;">
+                        <option value="0" style="color: #333; background-color: #fff;">Grade</option>
+                        <option value="10" style="color: #333; background-color: #fff;">S</option>
+                        <option value="9" style="color: #333; background-color: #fff;">A</option>
+                        <option value="8" style="color: #333; background-color: #fff;">B</option>
+                        <option value="7" style="color: #333; background-color: #fff;">C</option>
+                        <option value="6" style="color: #333; background-color: #fff;">D</option>
+                        <option value="5" style="color: #333; background-color: #fff;">E</option>
+                        <option value="0" style="color: #333; background-color: #fff;">F</option>
+                        <option value="0" style="color: #333; background-color: #fff;">N</option>
+                    </select>
+                    <select class="form-select" name="credits" id="c2" style="color: #333; background-color: #fff;">
+                        <option value="0" id="c0" style="color: #333; background-color: #fff;">Credits</option>
+                        <option value="1" style="color: #333; background-color: #fff;">1</option>
+                        <option value="1.5" style="color: #333; background-color: #fff;">1.5</option>
+                        <option value="2" style="color: #333; background-color: #fff;">2</option>
+                        <option value="3" style="color: #333; background-color: #fff;">3</option>
+                        <option value="4" style="color: #333; background-color: #fff;">4</option>
+                        <option value="5" style="color: #333; background-color: #fff;">5</option>
+                        <option value="20" style="color: #333; background-color: #fff;">20</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3 table-row" id="course3">
+                    <span class="input-group-text">Course </span>
+                    <select class="form-select" name="grades" id="g3">
+                        <option value="0" >Grade</option>
+                        <option value="10" >S</option>
+                        <option value="9">A</option>
+                        <option value="8">B</option>
+                        <option value="7">C</option>
+                        <option value="6">D</option>
+                        <option value="5">E</option>
+                        <option value="0">F</option>
+                        <option value="0">N</option>
+                    </select>
+                    <select class="form-select" name="credits" id="c3">
+                        <option value="0" id="c0">Credits</option>
+                        <option value="1">1</option>
+                        <option value="1.5">1.5</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3 table-row" id="course4">
+                    <span class="input-group-text">Course </span>
+                    <select class="form-select" name="grades" id="g4">
+                        <option value="0" >Grade</option>
+                        <option value="10">S</option>
+                        <option value="9">A</option>
+                        <option value="8">B</option>
+                        <option value="7">C</option>
+                        <option value="6">D</option>
+                        <option value="5">E</option>
+                        <option value="0">F</option>
+                        <option value="0">N</option>
+                    </select>
+                    <select class="form-select" name="credits" id="c4">
+                        <option value="0" id="c0">Credits</option>
+                        <option value="1">1</option>
+                        <option value="1.5">1.5</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3 table-row" id="course5">
+                    <span class="input-group-text">Course </span>
+                    <select class="form-select" name="grades" id="g5">
+                        <option value="0" >Grade</option>
+                        <option value="10">S</option>
+                        <option value="9">A</option>
+                        <option value="8">B</option>
+                        <option value="7">C</option>
+                        <option value="6">D</option>
+                        <option value="5">E</option>
+                        <option value="0">F</option>
+                        <option value="0">N</option>
+                    </select>
+                    <select class="form-select" name="credits" id="c5">
+                        <option value="0" id="c0">Credits</option>
+                        <option value="1">1</option>
+                        <option value="1.5">1.5</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                
+                
+                
+                
+                <div class="input-group mb-3 table-row" id="course6">
+                    <span class="input-group-text">Course </span>
+                    <select class="form-select" name="grades" id="g6">
+                        <option value="0" >Grade</option>
+                        <option value="10">S</option>
+                        <option value="9">A</option>
+                        <option value="8">B</option>
+                        <option value="7">C</option>
+                        <option value="6">D</option>
+                        <option value="5">E</option>
+                        <option value="0">F</option>
+                        <option value="0">N</option>
+                    </select>
+                    <select class="form-select" name="credits" id="c6">
+                        <option value="0" id="c0">Credits</option>
+                        <option value="1">1</option>
+                        <option value="1.5">1.5</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3 table-row" id="course7">
+                    <span class="input-group-text">Course </span>
+                    <select class="form-select" name="grades" id="g7">
+                        <option value="0" >Grade</option>
+                        <option value="10">S</option>
+                        <option value="9">A</option>
+                        <option value="8">B</option>
+                        <option value="7">C</option>
+                        <option value="6">D</option>
+                        <option value="5">E</option>
+                        <option value="0">F</option>
+                        <option value="0">N</option>
+                    </select>
+                    <select class="form-select" name="credits" id="c7">
+                        <option value="0" id="c0">Credits</option>
+                        <option value="1">1</option>
+                        <option value="1.5">1.5</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3 table-row" id="course8">
+                    <span class="input-group-text">Course </span>
+                    <select class="form-select" name="grades" id="g8">
+                        <option value="0" >Grade</option>
+                        <option value="10">S</option>
+                        <option value="9">A</option>
+                        <option value="8">B</option>
+                        <option value="7">C</option>
+                        <option value="6">D</option>
+                        <option value="5">E</option>
+                        <option value="0">F</option>
+                        <option value="0">N</option>
+                    </select>
+                    <select class="form-select" name="credits" id="c8">
+                        <option value="0" id="c0">Credits</option>
+                        <option value="1">1</option>
+                        <option value="1.5">1.5</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3 table-row" id="course9">
+                    <span class="input-group-text">Course </span>
+                    <select class="form-select" name="grades" id="g9">
+                        <option value="0" >Grade</option>
+                        <option value="10">S</option>
+                        <option value="9">A</option>
+                        <option value="8">B</option>
+                        <option value="7">C</option>
+                        <option value="6">D</option>
+                        <option value="5">E</option>
+                        <option value="0">F</option>
+                        <option value="0">N</option>
+                    </select>
+                    <select class="form-select" name="credits" id="c9">
+                        <option value="0" id="c0">Credits</option>
+                        <option value="1">1</option>
+                        <option value="1.5">1.5</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3 table-row" id="course10">
+                    <span class="input-group-text">Course </span>
+                    <select class="form-select" name="grades" id="g10">
+                        <option value="0" >Grade</option>
+                        <option value="10">S</option>
+                        <option value="9">A</option>
+                        <option value="8">B</option>
+                        <option value="7">C</option>
+                        <option value="6">D</option>
+                        <option value="5">E</option>
+                        <option value="0">F</option>
+                        <option value="0">N</option>
+                    </select>
+                    <select class="form-select" name="credits" id="c10">
+                        <option value="0" id="c0">Credits</option>
+                        <option value="1">1</option>
+                        <option value="1.5">1.5</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="alert alert-primary alert-grades text-center" role="alert">
+                    <b><span id="grades" class="text-info"></span></b>
+                </div>
+                
+                <button class="gbtn btn w-100 btn-md btn-primary" id="gbtn">Submit</button>
+                <br>
+                <!-- Google Ads -->
+                
+            </div>
+        </div>
+        <!-- ads for large screens -->
+        
+    </div>
+
+    <!-- quick cgpa calculator -->
+    <div class="row col-sm-12 col-md-12 col-lg-12 centered quick-cgpa-calculator no-padding calculator-tab" id="gc">
+        <!-- ads for large screens -->
+        
+
+        <div class="card-container col-lg-6 mx-auto p-4 mb-5 centered has-box-shadow">
+            <div class="col-lg-10 col-md-8 col-sm-12 centered">
+                <h1>QUICK CGPA CALCULATOR</h1>
+                <hr>
+                <div class="input-group mb-3 table-row">
+                    <input type="text" id='tc' class="form-control" maxlength="5" placeholder="Credits till last Sem?" aria-label="Credits Input">
+                    <span class="input-group-text">max 250 </span>
+                </div>
+                
+                <div class="input-group mb-3 table-row">
+                    <input type="text" id='cgpa' class="form-control" maxlength="4" placeholder="CGPA till last Sem?" aria-label="CGPA Input">
+                    <span class="input-group-text">max 10 </span>
+                </div>
+                
+                
+                
+                
+                <div class="input-group mb-3 table-row">
+                    <input type="text" id='c' class="form-control" maxlength="4" placeholder="Credits in this Sem?" aria-label="This Sem Credits">
+                    <span class="input-group-text">max 39 </span>
+                </div>
+                
+                <div class="input-group mb-3 table-row">
+                    <input type="text" id='gpa' class="form-control" maxlength="4" placeholder="GPA this semester?" aria-label="This Sem GPA">
+                    <span class="input-group-text">max 10 </span>
+                </div>
+                <div class="alert alert-primary text-center alert-cgpa-msg result-container" role="alert">
+                    <b><span class="cgpa-msg" id="cgpa-msg"></span></b>
+                </div>
+                
+                <button class="btn w-100 btn-md btn-primary" id="submit">Submit</button>
+                <br>
+
+                <!-- Google Ads -->
+                
+            </div>
+        </div>
+        <!-- ads for large screens -->
+        
+    </div>
+
+    <!--Marks Predictor-->
+    <div class="row col-sm-12 col-md-12 col-lg-12 centered marks-predictor no-padding calculator-tab" id="ec">
+        <!-- ads for large screens -->
+        
+        <!-- main content -->
+        <div class="card-container col-lg-6 mx-auto col-sm-12 p-4 mb-5 centered has-box-shadow">
+            <div class="col-lg-10 col-md-8 col-sm-12 centered">
+                <h1>COMPUTE EXPECTED MARKS</h1>
+                <hr>
+                <form>
+                    <div class="mb-3 row">
+                        <label for="cat1" class="col-sm-6 col-form-label text-end">Marks in CAT 1 : </label>
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="cat1" placeholder="Your score in CAT 1" aria-label="Marks Input" aria-describedby="cat1-addon">
+                                <span class="input-group-text" id="cat1-addon">&nbsp; max 30 </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="cat2" class="col-sm-6 col-form-label text-end">Marks in CAT 2 : </label>
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="cat2" placeholder="Your score in CAT 2" aria-label="Marks Input" aria-describedby="cat2-addon">
+                                <span class="input-group-text" id="cat2-addon">&nbsp; max 30 </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    
+                    <div class="mb-3 row">
+                        <label for="da" class="col-sm-6 col-form-label text-end">Marks in Internals : </label>
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="da" placeholder="Your score in DA(s)" aria-label="Marks Input" aria-describedby="da-addon">
+                                <span class="input-group-text" id="da-addon">&nbsp; max 30 </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="al" class="col-sm-6 col-form-label text-end">Additional Learning : </label>
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="al" placeholder="Your score in AL" aria-label="Marks Input" aria-describedby="al-addon">
+                                <span class="input-group-text" id="al-addon">&nbsp; max 10 </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="lab" class="col-sm-6 col-form-label text-end">Marks in Lab : </label>
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="lab" placeholder="Your score in Lab" aria-label="Marks Input" aria-describedby="lab-addon">
+                                <span class="input-group-text" id="lab-addon"> max 100 </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label for="j-comp" class="col-sm-6 col-form-label text-end">Marks in J Component : </label>
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="j-comp" placeholder="Your score in Project" aria-label="Marks Input" aria-describedby="j-comp-addon">
+                                <span class="input-group-text" id="j-comp-addon">max 100 </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="fat" class="col-sm-6 col-form-label text-end">Expected Marks in FAT :</label>
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="fat" placeholder="Say 98" aria-label="Marks Input" aria-describedby="fat-addon">
+                                <span class="input-group-text" id="fat-addon">max 100 </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-primary text-center alert-marks result-container" role="alert">
+                        <b><span id="marks"></span></b>
+                    </div>
+                    
+                    <div class="mb-3 row">
+                        <div class="col-sm-12 pt-2">
+                            <button type="button" id="ec-submit" class="btn btn-primary w-100">Submit</button>
+                            <br>
+                            <small id="projHelp" class="form-text text-danger">*If the course doesn't have J-Component/L-Component you can leave it empty.</small>
+                        </div>
+                    </div>
+                    <!-- Google Ads -->
+                    
+                </form>
+            </div>
+        </div>
+
+        <!-- ads for large screens -->
+        
+    </div>
+
+    <!--All semester CGPA calculator-->
+    <div class="row col-sm-12 col-md-12 col-lg-12 centered n-sem-cgpa-calculator no-padding calculator-tab" id="fc">
+         <!-- ads for large screens -->
+         
+        <!-- main content -->
+        <div class="card-container col-lg-6 mx-auto p-4 mb-5 centered has-box-shadow">
+            <div class="col-lg-10 col-md-8 col-sm-12 centered">
+                <h1 class="card-title">CALCULATE YOUR CGPA FOR ANY NUMBER OF SEMESTERS</h1><hr>
+                <div class="input-group mb-3 table-row" id="sem1">
+                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">1st Sem</span>
+                    <input type="text" id="gpa1" class="form-control fgpa" name="fgpa1" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
+                    <input type="text" id="fc1" class="form-control fcredits" name="fcredit1" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
+                </div>
+                <div class="input-group mb-3 table-row" id="sem2">
+                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">2nd Sem</span>
+                    <input type="text" id="gpa2" class="form-control fgpa" name="fgpa2" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
+                    <input type="text" id="fc2" class="form-control fcredits" name="fcredit2" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
+                </div>
+                <div class="input-group mb-3 table-row" id="sem3">
+                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">3rd Sem</span>
+                    <input type="text" id="gpa3" class="form-control fgpa" name="fgpa3" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
+                    <input type="text" id="fc3" class="form-control fcredits" name="fcredit3" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
+                </div>
+                <div class="input-group mb-3 table-row" id="sem4">
+                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">4th Sem</span>
+                    <input type="text" id="gpa4" class="form-control fgpa" name="fgpa4" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
+                    <input type="text" id="fc4" class="form-control fcredits" name="fcredit4" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
+                </div>
+                
+                
+                
+                
+                <div class="input-group mb-3 table-row" id="sem5">
+                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">5th Sem</span>
+                    <input type="text" id="gpa5" class="form-control fgpa" name="fgpa5" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
+                    <input type="text" id="fc5" class="form-control fcredits" name="fcredit5" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
+                </div>
+                <div class="input-group mb-3 table-row" id="sem6">
+                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">6th Sem</span>
+                    <input type="text" id="gpa6" class="form-control fgpa" name="fgpa6" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
+                    <input type="text" id="fc6" class="form-control fcredits" name="fcredit6" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
+                </div>
+                <div class="input-group mb-3 table-row" id="sem7">
+                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">7th Sem</span>
+                    <input type="text" id="gpa7" class="form-control fgpa" name="fgpa7" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
+                    <input type="text" id="fc7" class="form-control fcredits" name="fcredit7" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
+                </div>
+                <div class="input-group mb-3 table-row" id="sem8">
+                    <span class="input-group-text" style="background-color: #f2f2f2; color: #333;">8th Sem</span>
+                    <input type="text" id="gpa8" class="form-control fgpa" name="fgpa8" placeholder="GPA" aria-label="GPA" style="color: #333; background-color: #fff;">
+                    <input type="text" id="fc8" class="form-control fcredits" name="fcredit8" placeholder="CREDITS" aria-label="Credits" style="color: #333; background-color: #fff;">
+                </div>
+                <div class="alert alert-primary text-center alert-fcgpa" role="alert">
+                    <b><span class="text-info" id="fcgpa"></span></b>
+                </div>
+                
+                <button class="btn w-100 btn-md btn-primary clearfix" id="sem-cgpa-btn">Submit</button>
+                <br>
+                <!-- Google Ads -->
+                
+            </div>
+        </div>
+        <!-- ads for large screens -->
+        
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="modal-error" tabindex="-1" role="dialog" aria-labelledby="modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="modal-title">Error</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Got it</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Classic Footer -->
+    <div class="col-lg-12 common-footer-container bg-dark">
+        <footer class="p-4 text-center">
+            &copy; 2017&ndash;<span id="thisYear"></span> <a href="https://rajchandra.me">Raj Chandra</a>. All Rights Reserved.<br>
+            <a href="https://www.linkedin.com/in/rajchandra3/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fa-brands fa-linkedin" aria-hidden="true" style="font-size: 23px; color: white;"></i></a> &nbsp;
+            <a href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fa-brands fa-github" aria-hidden="true" style="font-size: 23px; color: white;"></i></a>
+        </footer>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="/legacy/js/legacy.js" defer></script>
+</body>
+</html>
