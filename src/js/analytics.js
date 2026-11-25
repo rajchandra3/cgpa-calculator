@@ -119,6 +119,83 @@
     window.mixpanel.init(MIXPANEL_TOKEN);
   }
 
+  var BEACON_EVENTS = {
+    promo_clicked: true,
+    contribute_clicked: true,
+    discussions_clicked: true,
+    announcement_clicked: true,
+  };
+
+  function toSnakeCase(raw, maxLen) {
+    var str = String(raw || '')
+      .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    if (maxLen && str.length > maxLen) {
+      str = str.slice(0, maxLen).replace(/_+$/g, '');
+    }
+    return str;
+  }
+
+  function toGa4EventName(rawName) {
+    var name = toSnakeCase(rawName, 40);
+    if (!name) return '';
+    if (!/^[a-z]/.test(name)) {
+      name = ('e_' + name).slice(0, 40);
+    }
+    if (name === 'page_view') {
+      return 'calculator_view';
+    }
+    return name;
+  }
+
+  function sanitizeGa4Params(rawProps, gaEventName) {
+    var out = {};
+    if (rawProps && typeof rawProps === 'object') {
+      var keys = Object.keys(rawProps);
+      for (var i = 0; i < keys.length; i++) {
+        var rawKey = keys[i];
+        if (gaEventName === 'calculator_view' && rawKey === 'referrer') {
+          continue;
+        }
+        var key = toSnakeCase(rawKey, 40);
+        if (!key) continue;
+        var val = rawProps[rawKey];
+        if (typeof val === 'string') {
+          var trimmed = val.trim();
+          if (trimmed.length > 100) trimmed = trimmed.slice(0, 100);
+          out[key] = trimmed;
+        } else if (typeof val === 'number') {
+          if (Number.isFinite(val)) out[key] = val;
+        } else if (typeof val === 'boolean') {
+          out[key] = val;
+        }
+      }
+    }
+    if (gaEventName && BEACON_EVENTS[gaEventName]) {
+      out.transport_type = 'beacon';
+    }
+    return out;
+  }
+
+  window.setAnalyticsUserProperties = function setAnalyticsUserProperties(props) {
+    var clean = sanitizeGa4Params(props, '');
+    if (!Object.keys(clean).length) return;
+
+    try {
+      window.mixpanel?.register?.(clean);
+    } catch (err) {
+      // Ignore Mixpanel register errors
+    }
+
+    try {
+      window.gtag?.('set', 'user_properties', clean);
+    } catch (err) {
+      // Ignore GA user_properties errors
+    }
+  };
+
   window.track = function track(eventName, props) {
     if (!eventName) return;
     var payload = props && typeof props === 'object' ? props : {};
@@ -130,7 +207,11 @@
     }
 
     try {
-      window.gtag?.('event', eventName, payload);
+      var gaEventName = toGa4EventName(eventName);
+      if (gaEventName) {
+        var gaPayload = sanitizeGa4Params(payload, gaEventName);
+        window.gtag?.('event', gaEventName, gaPayload);
+      }
     } catch (err) {
       // Ignore GA transport errors
     }
