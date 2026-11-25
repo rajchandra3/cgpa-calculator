@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v12, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v13, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v12'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v13'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -781,6 +781,8 @@ test('VIT /legacy/ Classic UI snapshot exists, is ad-free/noindex, and has safe 
   assert.match(legacyHtml, /\/src\/js\/analytics\.js/);
   assert.match(legacyHtml, /id="switch-to-v2-btn"/);
   assert.match(legacyHtml, /id="banner-switch-v2"/);
+  assert.match(legacyHtml, /\[data-bs-theme="dark"\] \.legacy-v2-banner/);
+  assert.match(legacyHtml, /\.common-footer-container footer/);
   assert.match(legacyHtml, /id="gbtn"/);
   assert.match(legacyHtml, /id="submit"/);
   assert.match(legacyHtml, /id="ec-submit"/);
