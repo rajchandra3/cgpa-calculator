@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <script>try{var s=localStorage.getItem('color-scheme')||localStorage.getItem('ui_theme')||localStorage.getItem('theme');if(s==='light'||s==='dark'){document.querySelector('meta[name="color-scheme"]').content=s;document.documentElement.dataset.theme=s;}}catch(e){}</script>
+  <script>try{var p=new URLSearchParams(location.search);if(p.get('ui')==='v2'){localStorage.setItem('cgpa_ui_version','v2');}else if(localStorage.getItem('cgpa_ui_version')==='legacy'){var t=p.get('tab');location.replace('/legacy/'+(t?'?tab='+encodeURIComponent(t):''));}}catch(e){}</script>
 
   <title>VIT CGPA Calculator | GPA, Quick CGPA &amp; Expected Marks</title>
   <meta name="description" content="Calculate VIT semester GPA, cumulative CGPA, and expected FAT marks under FFCS. Over 1M+ views since 2017 and trusted by VIT students for over 9+ years.">
@@ -140,6 +141,7 @@
         <h1 class="brand-title">VIT CGPA Calculator</h1>
       </a>
       <div class="header-actions">
+        <a id="legacy-ui-link" class="btn btn-subtle" href="/legacy/">Classic UI</a>
         <label class="visually-hidden" for="theme-selector">Color theme</label>
         <select id="theme-selector" class="theme-select" aria-label="Color theme">
           <option value="system">System</option>
