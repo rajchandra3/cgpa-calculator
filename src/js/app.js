@@ -45,6 +45,21 @@ export function resolveGiscusTheme(mode) {
   return 'preferred_color_scheme';
 }
 
+export function getScoreBand(tab, score) {
+  const num = Number(score);
+  if (!Number.isFinite(num)) return 'unknown';
+  if (tab === 'ec') {
+    if (num >= 90) return '90_plus';
+    if (num >= 80) return '80_to_90';
+    if (num >= 70) return '70_to_80';
+    return 'below_70';
+  }
+  if (num >= 9) return '9_plus';
+  if (num >= 8) return '8_to_9';
+  if (num >= 7) return '7_to_8';
+  return 'below_7';
+}
+
 function safeStorageGet(key) {
   try {
     return window.localStorage.getItem(key);
@@ -71,8 +86,34 @@ function safeStorageRemove(key) {
 
 function trackEvent(eventName, props = {}) {
   try {
-    if (typeof window !== 'undefined' && typeof window.track === 'function') {
+    if (typeof window === 'undefined') return;
+    if (typeof window.track === 'function') {
       window.track(eventName, props);
+      return;
+    }
+    if (typeof window.gtag === 'function') {
+      const normalized = String(eventName || '')
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 40);
+      if (normalized && normalized !== 'page_view') {
+        window.gtag('event', normalized, props);
+      }
+    }
+  } catch {
+    // Ignore analytics errors
+  }
+}
+
+function setUserProperties(props = {}) {
+  try {
+    if (typeof window === 'undefined') return;
+    if (typeof window.setAnalyticsUserProperties === 'function') {
+      window.setAnalyticsUserProperties(props);
+    } else if (typeof window.gtag === 'function') {
+      window.gtag('set', 'user_properties', props);
     }
   } catch {
     // Ignore analytics errors
@@ -377,6 +418,61 @@ function initApp() {
     }
   });
 
+  // Usage-Pattern Calculation Tracker (Submit + Debounced Live Auto-Calc)
+  const liveCalcTimers = new Map();
+  const lastTrackedCalcSig = new Map();
+
+  function cancelPendingLiveCalc(tab) {
+    const timer = liveCalcTimers.get(tab);
+    if (timer !== undefined) {
+      window.clearTimeout(timer);
+      liveCalcTimers.delete(tab);
+    }
+  }
+
+  function clearCalcTracking(tab) {
+    if (!tab) {
+      for (const timer of liveCalcTimers.values()) {
+        window.clearTimeout(timer);
+      }
+      liveCalcTimers.clear();
+      lastTrackedCalcSig.clear();
+      return;
+    }
+    cancelPendingLiveCalc(tab);
+    lastTrackedCalcSig.delete(tab);
+  }
+
+  function emitCalculationEvents(tab, eventName, payload, score, trigger) {
+    trackEvent(eventName, { ...payload, trigger });
+    trackEvent('calculation_completed', {
+      calculator: tab,
+      university: config.id,
+      trigger,
+      score,
+      score_band: getScoreBand(tab, score),
+    });
+  }
+
+  function recordCalculation(tab, eventName, payload, score, { isSubmit = false, signature = '' } = {}) {
+    cancelPendingLiveCalc(tab);
+    if (isSubmit) {
+      lastTrackedCalcSig.set(tab, signature);
+      emitCalculationEvents(tab, eventName, payload, score, 'submit');
+      return;
+    }
+    if (lastTrackedCalcSig.get(tab) === signature) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      liveCalcTimers.delete(tab);
+      if (lastTrackedCalcSig.get(tab) === signature) return;
+      lastTrackedCalcSig.set(tab, signature);
+      emitCalculationEvents(tab, eventName, payload, score, 'live');
+    }, 800);
+    liveCalcTimers.set(tab, timer);
+  }
+
   // Wow-Moment Personal & Affiliate Promo Slot
   const promoSlot = document.getElementById('personal-promo-slot');
   const dismissedPromoIds = new Set();
@@ -500,6 +596,7 @@ function initApp() {
 
     if (trackChange) {
       clearPersonalPromo();
+      clearCalcTracking();
       trackEvent('tab_change', { calculator: target, university: config.id });
     }
 
@@ -764,11 +861,24 @@ function initApp() {
         { ok: true, tab: 'sc', result: res.gpa, credits: res.totalCredits },
         { immediate: true, forceShuffle: isSubmit }
       );
+      recordCalculation(
+        'sc',
+        'computed_gpa',
+        {
+          university: config.id,
+          gpa: res.gpa,
+          courses: res.courseCount,
+          credits: res.totalCredits,
+        },
+        res.gpa,
+        { isSubmit, signature: `${res.gpa}:${res.courseCount}:${res.totalCredits}` }
+      );
       return res;
     }
 
     hideResult(gpaResultBox, gpaValueEl, gpaMetaEl);
     clearPersonalPromo();
+    clearCalcTracking('sc');
 
     if (!isSubmit) {
       entries.forEach(({ gradeSelect, creditsSelect, grade, credits }) => {
@@ -853,6 +963,11 @@ function initApp() {
       targetRow.remove();
       renumberGpaRows();
       const updatedRows = gpaRowsContainer.querySelectorAll('.row-item');
+      trackEvent('row_removed', {
+        calculator: 'sc',
+        row_count: updatedRows.length,
+        university: config.id,
+      });
       updatedRows[Math.min(idx, updatedRows.length - 1)]
         ?.querySelector('select[data-field="grade"]')
         ?.focus();
@@ -866,6 +981,11 @@ function initApp() {
         const newRow = createCourseRow(rows.length);
         gpaRowsContainer.appendChild(newRow);
         renumberGpaRows();
+        trackEvent('row_added', {
+          calculator: 'sc',
+          row_count: rows.length + 1,
+          university: config.id,
+        });
         newRow.querySelector('select[data-field="grade"]')?.focus();
       });
     }
@@ -873,21 +993,15 @@ function initApp() {
     gpaForm.addEventListener('submit', (e) => {
       e.preventDefault();
       gpaForm.dataset.submitted = 'true';
-      const res = evaluateGpa({ isSubmit: true });
-      if (res.ok) {
-        trackEvent('computed_gpa', {
-          university: config.id,
-          gpa: res.gpa,
-          courses: res.courseCount,
-          credits: res.totalCredits,
-        });
-      }
+      evaluateGpa({ isSubmit: true });
     });
 
     wireResetButton('reset-gpa-btn', gpaForm, () => {
       setBanner(gpaErrorBanner, '');
       hideResult(gpaResultBox, gpaValueEl, gpaMetaEl);
       clearPersonalPromo();
+      clearCalcTracking('sc');
+      trackEvent('calculator_reset', { calculator: 'sc', university: config.id });
     });
   }
 
@@ -916,6 +1030,7 @@ function initApp() {
     if (!isSubmit && allBlank) {
       hideResult(quickResultBox, quickValueEl, quickMetaEl);
       clearPersonalPromo();
+      clearCalcTracking('gc');
       if (quickForm?.dataset.submitted !== 'true') {
         setBanner(quickErrorBanner, '');
       }
@@ -947,11 +1062,23 @@ function initApp() {
         { ok: true, tab: 'gc', result: res.cgpa, credits: res.totalCredits },
         { immediate: isSubmit }
       );
+      recordCalculation(
+        'gc',
+        'computed_qcc',
+        {
+          university: config.id,
+          cgpa: res.cgpa,
+          totalCredits: res.totalCredits,
+        },
+        res.cgpa,
+        { isSubmit, signature: `${res.cgpa}:${res.totalCredits}` }
+      );
       return res;
     }
 
     hideResult(quickResultBox, quickValueEl, quickMetaEl);
     clearPersonalPromo();
+    clearCalcTracking('gc');
     if (!isSubmit) return res;
 
     setBanner(quickErrorBanner, res.error);
@@ -990,20 +1117,15 @@ function initApp() {
     quickForm.addEventListener('submit', (e) => {
       e.preventDefault();
       quickForm.dataset.submitted = 'true';
-      const res = evaluateQuickCgpa({ isSubmit: true });
-      if (res.ok) {
-        trackEvent('computed_qcc', {
-          university: config.id,
-          cgpa: res.cgpa,
-          totalCredits: res.totalCredits,
-        });
-      }
+      evaluateQuickCgpa({ isSubmit: true });
     });
 
     wireResetButton('reset-qcc-btn', quickForm, () => {
       setBanner(quickErrorBanner, '');
       hideResult(quickResultBox, quickValueEl, quickMetaEl);
       clearPersonalPromo();
+      clearCalcTracking('gc');
+      trackEvent('calculator_reset', { calculator: 'gc', university: config.id });
     });
   }
 
@@ -1030,6 +1152,7 @@ function initApp() {
     if (!isSubmit && allBlank) {
       hideResult(ecResultBox, ecValueEl, ecMetaEl);
       clearPersonalPromo();
+      clearCalcTracking('ec');
       if (ecForm?.dataset.submitted !== 'true') {
         setBanner(ecErrorBanner, '');
       }
@@ -1061,11 +1184,24 @@ function initApp() {
         { scroll: isSubmit }
       );
       schedulePersonalPromo({ ok: true, tab: 'ec', result: res.marks }, { immediate: isSubmit });
+      recordCalculation(
+        'ec',
+        'computed_emc',
+        {
+          university: config.id,
+          marks: res.marks,
+          internals: res.internals,
+          mode: res.modeLabel,
+        },
+        res.marks,
+        { isSubmit, signature: `${res.marks}:${res.internals}:${res.modeLabel}` }
+      );
       return res;
     }
 
     hideResult(ecResultBox, ecValueEl, ecMetaEl);
     clearPersonalPromo();
+    clearCalcTracking('ec');
     if (!isSubmit) return res;
 
     setBanner(ecErrorBanner, res.error);
@@ -1095,21 +1231,15 @@ function initApp() {
     ecForm.addEventListener('submit', (e) => {
       e.preventDefault();
       ecForm.dataset.submitted = 'true';
-      const res = evaluateExpectedMarks({ isSubmit: true });
-      if (res.ok) {
-        trackEvent('computed_emc', {
-          university: config.id,
-          marks: res.marks,
-          internals: res.internals,
-          mode: res.modeLabel,
-        });
-      }
+      evaluateExpectedMarks({ isSubmit: true });
     });
 
     wireResetButton('reset-ec-btn', ecForm, () => {
       setBanner(ecErrorBanner, '');
       hideResult(ecResultBox, ecValueEl, ecMetaEl);
       clearPersonalPromo();
+      clearCalcTracking('ec');
+      trackEvent('calculator_reset', { calculator: 'ec', university: config.id });
     });
   }
 
@@ -1246,11 +1376,24 @@ function initApp() {
         { ok: true, tab: 'fc', result: res.cgpa, credits: res.totalCredits },
         { immediate: isSubmit }
       );
+      recordCalculation(
+        'fc',
+        'computed_ascc',
+        {
+          university: config.id,
+          cgpa: res.cgpa,
+          semesters: res.semesterCount,
+          totalCredits: res.totalCredits,
+        },
+        res.cgpa,
+        { isSubmit, signature: `${res.cgpa}:${res.semesterCount}:${res.totalCredits}` }
+      );
       return res;
     }
 
     hideResult(allSemResultBox, allSemValueEl, allSemMetaEl);
     clearPersonalPromo();
+    clearCalcTracking('fc');
 
     if (!isSubmit) {
       entries.forEach(({ gpaEl, creditsEl, gpa, credits }) => {
@@ -1351,6 +1494,11 @@ function initApp() {
       targetRow.remove();
       renumberSemRows();
       const updatedRows = semRowsContainer.querySelectorAll('.row-item');
+      trackEvent('row_removed', {
+        calculator: 'fc',
+        row_count: updatedRows.length,
+        university: config.id,
+      });
       updatedRows[Math.min(idx, updatedRows.length - 1)]
         ?.querySelector('input[data-field="gpa"]')
         ?.focus();
@@ -1364,6 +1512,11 @@ function initApp() {
         const newRow = createSemesterRow(rows.length);
         semRowsContainer.appendChild(newRow);
         renumberSemRows();
+        trackEvent('row_added', {
+          calculator: 'fc',
+          row_count: rows.length + 1,
+          university: config.id,
+        });
         newRow.querySelector('input[data-field="gpa"]')?.focus();
       });
     }
@@ -1371,21 +1524,15 @@ function initApp() {
     allSemForm.addEventListener('submit', (e) => {
       e.preventDefault();
       allSemForm.dataset.submitted = 'true';
-      const res = evaluateAllSem({ isSubmit: true });
-      if (res.ok) {
-        trackEvent('computed_ascc', {
-          university: config.id,
-          cgpa: res.cgpa,
-          semesters: res.semesterCount,
-          totalCredits: res.totalCredits,
-        });
-      }
+      evaluateAllSem({ isSubmit: true });
     });
 
     wireResetButton('reset-fc-btn', allSemForm, () => {
       setBanner(allSemErrorBanner, '');
       hideResult(allSemResultBox, allSemValueEl, allSemMetaEl);
       clearPersonalPromo();
+      clearCalcTracking('fc');
+      trackEvent('calculator_reset', { calculator: 'fc', university: config.id });
     });
   }
 
@@ -1441,6 +1588,7 @@ function initApp() {
   } else if (standaloneQuery?.matches) {
     launchMode = 'standalone';
   }
+  setUserProperties({ university: config.id, launch_mode: launchMode });
   trackEvent('App Launched', { mode: launchMode, university: config.id });
 
   standaloneQuery?.addEventListener?.('change', (evt) => {
@@ -1580,7 +1728,7 @@ function initApp() {
     }
   }
 
-  // 10. Contribute Section Telemetry & Opt-In Quality Display Ad Controller (Default OFF)
+  // 10. Contribute, Discussions & FAQ Telemetry + Opt-In Quality Display Ad Controller
   const contributeSection = document.getElementById('contribute-section');
   if (contributeSection) {
     contributeSection.addEventListener('click', (e) => {
@@ -1591,6 +1739,29 @@ function initApp() {
       trackEvent('contribute_clicked', { action, university: config.id });
     });
   }
+
+  const commentsSection = document.getElementById('comments-section');
+  if (commentsSection) {
+    commentsSection.addEventListener('click', (e) => {
+      const link = e.target?.closest?.('a[href]');
+      if (!link) return;
+      trackEvent('discussions_clicked', {
+        university: config.id,
+        link_text: (link.textContent || '').trim(),
+      });
+    });
+  }
+
+  document.querySelectorAll('details.faq-item').forEach((detailsEl) => {
+    detailsEl.addEventListener('toggle', () => {
+      if (!detailsEl.open) return;
+      const question = detailsEl.querySelector('summary')?.textContent?.trim() || '';
+      trackEvent('faq_opened', {
+        university: config.id,
+        question,
+      });
+    });
+  });
 
   function initOptInAdControl() {
     const optInBtn = document.getElementById('ad-optin-btn');

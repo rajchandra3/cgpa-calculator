@@ -5,7 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
-import { resolveTabId, resolveGiscusTheme } from '../src/js/app.js';
+import { resolveTabId, resolveGiscusTheme, getScoreBand } from '../src/js/app.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v10, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v11, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v10'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v11'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -322,6 +322,13 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
   assert.match(appSource, /promo_shown/);
   assert.match(appSource, /promo_clicked/);
   assert.match(appSource, /promo_dismissed/);
+  assert.match(appSource, /calculation_completed/);
+  assert.match(appSource, /calculator_reset/);
+  assert.match(appSource, /row_added/);
+  assert.match(appSource, /row_removed/);
+  assert.match(appSource, /faq_opened/);
+  assert.match(appSource, /discussions_clicked/);
+  assert.match(appSource, /setUserProperties/);
 
   const htmlFiles = [
     'index.html',
@@ -385,7 +392,7 @@ test('analytics.js queues Mixpanel events from boot, defers remote script until 
     location: { hash: '', pathname: '/', search: '' },
     document: mockDoc,
     gtag(...args) {
-      gtagCalls.push(args);
+      gtagCalls.push(JSON.parse(JSON.stringify(args)));
     },
     addEventListener(type, fn) {
       if (type === 'load') loadListeners.push(fn);
@@ -420,6 +427,53 @@ test('analytics.js queues Mixpanel events from boot, defers remote script until 
   assert.deepEqual(gtagCalls[0], ['event', 'computed_gpa', { gpa: 9.57 }]);
   assert.equal(
     mockWindow.mixpanel.some((entry) => Array.isArray(entry) && entry[0] === 'track' && entry[1] === 'computed_gpa'),
+    true
+  );
+
+  // GA4 normalization: spaces -> snake_case, camelCase params -> snake_case, beacon on outbound clicks, no duplicate page_view
+  mockWindow.track('App Launched', { mode: 'browser tab', university: 'vit' });
+  assert.deepEqual(gtagCalls[1], ['event', 'app_launched', { mode: 'browser tab', university: 'vit' }]);
+  assert.equal(
+    mockWindow.mixpanel.some((entry) => Array.isArray(entry) && entry[0] === 'track' && entry[1] === 'App Launched'),
+    true
+  );
+
+  mockWindow.track('page_view', { university: 'vit', calculator: 'sc', referrer: 'https://reddit.com' });
+  assert.deepEqual(gtagCalls[2], ['event', 'calculator_view', { university: 'vit', calculator: 'sc' }]);
+
+  mockWindow.track('computed_qcc', {
+    university: 'vit',
+    cgpa: 9.12,
+    totalCredits: 120,
+    ignoredObj: { nested: true },
+    ignoredNaN: Number.NaN,
+    longText: 'x'.repeat(130),
+  });
+  assert.deepEqual(gtagCalls[3], [
+    'event',
+    'computed_qcc',
+    { university: 'vit', cgpa: 9.12, total_credits: 120, long_text: 'x'.repeat(100) },
+  ]);
+
+  mockWindow.track('promo_clicked', { promo_id: 'personal-day20', tab: 'sc', university: 'vit' });
+  assert.deepEqual(gtagCalls[4], [
+    'event',
+    'promo_clicked',
+    { promo_id: 'personal-day20', tab: 'sc', university: 'vit', transport_type: 'beacon' },
+  ]);
+
+  mockWindow.track('123_custom', { ok: true });
+  assert.deepEqual(gtagCalls[5], ['event', 'e_123_custom', { ok: true }]);
+
+  assert.equal(typeof mockWindow.setAnalyticsUserProperties, 'function');
+  mockWindow.setAnalyticsUserProperties({ university: 'vit', launchMode: 'standalone' });
+  assert.deepEqual(gtagCalls[6], [
+    'set',
+    'user_properties',
+    { university: 'vit', launch_mode: 'standalone' },
+  ]);
+  assert.equal(
+    mockWindow.mixpanel.some((entry) => Array.isArray(entry) && entry[0] === 'register'),
     true
   );
 
@@ -511,6 +565,20 @@ test('resolveGiscusTheme maps light, dark, and system theme modes', () => {
   assert.equal(resolveGiscusTheme('system'), 'preferred_color_scheme');
   assert.equal(resolveGiscusTheme('other'), 'preferred_color_scheme');
   assert.equal(resolveGiscusTheme(null), 'preferred_color_scheme');
+});
+
+test('getScoreBand buckets 10-point GPA/CGPA and 100-point marks cleanly', () => {
+  assert.equal(getScoreBand('sc', 9.5), '9_plus');
+  assert.equal(getScoreBand('gc', 9.0), '9_plus');
+  assert.equal(getScoreBand('fc', 8.4), '8_to_9');
+  assert.equal(getScoreBand('sc', 7.0), '7_to_8');
+  assert.equal(getScoreBand('sc', 6.8), 'below_7');
+  assert.equal(getScoreBand('ec', 92), '90_plus');
+  assert.equal(getScoreBand('ec', 84), '80_to_90');
+  assert.equal(getScoreBand('ec', 71), '70_to_80');
+  assert.equal(getScoreBand('ec', 60), 'below_70');
+  assert.equal(getScoreBand('sc', Number.NaN), 'unknown');
+  assert.equal(getScoreBand('ec', 'not-a-number'), 'unknown');
 });
 
 test('all 4 HTML pages match DOM contract IDs, header logo/title, independent college pages, per-college Discussions, Contribute above Discussion, Left Ad pane, Announcement Banner, Pico CSS, fonts, AdSense meta, and analytics', () => {
