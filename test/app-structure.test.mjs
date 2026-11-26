@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v17, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v18, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v17'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v18'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -748,6 +748,14 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     for (const id of requiredIds) {
       assert.match(html, new RegExp(`id="${id}"`), `${page.file} missing #${id}`);
     }
+
+    const footerMatch = html.match(/<footer class="site-footer"[\s\S]*?<\/footer>/);
+    assert.ok(footerMatch, `${page.file} missing .site-footer`);
+    assert.match(footerMatch[0], /id="install-app-btn"/, `${page.file} #install-app-btn must live in .site-footer`);
+
+    const headerMatch = html.match(/<header class="site-header"[\s\S]*?<\/header>/);
+    assert.ok(headerMatch, `${page.file} missing .site-header`);
+    assert.doesNotMatch(headerMatch[0], /id="install-app-btn"/, `${page.file} #install-app-btn must not live in .site-header`);
 
     if (page.hasEc) {
       assert.match(html, /id="expected-marks-form"/);
