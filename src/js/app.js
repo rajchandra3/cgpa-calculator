@@ -333,8 +333,25 @@ function initApp() {
 
   // 2. Theme Selector & Persistence
   const themeSelector = document.getElementById('theme-selector');
+  const themeToggleBtn = document.getElementById('theme-toggle-btn');
   const metaColorScheme = document.querySelector('meta[name="color-scheme"]');
   let currentThemeMode = 'system';
+
+  function syncThemeToggleBtn(mode) {
+    if (!themeToggleBtn) return;
+    themeToggleBtn.dataset.themeMode = mode;
+    const labels = {
+      system: 'Theme: System (tap for Light)',
+      light: 'Theme: Light (tap for Dark)',
+      dark: 'Theme: Dark (tap for System)',
+    };
+    const label = labels[mode] || labels.system;
+    themeToggleBtn.setAttribute('aria-label', label);
+    themeToggleBtn.setAttribute('title', label);
+    themeToggleBtn.querySelectorAll('[data-theme-icon]').forEach((svg) => {
+      svg.hidden = svg.getAttribute('data-theme-icon') !== mode;
+    });
+  }
 
   function clearLegacyThemeKeys() {
     for (const key of LEGACY_THEME_KEYS) {
@@ -373,6 +390,7 @@ function initApp() {
     if (themeSelector) {
       themeSelector.value = normalized;
     }
+    syncThemeToggleBtn(normalized);
     if (persist) {
       clearLegacyThemeKeys();
       if (normalized === 'system') {
@@ -407,6 +425,16 @@ function initApp() {
   if (themeSelector) {
     themeSelector.addEventListener('change', (e) => {
       const next = e.target.value;
+      applyTheme(next, { persist: true });
+      trackEvent('theme_changed', { theme: next, university: config.id });
+    });
+  }
+
+  if (themeToggleBtn) {
+    const themeOrder = ['system', 'light', 'dark'];
+    themeToggleBtn.addEventListener('click', () => {
+      const idx = themeOrder.indexOf(currentThemeMode);
+      const next = themeOrder[(idx + 1) % themeOrder.length];
       applyTheme(next, { persist: true });
       trackEvent('theme_changed', { theme: next, university: config.id });
     });

@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v15, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v16, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v15'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v16'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -811,5 +811,7 @@ test('src/css/app.css keeps .row-list single-column at all viewports and cleans 
   assert.match(css, /\.ad-slot--optin/);
   assert.match(css, /\.personal-promo-card/);
   assert.match(css, /@media \(max-width: 640px\)[\s\S]*?\.header-inner\s*\{\s*flex-wrap:\s*wrap;/);
-  assert.match(css, /#legacy-ui-link,\s*#install-app-btn/);
+  assert.match(css, /\.header-actions \.theme-toggle-mobile/);
+  assert.match(css, /#legacy-ui-link \.btn-icon-svg\s*\{\s*display:\s*none;/);
+  assert.match(css, /\.header-actions \.btn-responsive \.btn-label\s*\{\s*display:\s*none;/);
 });
