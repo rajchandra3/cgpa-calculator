@@ -811,6 +811,7 @@ test('src/css/app.css keeps .row-list single-column at all viewports and cleans 
   assert.match(css, /\.ad-slot--optin/);
   assert.match(css, /\.personal-promo-card/);
   assert.match(css, /@media \(max-width: 640px\)[\s\S]*?\.header-inner\s*\{\s*flex-wrap:\s*wrap;/);
-  assert.match(css, /#legacy-ui-link,\s*#install-app-btn/);
+  assert.match(css, /\.header-actions \.theme-toggle-mobile/);
+  assert.match(css, /#legacy-ui-link \.btn-icon-svg\s*\{\s*display:\s*none;/);
   assert.match(css, /\.header-actions \.btn-responsive \.btn-label\s*\{\s*display:\s*none;/);
 });

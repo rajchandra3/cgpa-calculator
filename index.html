@@ -141,7 +141,7 @@
         <h1 class="brand-title">VIT CGPA Calculator</h1>
       </a>
       <div class="header-actions">
-        <a id="legacy-ui-link" class="btn btn-subtle btn-responsive" href="/legacy/" aria-label="Switch to Classic UI" title="Classic UI">
+        <a id="legacy-ui-link" class="btn btn-subtle btn-classic-ui" href="/legacy/" aria-label="Switch to Classic UI" title="Classic UI">
           <svg class="btn-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
           <span class="btn-label">Classic UI</span>
         </a>
@@ -151,6 +151,11 @@
           <option value="light">Light</option>
           <option value="dark">Dark</option>
         </select>
+        <button type="button" id="theme-toggle-btn" class="btn btn-subtle btn-icon-only theme-toggle-mobile" aria-label="Switch color theme" title="Switch theme">
+          <svg class="btn-icon-svg" data-theme-icon="system" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor"/></svg>
+          <svg class="btn-icon-svg" data-theme-icon="light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <svg class="btn-icon-svg" data-theme-icon="dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
         <button type="button" id="install-app-btn" class="btn btn-subtle btn-responsive" aria-label="Install App" title="Install App" hidden>
           <svg class="btn-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span class="btn-label">Install App</span>

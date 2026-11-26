@@ -602,11 +602,17 @@ html :is(input, select):disabled {
   font-size: 0.875rem;
 }
 
-.header-actions .btn-responsive {
+.header-actions .btn-responsive,
+.header-actions .btn-classic-ui,
+.header-actions .btn-icon-only {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+}
+
+.header-actions .theme-toggle-mobile {
+  display: none;
 }
 
 .header-actions .btn-icon-svg {
@@ -1756,16 +1762,26 @@ details.faq-item > p {
   }
 
   html select#theme-selector {
-    width: auto;
-    min-inline-size: 0;
-    max-inline-size: 4.85rem;
-    padding-block: 0.35rem !important;
-    padding-inline: 0.45rem 1.45rem !important;
-    background-position: center right 0.3rem;
-    font-size: 0.8125rem;
+    display: none;
   }
 
-  #legacy-ui-link,
+  .header-actions .theme-toggle-mobile {
+    display: inline-flex;
+    padding: 0;
+    inline-size: max(var(--target-size), 2.25rem);
+    block-size: max(var(--target-size), 2.25rem);
+  }
+
+  #legacy-ui-link {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  #legacy-ui-link .btn-icon-svg {
+    display: none;
+  }
+
   #install-app-btn {
     padding: 0;
     inline-size: max(var(--target-size), 2.25rem);
