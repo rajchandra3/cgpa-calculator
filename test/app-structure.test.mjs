@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v13, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v14, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v13'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v14'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -647,7 +647,8 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     const html = readRepoFile(page.file);
     assert.match(html, new RegExp(`data-university="${page.uni}"`));
     assert.match(html, /<meta name="google-adsense-account" content="ca-pub-8598751574376549">/);
-    assert.match(html, /G-8SGELQM6QV/);
+    assert.match(html, /G-65WDQ61WWG/);
+    assert.doesNotMatch(html, /G-8SGELQM6QV/);
     assert.match(html, /Google\+Sans/);
     assert.match(html, /Space\+Grotesk/);
     assert.match(html, /\/src\/css\/vendor\/pico\.min\.css/);
@@ -777,7 +778,8 @@ test('VIT /legacy/ Classic UI snapshot exists, is ad-free/noindex, and has safe 
   const legacyHtml = readRepoFile('legacy/index.html');
   assert.match(legacyHtml, /<meta name="robots" content="noindex, follow">/);
   assert.match(legacyHtml, /<link rel="canonical" href="https:\/\/cgpa-calculator\.rajchandra\.me\/">/);
-  assert.match(legacyHtml, /G-8SGELQM6QV/);
+  assert.match(legacyHtml, /G-65WDQ61WWG/);
+  assert.doesNotMatch(legacyHtml, /G-8SGELQM6QV/);
   assert.match(legacyHtml, /\/src\/js\/analytics\.js/);
   assert.match(legacyHtml, /id="switch-to-v2-btn"/);
   assert.match(legacyHtml, /id="banner-switch-v2"/);
