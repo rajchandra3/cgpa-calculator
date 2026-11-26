@@ -1714,13 +1714,13 @@ details.faq-item > p {
 
 @media (max-width: 640px) {
   .header-inner {
-    flex-wrap: nowrap;
-    gap: 0.375rem 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.5rem;
   }
 
   .brand {
-    flex: 1 1 0%;
-    min-inline-size: 0;
+    flex: 1 1 auto;
+    min-inline-size: max-content;
     gap: 0.4375rem;
   }
 
@@ -1732,11 +1732,12 @@ details.faq-item > p {
 
   .brand-title {
     font-size: 0.9375rem;
+    white-space: nowrap;
   }
 
   .header-actions {
-    flex: 0 0 auto;
-    flex-wrap: nowrap;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
     gap: 0.375rem;
     margin-inline-start: auto;
   }
@@ -1751,6 +1752,7 @@ details.faq-item > p {
     font-size: 0.8125rem;
   }
 
+  #legacy-ui-link,
   #install-app-btn {
     padding: 0.35rem 0.65rem;
     font-size: 0.8125rem;
