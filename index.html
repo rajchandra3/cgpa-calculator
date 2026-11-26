@@ -125,7 +125,7 @@
   </script>
 
   <link rel="stylesheet" href="/src/css/vendor/pico.min.css">
-  <link rel="stylesheet" href="/src/css/app.css?v=17">
+  <link rel="stylesheet" href="/src/css/app.css?v=18">
   <link rel="modulepreload" href="/src/js/app.js">
   <link rel="modulepreload" href="/src/js/math.js">
   <link rel="modulepreload" href="/src/js/universities.js">
@@ -155,10 +155,6 @@
           <svg class="btn-icon-svg" data-theme-icon="system" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor"/></svg>
           <svg class="btn-icon-svg" data-theme-icon="light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
           <svg class="btn-icon-svg" data-theme-icon="dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-        </button>
-        <button type="button" id="install-app-btn" class="btn btn-subtle btn-responsive" aria-label="Install App" title="Install App" hidden>
-          <svg class="btn-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span class="btn-label">Install App</span>
         </button>
       </div>
     </div>
@@ -397,6 +393,10 @@
   <footer class="site-footer">
     <p class="footer-copyright"><span>&copy; 2017–<span id="thisYear"></span></span> <a href="https://rajchandra.me" target="_blank" rel="noopener noreferrer">Raj Chandra</a></p>
     <div class="footer-actions">
+      <button type="button" id="install-app-btn" class="btn btn-subtle btn-install-footer" aria-label="Install App" title="Install App" hidden>
+        <svg class="btn-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Install App</span>
+      </button>
       <button type="button" id="share-app-btn" class="btn btn-subtle" hidden>Share</button>
       <a href="https://www.linkedin.com/in/rajchandra3/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
       <a href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer">GitHub</a>
