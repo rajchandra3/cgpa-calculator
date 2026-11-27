@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+    <meta name="google-adsense-account" content="ca-pub-8598751574376549">
 
     <!-- Google Analytics 4 -->
     <script async fetchpriority="low" src="https://www.googletagmanager.com/gtag/js?id=G-65WDQ61WWG"></script>
@@ -61,6 +62,36 @@
         }
         .calculator-tab {
             justify-content: center;
+        }
+        .legacy-ad-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 90px;
+            margin: 1rem auto;
+            padding: 0.5rem;
+            border: 1px dashed rgba(0, 0, 0, 0.14);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.02);
+        }
+        [data-bs-theme="dark"] .legacy-ad-slot {
+            border-color: rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .legacy-ad-slot--rail {
+            min-height: 250px;
+        }
+        .legacy-ad-label {
+            font-size: 0.6875rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.65;
+            margin-bottom: 0.35rem;
+        }
+        .legacy-ad-slot.is-unfilled {
+            display: none !important;
         }
     </style>
 
@@ -111,16 +142,32 @@
             </select>
         </div>
         <div class="legacy-v2-banner alert alert-secondary d-flex justify-content-between align-items-center flex-wrap gap-2 text-start">
-            <span>You&rsquo;re using the <strong>Classic v1 UI</strong> (ad-free snapshot).</span>
+            <span>You&rsquo;re using the <strong>Classic v1 UI</strong>.</span>
             <a id="banner-switch-v2" class="btn btn-sm btn-primary" href="/?ui=v2">Try the new 2.0 UI</a>
         </div>
     </div>
 
+    <!-- Top Horizontal Ad Slot (Manual AdSense) -->
+    <div class="container my-3">
+        <aside class="legacy-ad-slot" data-ad-slot="6993669367" data-ad-format="horizontal" data-ad-location="legacy_top_banner" aria-label="Advertisement">
+            <span class="legacy-ad-label">Advertisement</span>
+        </aside>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row align-items-start g-3">
+            <!-- Left Desktop Rail Ad (lg >= 992px only) -->
+            <aside class="col-lg-3 d-none d-lg-block pt-2" aria-label="Advertisement">
+                <div class="legacy-ad-slot legacy-ad-slot--rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-location="legacy_left_rail">
+                    <span class="legacy-ad-label">Advertisement</span>
+                </div>
+            </aside>
+
+            <main class="col-12 col-lg-6">
     <!-- Calculator Tabs -->
 <div class="row col-sm-12 col-md-12 col-lg-12 gpa-calculator no-padding calculator-tab" id="sc">
-        <!-- ads for large screens -->
         
-        <div class="card-container col-lg-6 mx-auto p-4 mb-5 centered has-box-shadow gpa-calculator" id="gpa-box">
+        <div class="card-container col-12 mx-auto p-4 mb-5 centered has-box-shadow gpa-calculator" id="gpa-box">
             <div class="col-lg-10 col-md-8 col-sm-12 col-xs-12 centered">
                 <h1 class="card-title">CALCULATE GPA</h1><hr>
                 <div class="input-group mb-3 table-row" id="course1">
@@ -383,10 +430,7 @@
 
     <!-- quick cgpa calculator -->
     <div class="row col-sm-12 col-md-12 col-lg-12 centered quick-cgpa-calculator no-padding calculator-tab" id="gc">
-        <!-- ads for large screens -->
-        
-
-        <div class="card-container col-lg-6 mx-auto p-4 mb-5 centered has-box-shadow">
+        <div class="card-container col-12 mx-auto p-4 mb-5 centered has-box-shadow">
             <div class="col-lg-10 col-md-8 col-sm-12 centered">
                 <h1>QUICK CGPA CALCULATOR</h1>
                 <hr>
@@ -429,10 +473,8 @@
 
     <!--Marks Predictor-->
     <div class="row col-sm-12 col-md-12 col-lg-12 centered marks-predictor no-padding calculator-tab" id="ec">
-        <!-- ads for large screens -->
-        
         <!-- main content -->
-        <div class="card-container col-lg-6 mx-auto col-sm-12 p-4 mb-5 centered has-box-shadow">
+        <div class="card-container col-12 mx-auto col-sm-12 p-4 mb-5 centered has-box-shadow">
             <div class="col-lg-10 col-md-8 col-sm-12 centered">
                 <h1>COMPUTE EXPECTED MARKS</h1>
                 <hr>
@@ -528,10 +570,8 @@
 
     <!--All semester CGPA calculator-->
     <div class="row col-sm-12 col-md-12 col-lg-12 centered n-sem-cgpa-calculator no-padding calculator-tab" id="fc">
-         <!-- ads for large screens -->
-         
         <!-- main content -->
-        <div class="card-container col-lg-6 mx-auto p-4 mb-5 centered has-box-shadow">
+        <div class="card-container col-12 mx-auto p-4 mb-5 centered has-box-shadow">
             <div class="col-lg-10 col-md-8 col-sm-12 centered">
                 <h1 class="card-title">CALCULATE YOUR CGPA FOR ANY NUMBER OF SEMESTERS</h1><hr>
                 <div class="input-group mb-3 table-row" id="sem1">
@@ -584,12 +624,25 @@
                 
                 <button class="btn w-100 btn-md btn-primary clearfix" id="sem-cgpa-btn">Submit</button>
                 <br>
-                <!-- Google Ads -->
-                
             </div>
         </div>
-        <!-- ads for large screens -->
-        
+    </div>
+            </main>
+
+            <!-- Right Desktop Rail Ad (lg >= 992px only) -->
+            <aside class="col-lg-3 d-none d-lg-block pt-2" aria-label="Advertisement">
+                <div class="legacy-ad-slot legacy-ad-slot--rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-location="legacy_right_rail">
+                    <span class="legacy-ad-label">Advertisement</span>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Bottom Horizontal Ad Slot (Manual AdSense) -->
+    <div class="container my-3">
+        <aside class="legacy-ad-slot" data-ad-slot="6993669367" data-ad-format="horizontal" data-ad-location="legacy_bottom_banner" aria-label="Advertisement">
+            <span class="legacy-ad-label">Advertisement</span>
+        </aside>
     </div>
 
     <!-- Error Modal -->

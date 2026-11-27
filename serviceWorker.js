@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cgpa-calculator-v19';
+const CACHE_NAME = 'cgpa-calculator-v20';
 
 const PRECACHE_URLS = [
   '/',
