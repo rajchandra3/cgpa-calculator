@@ -650,7 +650,8 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     assert.match(html, /<meta name="google-adsense-account" content="ca-pub-8598751574376549">/);
     assert.match(html, /G-65WDQ61WWG/);
     assert.doesNotMatch(html, /G-8SGELQM6QV/);
-    assert.match(html, /Google\+Sans/);
+    assert.match(html, /Google\+Sans:wght@400;500/);
+    assert.doesNotMatch(html, /Google\+Sans:wght@[^"']*700/);
     assert.match(html, /Space\+Grotesk/);
     assert.match(html, /\/src\/css\/vendor\/pico\.min\.css/);
     assert.match(html, /<link rel="modulepreload" href="\/src\/js\/promos\.js">/);
@@ -829,4 +830,7 @@ test('src/css/app.css keeps .row-list single-column at all viewports and cleans 
   const desktopMq = css.match(/@media \(min-width: 1120px\)\s*\{([\s\S]*?)^\}/m);
   assert.ok(desktopMq, 'Missing @media (min-width: 1120px) block');
   assert.doesNotMatch(desktopMq[1], /position:\s*sticky/, 'Sidebars/display ad must scroll with the page and never stick on desktop');
+  assert.match(css, /--text-title:/);
+  assert.match(css, /--text-ui:/);
+  assert.doesNotMatch(css, /font-weight:\s*700/, 'Google Sans must stay at 400/500 with zero heavy 700 weights');
 });

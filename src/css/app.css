@@ -16,6 +16,14 @@
   --font-sans: 'Google Sans', system-ui, -apple-system, sans-serif;
   --font-num: 'Space Grotesk', ui-monospace, sans-serif;
 
+  /* Fixed Operate-mode role scale */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-ui: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-title: 1.375rem;
+  --text-figure: 2.5rem;
+
   /* Surface, border, text, accent & status tokens */
   --bg: light-dark(#f6f5f1, #141413);
   --surface: light-dark(#ffffff, #1c1c1a);
@@ -374,24 +382,24 @@ h3 {
 
 h1 {
   margin: 0 0 0.25rem;
-  font-size: clamp(1.55rem, 1.15rem + 1.4vw, 2.15rem);
-  font-weight: 700;
-  line-height: 1.22;
-  letter-spacing: -0.02em;
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.24;
+  letter-spacing: -0.015em;
 }
 
 h2 {
   margin: 0 0 0.375rem;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 500;
   line-height: 1.3;
   letter-spacing: -0.01em;
 }
 
 h3 {
   margin: 0 0 0.375rem;
-  font-size: 1.0625rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 500;
   line-height: 1.35;
 }
 
@@ -471,7 +479,7 @@ html :is(input, select):not([type="checkbox"], [type="radio"]) {
   color: var(--text);
   box-shadow: none;
   --pico-box-shadow: none;
-  font-size: 1rem;
+  font-size: var(--text-ui);
   line-height: 1.4;
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
@@ -578,7 +586,7 @@ html :is(input, select):disabled {
   gap: 0.625rem;
   min-block-size: max(var(--target-size), 2.5rem);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text);
   text-decoration: none;
   min-inline-size: 0;
@@ -600,10 +608,10 @@ html :is(input, select):disabled {
 
 .brand-title {
   margin: 0;
-  font-size: clamp(1rem, 0.92rem + 0.35vw, 1.25rem);
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: inherit;
 }
 
@@ -691,7 +699,7 @@ html select.theme-select {
 }
 
 .stat-num {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text);
 }
 
@@ -724,8 +732,8 @@ button.mode-tab {
   box-shadow: none;
   --pico-box-shadow: none;
   font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-ui);
+  font-weight: 400;
   line-height: 1.3;
   white-space: nowrap;
   cursor: pointer;
@@ -750,7 +758,7 @@ button.mode-tab:is([aria-selected="true"], .is-active):is(:hover, :active, :focu
   background-color: var(--surface);
   border-color: var(--border-strong);
   color: var(--text);
-  font-weight: 600;
+  font-weight: 500;
   box-shadow: var(--tab-active-shadow);
   --pico-box-shadow: var(--tab-active-shadow);
 }
@@ -777,14 +785,16 @@ button.mode-tab:is([aria-selected="true"], .is-active):is(:hover, :active, :focu
 
 .calculator-panel > h2 {
   margin: 0 0 0.25rem;
-  font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-size: var(--text-title);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
 }
 
 .panel-desc {
   margin: 0 0 0.875rem;
-  font-size: 0.9375rem;
+  font-size: var(--text-ui);
+  font-weight: 400;
   color: var(--text-muted);
   line-height: 1.5;
 }
@@ -837,8 +847,8 @@ button.mode-tab:is([aria-selected="true"], .is-active):is(:hover, :active, :focu
   justify-content: center;
   min-inline-size: 0;
   min-block-size: max(var(--target-size), 2.5rem);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: 500;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -865,8 +875,8 @@ button.mode-tab:is([aria-selected="true"], .is-active):is(:hover, :active, :focu
 
 .field > label {
   margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--text-ui);
+  font-weight: 500;
   color: var(--text);
   line-height: 1.35;
 }
@@ -874,7 +884,7 @@ button.mode-tab:is([aria-selected="true"], .is-active):is(:hover, :active, :focu
 .field-hint {
   display: block;
   margin: 0 0 0.125rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   line-height: 1.4;
 }
@@ -883,7 +893,7 @@ button.mode-tab:is([aria-selected="true"], .is-active):is(:hover, :active, :focu
   display: none;
   margin: 0.25rem 0 0;
   color: var(--error);
-  font-size: 0.875rem;
+  font-size: var(--text-ui);
   font-weight: 500;
   line-height: 1.4;
 }
@@ -916,8 +926,8 @@ button.mode-tab:is([aria-selected="true"], .is-active):is(:hover, :active, :focu
   box-shadow: none;
   --pico-box-shadow: none;
   font-family: inherit;
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--text-ui);
+  font-weight: 500;
   line-height: 1.3;
   text-decoration: none;
   --pico-text-decoration: none;
@@ -1045,21 +1055,23 @@ button.btn.btn-remove:active:not(:disabled, [aria-disabled="true"]) {
 }
 
 .result-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: 500;
   color: var(--success);
 }
 
 .result-value {
-  font-size: clamp(2.125rem, 1.75rem + 1.4vw, 2.75rem);
-  font-weight: 700;
+  font-size: var(--text-figure);
+  font-weight: 600;
   line-height: 1.15;
+  letter-spacing: -0.025em;
   color: var(--text);
 }
 
 .result-meta {
   margin: 0.125rem 0 0;
-  font-size: 0.9375rem;
+  font-size: var(--text-ui);
+  font-weight: 400;
   color: var(--success-muted);
   line-height: 1.45;
 }
@@ -1084,12 +1096,12 @@ button.btn.btn-remove:active:not(:disabled, [aria-disabled="true"]) {
 
 .comments-header > h2 {
   margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: 500;
 }
 
 .comments-ext-link {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--link);
   text-decoration: none;
@@ -1103,7 +1115,7 @@ button.btn.btn-remove:active:not(:disabled, [aria-disabled="true"]) {
 
 .comments-desc {
   margin: 0 0 0.75rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   line-height: 1.45;
 }
@@ -1119,7 +1131,7 @@ iframe.giscus-frame {
 
 .comments-footnote {
   margin: 0.75rem 0 0;
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   line-height: 1.45;
 }
@@ -1135,14 +1147,14 @@ iframe.giscus-frame {
 
 .side-card > h2 {
   margin: 0 0 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .side-card-desc {
   margin: 0 0 0.625rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   line-height: 1.45;
 }
@@ -1159,8 +1171,8 @@ iframe.giscus-frame {
   max-inline-size: 100%;
   min-block-size: max(var(--target-size), 2.125rem);
   padding: 0.375rem 0.75rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: 400;
   white-space: normal;
   text-align: center;
 }
@@ -1279,7 +1291,7 @@ iframe.giscus-frame {
 
 .ad-preview-box strong {
   color: var(--text);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ad-slot.is-unfilled,
@@ -1320,8 +1332,8 @@ iframe.giscus-frame {
   border-radius: 999px;
   background-color: var(--accent-tint);
   color: var(--link);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: 500;
 }
 
 .promo-disclosure {
@@ -1375,8 +1387,8 @@ button.promo-dismiss:active {
 
 .personal-promo-title {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: 500;
   line-height: 1.35;
   color: var(--text);
 }
@@ -1403,7 +1415,9 @@ button.promo-dismiss:active {
 }
 
 .faq-section > h2 {
-  margin: 0 0 0.875rem;
+  margin: 0 0 0.75rem;
+  font-size: 1.0625rem;
+  font-weight: 500;
 }
 
 .info-section {
@@ -1445,8 +1459,8 @@ button.promo-dismiss:active {
 .grade-table thead th {
   background-color: var(--surface-muted);
   color: var(--text);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: 500;
   padding: 0.6875rem 0.75rem;
   border-block-end: 1px solid var(--border);
   text-align: start;
@@ -1464,7 +1478,7 @@ button.promo-dismiss:active {
 
 .grade-table tbody th {
   font-family: var(--font-num);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .grade-table tbody th:has(a) {
@@ -1481,7 +1495,7 @@ button.promo-dismiss:active {
 
 .grade-table .num,
 .grade-table td.num {
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -1515,8 +1529,8 @@ details.faq-item > summary {
   min-block-size: max(var(--target-size), 2.75rem);
   margin: 0;
   padding: 0.875rem 0.25rem;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: 400;
   line-height: 1.4;
   color: var(--text);
   cursor: pointer;
@@ -1579,7 +1593,7 @@ details.faq-item:not([open])::details-content {
 details.faq-item > p {
   margin: 0 0 1rem;
   padding-inline-start: 1.375rem;
-  font-size: 0.9375rem;
+  font-size: var(--text-ui);
   color: var(--text-muted);
   line-height: 1.6;
 }
@@ -1667,7 +1681,7 @@ details.faq-item > p {
   border-radius: 10px;
   background-color: var(--accent);
   color: var(--accent-fg);
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
 }
 
@@ -1723,7 +1737,7 @@ details.faq-item > p {
     width: auto;
     flex: 0 0 auto;
     padding: 0.4375rem 0.875rem;
-    font-size: 0.9375rem;
+    font-size: var(--text-ui);
   }
 
   .calculator-shell {
@@ -1780,8 +1794,12 @@ details.faq-item > p {
   }
 
   .brand-title {
-    font-size: 0.9rem;
+    font-size: 0.9375rem;
     white-space: nowrap;
+  }
+
+  html :is(input, select):not([type="checkbox"], [type="radio"]) {
+    font-size: 1rem;
   }
 
   .header-actions {
@@ -1833,6 +1851,14 @@ details.faq-item > p {
     background-color: var(--surface);
     border-top: 1px solid var(--border);
     padding: 0.625rem 0 max(0.625rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .calculator-panel > h2 {
+    font-size: 1.1875rem;
+  }
+
+  .result-value {
+    font-size: 2rem;
   }
 
   .calculator-panel .form-actions > .btn {
@@ -1900,7 +1926,7 @@ details.faq-item > p {
   }
 
   .brand-title {
-    font-size: 0.82rem;
+    font-size: 0.85rem;
   }
 
   #legacy-ui-link {
