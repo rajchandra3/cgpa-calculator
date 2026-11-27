@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v19, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v20, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v19'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v20'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -772,7 +772,7 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
   }
 });
 
-test('VIT /legacy/ Classic UI snapshot exists, is ad-free/noindex, and has safe JS + 2.0 switch toggle', () => {
+test('VIT /legacy/ Classic UI snapshot exists, uses manual AdSense slots (no Auto Ads), is noindex, and has safe JS + 2.0 switch toggle', () => {
   const legacyFiles = [
     'legacy/index.html',
     'legacy/js/legacy.js',
@@ -788,6 +788,7 @@ test('VIT /legacy/ Classic UI snapshot exists, is ad-free/noindex, and has safe 
   const legacyHtml = readRepoFile('legacy/index.html');
   assert.match(legacyHtml, /<meta name="robots" content="noindex, follow">/);
   assert.match(legacyHtml, /<link rel="canonical" href="https:\/\/cgpa-calculator\.rajchandra\.me\/">/);
+  assert.match(legacyHtml, /<meta name="google-adsense-account" content="ca-pub-8598751574376549">/);
   assert.match(legacyHtml, /G-65WDQ61WWG/);
   assert.doesNotMatch(legacyHtml, /G-8SGELQM6QV/);
   assert.match(legacyHtml, /\/src\/js\/analytics\.js/);
@@ -795,15 +796,24 @@ test('VIT /legacy/ Classic UI snapshot exists, is ad-free/noindex, and has safe 
   assert.match(legacyHtml, /id="banner-switch-v2"/);
   assert.match(legacyHtml, /\[data-bs-theme="dark"\] \.legacy-v2-banner/);
   assert.match(legacyHtml, /\.common-footer-container footer/);
+  assert.match(legacyHtml, /data-ad-slot="6993669367"/);
+  assert.match(legacyHtml, /data-ad-slot="7637288848"/);
+  assert.match(legacyHtml, /d-none d-lg-block/);
+  assert.doesNotMatch(legacyHtml, /\(ad-free snapshot\)/);
+  assert.doesNotMatch(legacyHtml, /card-container col-lg-6 mx-auto/);
   assert.match(legacyHtml, /id="gbtn"/);
   assert.match(legacyHtml, /id="submit"/);
   assert.match(legacyHtml, /id="ec-submit"/);
   assert.match(legacyHtml, /id="sem-cgpa-btn"/);
   assert.match(legacyHtml, /<span id="thisYear"><\/span>/);
-  assert.doesNotMatch(legacyHtml, /adsbygoogle|pagead2|fb-comments|connect\.facebook|AW-16729760450|files\.rajchandra\.me/);
+  assert.doesNotMatch(legacyHtml, /enable_page_level_ads|fb-comments|connect\.facebook|AW-16729760450|files\.rajchandra\.me/);
 
   const legacyJs = readRepoFile('legacy/js/legacy.js');
-  assert.doesNotMatch(legacyJs, /innerHTML|outerHTML|document\.write|insertAdjacentHTML|\beval\(|alert\(/);
+  assert.doesNotMatch(legacyJs, /innerHTML|outerHTML|document\.write|insertAdjacentHTML|\beval\(|alert\(|enable_page_level_ads/);
+  assert.match(legacyJs, /ca-pub-8598751574376549/);
+  assert.match(legacyJs, /offsetWidth <= 0/);
+  assert.match(legacyJs, /adsbygoogle/);
+  assert.match(legacyJs, /ad_slot_requested/);
   assert.match(legacyJs, /ui_version_switched/);
   assert.match(legacyJs, /calculation_completed/);
 });

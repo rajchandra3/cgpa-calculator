@@ -394,5 +394,106 @@
         });
       });
     }
+
+    initLegacyAds();
   });
+
+  function initLegacyAds() {
+    var AD_CLIENT = 'ca-pub-8598751574376549';
+    var PRODUCTION_HOST = 'cgpa-calculator.rajchandra.me';
+    var slotsMounted = false;
+    var scriptInjected = false;
+
+    function injectAdSenseScript() {
+      if (scriptInjected) return;
+      scriptInjected = true;
+      var existing = document.querySelector('script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]');
+      if (existing) return;
+
+      var script = document.createElement('script');
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + AD_CLIENT;
+      script.addEventListener('error', function () {
+        // Ignore adblocker or offline network errors cleanly
+      });
+      document.head.appendChild(script);
+    }
+
+    function observeSlotStatus(ins, container, slotId, location) {
+      if (typeof MutationObserver !== 'function') return;
+      var observer = new MutationObserver(function () {
+        var status = ins.getAttribute('data-ad-status');
+        if (status === 'filled') {
+          container.classList.remove('is-unfilled');
+          trackLegacy('ad_slot_filled', { location: location, slot: slotId });
+          observer.disconnect();
+        } else if (status === 'unfilled') {
+          container.classList.add('is-unfilled');
+          trackLegacy('ad_slot_unfilled', { location: location, slot: slotId });
+          observer.disconnect();
+        }
+      });
+      observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
+    }
+
+    function mountSlots() {
+      if (slotsMounted) return;
+      slotsMounted = true;
+
+      var containers = document.querySelectorAll('.legacy-ad-slot[data-ad-slot]');
+      var visibleCount = 0;
+      var isProd = window.location.hostname === PRODUCTION_HOST;
+
+      containers.forEach(function (container) {
+        if (container.offsetWidth <= 0) return;
+
+        var slotId = container.getAttribute('data-ad-slot');
+        var adFormat = container.getAttribute('data-ad-format') || 'auto';
+        var location = container.getAttribute('data-ad-location') || 'legacy';
+
+        var ins = document.createElement('ins');
+        ins.className = 'adsbygoogle';
+        ins.style.display = 'block';
+        ins.style.width = '100%';
+        ins.setAttribute('data-ad-client', AD_CLIENT);
+        ins.setAttribute('data-ad-slot', slotId);
+        ins.setAttribute('data-ad-format', adFormat);
+        ins.setAttribute('data-full-width-responsive', 'true');
+        if (!isProd) {
+          ins.setAttribute('data-adtest', 'on');
+        }
+
+        container.appendChild(ins);
+        observeSlotStatus(ins, container, slotId, location);
+
+        try {
+          window.adsbygoogle = window.adsbygoogle || [];
+          window.adsbygoogle.push({});
+          trackLegacy('ad_slot_requested', { location: location, slot: slotId });
+          visibleCount += 1;
+        } catch (err) {
+          // Never allow AdSense push failure to break calculators
+        }
+      });
+
+      if (visibleCount > 0) {
+        injectAdSenseScript();
+      }
+    }
+
+    function scheduleMount() {
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(mountSlots, { timeout: 2000 });
+      } else {
+        window.setTimeout(mountSlots, 800);
+      }
+    }
+
+    if (document.readyState === 'complete') {
+      scheduleMount();
+    } else {
+      window.addEventListener('load', scheduleMount, { once: true });
+    }
+  }
 })();
