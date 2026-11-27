@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v18, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v19, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v18'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v19'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -650,7 +650,8 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     assert.match(html, /<meta name="google-adsense-account" content="ca-pub-8598751574376549">/);
     assert.match(html, /G-65WDQ61WWG/);
     assert.doesNotMatch(html, /G-8SGELQM6QV/);
-    assert.match(html, /Google\+Sans/);
+    assert.match(html, /Google\+Sans:wght@400;500/);
+    assert.doesNotMatch(html, /Google\+Sans:wght@[^"']*700/);
     assert.match(html, /Space\+Grotesk/);
     assert.match(html, /\/src\/css\/vendor\/pico\.min\.css/);
     assert.match(html, /<link rel="modulepreload" href="\/src\/js\/promos\.js">/);
@@ -823,4 +824,13 @@ test('src/css/app.css keeps .row-list single-column at all viewports and cleans 
   assert.match(css, /\.header-actions \.theme-toggle-mobile/);
   assert.match(css, /#legacy-ui-link \.btn-icon-svg\s*\{\s*display:\s*none;/);
   assert.match(css, /\.header-actions \.btn-responsive \.btn-label\s*\{\s*display:\s*none;/);
+  assert.doesNotMatch(css, /#0b1120|#38bdf8/i, 'Generic AI slate/cyan colors must not return');
+  assert.match(css, /--surface-recessed:/);
+  assert.match(css, /\.side-card\s*\{[\s\S]*?background:\s*transparent;/);
+  const desktopMq = css.match(/@media \(min-width: 1120px\)\s*\{([\s\S]*?)^\}/m);
+  assert.ok(desktopMq, 'Missing @media (min-width: 1120px) block');
+  assert.doesNotMatch(desktopMq[1], /position:\s*sticky/, 'Sidebars/display ad must scroll with the page and never stick on desktop');
+  assert.match(css, /--text-title:/);
+  assert.match(css, /--text-ui:/);
+  assert.doesNotMatch(css, /font-weight:\s*700/, 'Google Sans must stay at 400/500 with zero heavy 700 weights');
 });
