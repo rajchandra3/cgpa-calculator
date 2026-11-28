@@ -226,7 +226,7 @@ function observeAdStatus(insEl, slotEl, meta, win) {
     } else if (status === 'unfilled') {
       slotEl.classList.remove('is-loading');
       slotEl.classList.add('is-unfilled');
-      trackAdEvent(win, 'ad_slot_unfilled', meta);
+      trackAdEvent(win, 'ad_slot_unfilled', { ...meta, reason: 'no_fill' });
       observer.disconnect();
     }
   });
@@ -372,6 +372,7 @@ export function mountManagedSlot(
     university,
     viewport_bucket: bucket,
     trigger,
+    ui_version: 'v2',
   };
 
   slotEl.classList?.add('is-loading');

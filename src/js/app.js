@@ -16,6 +16,9 @@ import {
 
 const THEME_STORAGE_KEY = 'color-scheme';
 const UI_VERSION_STORAGE_KEY = 'cgpa_ui_version';
+const SESSION_CALCS_KEY = 'cgpa_session_calcs';
+const SESSION_DWELL_KEY = 'cgpa_session_dwell_sec';
+const SESSION_MILESTONES_KEY = 'cgpa_session_milestones';
 const LEGACY_THEME_KEYS = ['ui_theme', 'theme'];
 const LEGACY_TAB_MAP = Object.freeze({
   qcc: 'gc',
@@ -85,6 +88,22 @@ function safeStorageRemove(key) {
   }
 }
 
+function safeSessionGet(key) {
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSessionSet(key, value) {
+  try {
+    window.sessionStorage.setItem(key, value);
+  } catch {
+    // Ignore blocked sessionStorage
+  }
+}
+
 function trackEvent(eventName, props = {}) {
   try {
     if (typeof window === 'undefined') return;
@@ -92,7 +111,7 @@ function trackEvent(eventName, props = {}) {
       window.track(eventName, props);
       return;
     }
-    if (typeof window.gtag === 'function') {
+    if (!window['ga-disable-G-65WDQ61WWG'] && typeof window.gtag === 'function') {
       const normalized = String(eventName || '')
         .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
         .toLowerCase()
@@ -113,7 +132,7 @@ function setUserProperties(props = {}) {
     if (typeof window === 'undefined') return;
     if (typeof window.setAnalyticsUserProperties === 'function') {
       window.setAnalyticsUserProperties(props);
-    } else if (typeof window.gtag === 'function') {
+    } else if (!window['ga-disable-G-65WDQ61WWG'] && typeof window.gtag === 'function') {
       window.gtag('set', 'user_properties', props);
     }
   } catch {
@@ -455,7 +474,7 @@ function initApp() {
   function unlockPostCalcAds(trigger = 'calculation_completed') {
     if (actionAdsUnlocked) return;
     actionAdsUnlocked = true;
-    import('./ads-manager.js?v=25')
+    import('./ads-manager.js?v=26')
       .then((mod) => mod.unlockActionAds({ university: config.id, trigger }))
       .catch(() => {
         actionAdsUnlocked = false;
@@ -483,7 +502,15 @@ function initApp() {
     lastTrackedCalcSig.delete(tab);
   }
 
+  function nextSessionCalcIndex() {
+    const prev = Number(safeSessionGet(SESSION_CALCS_KEY) || 0);
+    const next = Number.isFinite(prev) && prev >= 0 ? Math.floor(prev) + 1 : 1;
+    safeSessionSet(SESSION_CALCS_KEY, String(next));
+    return next;
+  }
+
   function emitCalculationEvents(tab, eventName, payload, score, trigger) {
+    const sessionCalcIndex = nextSessionCalcIndex();
     trackEvent(eventName, { ...payload, trigger });
     trackEvent('calculation_completed', {
       calculator: tab,
@@ -491,6 +518,8 @@ function initApp() {
       trigger,
       score,
       score_band: getScoreBand(tab, score),
+      entry_source: entrySource,
+      session_calc_index: sessionCalcIndex,
     });
   }
 
@@ -677,17 +706,40 @@ function initApp() {
     activateTab(param, { updateHistory: false, scroll: true, trackChange: false });
   });
 
-  const initialTabParam = new URLSearchParams(window.location.search).get('tab');
+  const initialSearchParams = new URLSearchParams(window.location.search);
+  const initialTabParam = initialSearchParams.get('tab');
   const activeTab = activateTab(initialTabParam, {
     updateHistory: false,
     scroll: false,
     trackChange: false,
   });
 
+  const pageTab =
+    activeTab ||
+    document.querySelector('.mode-tab[aria-current="page"][data-tab]')?.dataset?.tab ||
+    'sc';
+  const hasCarryForwardParams =
+    (pageTab === 'gc' && (initialSearchParams.has('gpa') || initialSearchParams.has('c'))) ||
+    (pageTab === 'target' &&
+      (initialSearchParams.has('cgpa') || initialSearchParams.has('credits')));
+  const entrySource = hasCarryForwardParams ? 'carry_forward' : 'direct';
+
   trackEvent('page_view', {
     university: config.id,
-    calculator: activeTab || 'sc',
+    calculator: pageTab,
+    entry_source: entrySource,
     referrer: document.referrer,
+  });
+
+  document.querySelectorAll('a.mode-tab[href][data-tab]').forEach((link) => {
+    if (link.getAttribute('aria-current') === 'page') return;
+    link.addEventListener('click', () => {
+      trackEvent('tool_nav_clicked', {
+        from_tab: pageTab,
+        to_tab: link.dataset.tab || '',
+        university: config.id,
+      });
+    });
   });
 
   // Shared UI & Dynamic Row Helpers
@@ -997,6 +1049,11 @@ function initApp() {
     }
 
     setBanner(gpaErrorBanner, res.error);
+    trackEvent('form_validation_error', {
+      calculator: 'sc',
+      university: config.id,
+      error_count: res.invalidRows?.length || 1,
+    });
     let firstInvalid = null;
     if (res.invalidRows?.length) {
       const invalidSet = new Set(res.invalidRows);
@@ -1200,6 +1257,11 @@ function initApp() {
     if (!isSubmit) return res;
 
     setBanner(quickErrorBanner, res.error);
+    trackEvent('form_validation_error', {
+      calculator: 'gc',
+      university: config.id,
+      error_count: res.invalidFields?.length || 1,
+    });
     let firstInvalid = null;
     const invalidSet = new Set(res.invalidFields || []);
 
@@ -1263,6 +1325,11 @@ function initApp() {
           quickPrefillNote,
           `Carried forward from Semester GPA (${parts.join(' · ')}) — enter your prior completed credits and CGPA below.`
         );
+        trackEvent('prefill_applied', {
+          calculator: 'gc',
+          university: config.id,
+          source_params: hasGpa && hasCred ? 'gpa_credits' : hasGpa ? 'gpa' : 'credits',
+        });
       }
     } catch {
       // Ignore query prefill errors
@@ -1362,6 +1429,11 @@ function initApp() {
     if (!isSubmit) return res;
 
     setBanner(ecErrorBanner, res.error);
+    trackEvent('form_validation_error', {
+      calculator: 'ec',
+      university: config.id,
+      error_count: res.invalidFields?.length || 1,
+    });
     let firstInvalid = null;
     const invalidSet = new Set(res.invalidFields || []);
 
@@ -1584,6 +1656,11 @@ function initApp() {
     }
 
     setBanner(allSemErrorBanner, res.error);
+    trackEvent('form_validation_error', {
+      calculator: 'fc',
+      university: config.id,
+      error_count: res.invalidRows?.length || 1,
+    });
     let firstInvalid = null;
 
     if (res.invalidRows?.length) {
@@ -1811,6 +1888,11 @@ function initApp() {
     if (!isSubmit) return res;
 
     setBanner(targetErrorBanner, res.error);
+    trackEvent('form_validation_error', {
+      calculator: 'target',
+      university: config.id,
+      error_count: res.invalidFields?.length || 1,
+    });
     let firstInvalid = null;
     const invalidSet = new Set(res.invalidFields || []);
     for (const [key, el] of Object.entries(targetFieldMap)) {
@@ -1862,6 +1944,11 @@ function initApp() {
           targetPrefillNote,
           `Carried forward (${parts.join(' · ')}) — set your target CGPA and remaining credits.`
         );
+        trackEvent('prefill_applied', {
+          calculator: 'target',
+          university: config.id,
+          source_params: hasCgpa && hasCred ? 'cgpa_credits' : hasCgpa ? 'cgpa' : 'credits',
+        });
       }
     } catch {
       // Ignore query prefill errors
@@ -2140,7 +2227,7 @@ function initApp() {
     const mountAds = (trigger) => {
       if (started) return;
       started = true;
-      import('./ads-manager.js?v=25')
+      import('./ads-manager.js?v=26')
         .then((mod) => {
           mod.initManagedAds({ university: config.id, trigger });
         })
@@ -2208,9 +2295,60 @@ function initApp() {
     }
   }
 
+  function initSessionMilestones() {
+    const thresholds = [60, 180, 300];
+    const readSent = () =>
+      new Set(
+        String(safeSessionGet(SESSION_MILESTONES_KEY) || '')
+          .split(',')
+          .filter(Boolean)
+          .map(Number)
+      );
+
+    if (thresholds.every((m) => readSent().has(m))) return;
+
+    let dwellSec = Number(safeSessionGet(SESSION_DWELL_KEY) || 0);
+    if (!Number.isFinite(dwellSec) || dwellSec < 0) dwellSec = 0;
+
+    let timerId = null;
+    const tick = () => {
+      if (document.visibilityState !== 'visible') return;
+      dwellSec += 5;
+      safeSessionSet(SESSION_DWELL_KEY, String(dwellSec));
+
+      const sent = readSent();
+      let updated = false;
+      for (const m of thresholds) {
+        if (dwellSec >= m && !sent.has(m)) {
+          sent.add(m);
+          updated = true;
+          trackEvent('session_milestone', {
+            milestone_sec: m,
+            calc_count: Number(safeSessionGet(SESSION_CALCS_KEY) || 0),
+            university: config.id,
+            calculator: pageTab,
+          });
+        }
+      }
+      if (updated) {
+        safeSessionSet(SESSION_MILESTONES_KEY, Array.from(sent).join(','));
+        if (thresholds.every((m) => sent.has(m)) && timerId !== null) {
+          window.clearInterval(timerId);
+          timerId = null;
+        }
+      }
+    };
+
+    timerId = window.setInterval(tick, 5000);
+    window.addEventListener('pagehide', () => {
+      safeSessionSet(SESSION_DWELL_KEY, String(dwellSec));
+    });
+  }
+
   initAnnouncementBanner();
   initGiscusComments();
   initDisplayAds();
+  initSessionMilestones();
 }
 
 if (typeof document !== 'undefined') {

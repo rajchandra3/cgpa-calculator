@@ -623,6 +623,7 @@ test('Desktop opt-in mounts rail slot once with staging data-adtest, status sync
 
   assert.equal(env.trackEvents[0].name, 'ad_slot_requested');
   assert.equal(env.trackEvents[0].props.location, 'left-rail-primary');
+  assert.equal(env.trackEvents[0].props.ui_version, 'v2');
 
   // Hide preserves mounted DOM; re-activating reveals without pushing or loading script again
   assert.equal(hideOptInAd({ doc: env.doc }), true);
@@ -663,6 +664,9 @@ test('Desktop opt-in mounts rail slot once with staging data-adtest, status sync
   unfilledEnv.mutationObservers[0].trigger();
   assert.equal(unfilledSlot.slotEl.classList.contains('is-unfilled'), true);
   assert.equal(unfilledSlot.slotEl.classList.contains('is-loading'), false);
+  assert.equal(unfilledEnv.trackEvents.at(-1).name, 'ad_slot_unfilled');
+  assert.equal(unfilledEnv.trackEvents.at(-1).props.reason, 'no_fill');
+  assert.equal(unfilledEnv.trackEvents.at(-1).props.ui_version, 'v2');
 });
 
 test('initManagedAds and hideAllManagedAds orchestrate eager vs scroll-lazy slots across desktop and mobile cleanly', () => {

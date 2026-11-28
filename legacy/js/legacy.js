@@ -404,7 +404,14 @@
     var scriptInjected = false;
     var isProd = window.location.hostname === PRODUCTION_HOST;
 
-    function injectAdSenseScript() {
+    function getLegacyViewportBucket() {
+      var w = Number(window.innerWidth || document.documentElement?.clientWidth || 0);
+      if (w >= 992) return 'desktop';
+      if (w >= 768) return 'tablet';
+      return 'mobile';
+    }
+
+    function injectAdSenseScript(viewportBucket) {
       if (scriptInjected) return;
       scriptInjected = true;
       var existing = document.querySelector('script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]');
@@ -415,26 +422,74 @@
       script.crossOrigin = 'anonymous';
       script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + AD_CLIENT;
       script.addEventListener('error', function () {
-        // Ignore adblocker or offline network errors cleanly
+        trackLegacy('ad_slot_unfilled', {
+          location: 'legacy_script',
+          viewport_bucket: viewportBucket,
+          reason: 'script_blocked',
+        });
       });
       document.head.appendChild(script);
     }
 
-    function observeSlotStatus(ins, container, slotId, location) {
+    function observeSlotStatus(ins, container, slotId, location, viewportBucket) {
       if (typeof MutationObserver !== 'function') return;
       var observer = new MutationObserver(function () {
         var status = ins.getAttribute('data-ad-status');
         if (status === 'filled') {
           container.classList.remove('is-unfilled');
-          trackLegacy('ad_slot_filled', { location: location, slot: slotId });
+          trackLegacy('ad_slot_filled', {
+            location: location,
+            slot: slotId,
+            viewport_bucket: viewportBucket,
+          });
           observer.disconnect();
         } else if (status === 'unfilled') {
           container.classList.add('is-unfilled');
-          trackLegacy('ad_slot_unfilled', { location: location, slot: slotId });
+          trackLegacy('ad_slot_unfilled', {
+            location: location,
+            slot: slotId,
+            viewport_bucket: viewportBucket,
+            reason: 'no_fill',
+          });
           observer.disconnect();
         }
       });
       observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
+    }
+
+    function observeSlotViewability(container, slotId, location, viewportBucket) {
+      if (typeof window.IntersectionObserver !== 'function') return;
+      var dwellTimer = null;
+      var clearDwell = function () {
+        if (dwellTimer !== null) {
+          window.clearTimeout(dwellTimer);
+          dwellTimer = null;
+        }
+      };
+      var viewObserver = new window.IntersectionObserver(
+        function (entries) {
+          var visible = entries.some(function (entry) {
+            return entry.isIntersecting && entry.intersectionRatio >= 0.5;
+          });
+          if (visible) {
+            if (dwellTimer === null) {
+              dwellTimer = window.setTimeout(function () {
+                dwellTimer = null;
+                viewObserver.disconnect();
+                trackLegacy('ad_slot_viewable', {
+                  location: location,
+                  slot: slotId,
+                  viewport_bucket: viewportBucket,
+                });
+              }, 1000);
+            }
+          } else {
+            clearDwell();
+          }
+        },
+        { threshold: 0.5 }
+      );
+      viewObserver.observe(container);
     }
 
     function mountSlot(container) {
@@ -444,8 +499,9 @@
       var slotId = container.getAttribute('data-ad-slot');
       var adFormat = container.getAttribute('data-ad-format') || 'auto';
       var location = container.getAttribute('data-ad-location') || 'legacy';
+      var viewportBucket = getLegacyViewportBucket();
 
-      injectAdSenseScript();
+      injectAdSenseScript(viewportBucket);
 
       var ins = document.createElement('ins');
       ins.className = 'adsbygoogle';
@@ -460,12 +516,17 @@
       }
 
       container.appendChild(ins);
-      observeSlotStatus(ins, container, slotId, location);
+      observeSlotStatus(ins, container, slotId, location, viewportBucket);
+      observeSlotViewability(container, slotId, location, viewportBucket);
 
       try {
         window.adsbygoogle = window.adsbygoogle || [];
         window.adsbygoogle.push({});
-        trackLegacy('ad_slot_requested', { location: location, slot: slotId });
+        trackLegacy('ad_slot_requested', {
+          location: location,
+          slot: slotId,
+          viewport_bucket: viewportBucket,
+        });
       } catch (err) {
         // Never allow AdSense push failure to break calculators
       }
