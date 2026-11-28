@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cgpa-calculator-v26';
+const CACHE_NAME = 'cgpa-calculator-v27';
 
 const PRECACHE_URLS = [
   '/',
@@ -42,7 +42,7 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+        Promise.all(keys.filter((key) => key.startsWith('cgpa-calculator-') && key !== CACHE_NAME).map((key) => caches.delete(key)))
       )
       .then(() => self.clients.claim())
   );
