@@ -401,8 +401,8 @@
   function initLegacyAds() {
     var AD_CLIENT = 'ca-pub-8598751574376549';
     var PRODUCTION_HOST = 'cgpa-calculator.rajchandra.me';
-    var slotsMounted = false;
     var scriptInjected = false;
+    var isProd = window.location.hostname === PRODUCTION_HOST;
 
     function injectAdSenseScript() {
       if (scriptInjected) return;
@@ -437,56 +437,73 @@
       observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
     }
 
-    function mountSlots() {
-      if (slotsMounted) return;
-      slotsMounted = true;
+    function mountSlot(container) {
+      if (!container || container.dataset.adMounted === '1' || container.offsetWidth <= 0) return;
+      container.dataset.adMounted = '1';
 
-      var containers = document.querySelectorAll('.legacy-ad-slot[data-ad-slot]');
-      var visibleCount = 0;
-      var isProd = window.location.hostname === PRODUCTION_HOST;
+      var slotId = container.getAttribute('data-ad-slot');
+      var adFormat = container.getAttribute('data-ad-format') || 'auto';
+      var location = container.getAttribute('data-ad-location') || 'legacy';
 
-      containers.forEach(function (container) {
-        if (container.offsetWidth <= 0) return;
+      injectAdSenseScript();
 
-        var slotId = container.getAttribute('data-ad-slot');
-        var adFormat = container.getAttribute('data-ad-format') || 'auto';
-        var location = container.getAttribute('data-ad-location') || 'legacy';
+      var ins = document.createElement('ins');
+      ins.className = 'adsbygoogle';
+      ins.style.display = 'block';
+      ins.style.width = '100%';
+      ins.setAttribute('data-ad-client', AD_CLIENT);
+      ins.setAttribute('data-ad-slot', slotId);
+      ins.setAttribute('data-ad-format', adFormat);
+      ins.setAttribute('data-full-width-responsive', 'true');
+      if (!isProd) {
+        ins.setAttribute('data-adtest', 'on');
+      }
 
-        var ins = document.createElement('ins');
-        ins.className = 'adsbygoogle';
-        ins.style.display = 'block';
-        ins.style.width = '100%';
-        ins.setAttribute('data-ad-client', AD_CLIENT);
-        ins.setAttribute('data-ad-slot', slotId);
-        ins.setAttribute('data-ad-format', adFormat);
-        ins.setAttribute('data-full-width-responsive', 'true');
-        if (!isProd) {
-          ins.setAttribute('data-adtest', 'on');
-        }
+      container.appendChild(ins);
+      observeSlotStatus(ins, container, slotId, location);
 
-        container.appendChild(ins);
-        observeSlotStatus(ins, container, slotId, location);
+      try {
+        window.adsbygoogle = window.adsbygoogle || [];
+        window.adsbygoogle.push({});
+        trackLegacy('ad_slot_requested', { location: location, slot: slotId });
+      } catch (err) {
+        // Never allow AdSense push failure to break calculators
+      }
+    }
 
-        try {
-          window.adsbygoogle = window.adsbygoogle || [];
-          window.adsbygoogle.push({});
-          trackLegacy('ad_slot_requested', { location: location, slot: slotId });
-          visibleCount += 1;
-        } catch (err) {
-          // Never allow AdSense push failure to break calculators
-        }
+    function initSlots() {
+      var containers = Array.prototype.slice.call(
+        document.querySelectorAll('.legacy-ad-slot[data-ad-slot]')
+      ).filter(function (container) {
+        return container.offsetWidth > 0;
       });
 
-      if (visibleCount > 0) {
-        injectAdSenseScript();
+      if (containers.length === 0) return;
+
+      if (typeof window.IntersectionObserver === 'function') {
+        var io = new window.IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              io.unobserve(entry.target);
+              mountSlot(entry.target);
+            });
+          },
+          { rootMargin: '250px 0px' }
+        );
+        containers.forEach(function (container) {
+          io.observe(container);
+        });
+      } else {
+        containers.forEach(mountSlot);
       }
     }
 
     function scheduleMount() {
       if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(mountSlots, { timeout: 2000 });
+        window.requestIdleCallback(initSlots, { timeout: 2000 });
       } else {
-        window.setTimeout(mountSlots, 800);
+        window.setTimeout(initSlots, 800);
       }
     }
 

@@ -63,6 +63,12 @@
         .calculator-tab {
             justify-content: center;
         }
+        .legacy-ad-banner-wrap {
+            width: 100%;
+            max-width: 1140px;
+            margin: 1rem auto;
+            padding: 0 0.75rem;
+        }
         .legacy-ad-slot {
             display: flex;
             flex-direction: column;
@@ -75,12 +81,17 @@
             border: 1px dashed rgba(0, 0, 0, 0.14);
             border-radius: 8px;
             background: rgba(0, 0, 0, 0.02);
+            overflow: hidden;
         }
         [data-bs-theme="dark"] .legacy-ad-slot {
             border-color: rgba(255, 255, 255, 0.16);
             background: rgba(255, 255, 255, 0.03);
         }
         .legacy-ad-slot--rail {
+            min-height: 250px;
+            margin: 0;
+        }
+        .legacy-ad-slot--rect {
             min-height: 250px;
         }
         .legacy-ad-label {
@@ -148,17 +159,23 @@
     </div>
 
     <!-- Top Horizontal Ad Slot (Manual AdSense) -->
-    <div class="container my-3">
-        <aside class="legacy-ad-slot" data-ad-slot="6993669367" data-ad-format="horizontal" data-ad-location="legacy_top_banner" aria-label="Advertisement">
+    <div class="legacy-ad-banner-wrap">
+        <aside class="legacy-ad-slot my-0" data-ad-slot="4654433674" data-ad-format="horizontal" data-ad-location="legacy_top_banner" aria-label="Advertisement">
             <span class="legacy-ad-label">Advertisement</span>
         </aside>
     </div>
 
     <div class="container-fluid">
         <div class="row align-items-start g-3">
-            <!-- Left Desktop Rail Ad (lg >= 992px only) -->
-            <aside class="col-lg-3 d-none d-lg-block pt-2" aria-label="Advertisement">
-                <div class="legacy-ad-slot legacy-ad-slot--rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-location="legacy_left_rail">
+            <!-- Left Desktop Rail Ads (lg >= 992px only) -->
+            <aside class="col-lg-3 d-none d-lg-flex flex-column gap-3 pt-2" aria-label="Advertisement">
+                <div class="legacy-ad-slot legacy-ad-slot--rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-location="legacy_left_rail_1">
+                    <span class="legacy-ad-label">Advertisement</span>
+                </div>
+                <div class="legacy-ad-slot legacy-ad-slot--rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-location="legacy_left_rail_2">
+                    <span class="legacy-ad-label">Advertisement</span>
+                </div>
+                <div class="legacy-ad-slot legacy-ad-slot--rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-location="legacy_left_rail_3">
                     <span class="legacy-ad-label">Advertisement</span>
                 </div>
             </aside>
@@ -627,11 +644,21 @@
             </div>
         </div>
     </div>
+                <!-- Desktop Post-Calculator Ad Slot (lg >= 992px only, outside tabs) -->
+                <aside class="legacy-ad-slot legacy-ad-slot--rect d-none d-lg-flex" data-ad-slot="6993669367" data-ad-format="auto" data-ad-location="legacy_post_calc_banner" aria-label="Advertisement">
+                    <span class="legacy-ad-label">Advertisement</span>
+                </aside>
             </main>
 
-            <!-- Right Desktop Rail Ad (lg >= 992px only) -->
-            <aside class="col-lg-3 d-none d-lg-block pt-2" aria-label="Advertisement">
-                <div class="legacy-ad-slot legacy-ad-slot--rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-location="legacy_right_rail">
+            <!-- Right Desktop Rail Ads (lg >= 992px only) -->
+            <aside class="col-lg-3 d-none d-lg-flex flex-column gap-3 pt-2" aria-label="Advertisement">
+                <div class="legacy-ad-slot legacy-ad-slot--rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-location="legacy_right_rail_1">
+                    <span class="legacy-ad-label">Advertisement</span>
+                </div>
+                <div class="legacy-ad-slot legacy-ad-slot--rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-location="legacy_right_rail_2">
+                    <span class="legacy-ad-label">Advertisement</span>
+                </div>
+                <div class="legacy-ad-slot legacy-ad-slot--rail" data-ad-slot="7637288848" data-ad-format="auto" data-ad-location="legacy_right_rail_3">
                     <span class="legacy-ad-label">Advertisement</span>
                 </div>
             </aside>
@@ -639,8 +666,8 @@
     </div>
 
     <!-- Bottom Horizontal Ad Slot (Manual AdSense) -->
-    <div class="container my-3">
-        <aside class="legacy-ad-slot" data-ad-slot="6993669367" data-ad-format="horizontal" data-ad-location="legacy_bottom_banner" aria-label="Advertisement">
+    <div class="legacy-ad-banner-wrap">
+        <aside class="legacy-ad-slot my-0" data-ad-slot="6993669367" data-ad-format="horizontal" data-ad-location="legacy_bottom_banner" aria-label="Advertisement">
             <span class="legacy-ad-label">Advertisement</span>
         </aside>
     </div>
