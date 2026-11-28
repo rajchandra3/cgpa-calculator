@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v22, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v23, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js?v=23, app.js?v=23, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v22'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v23'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -110,7 +110,9 @@ test('serviceWorker.js uses cgpa-calculator-v22, precaches 21 existing assets in
   const urls = Array.from(arrayMatch[1].matchAll(/'([^']+)'/g), (m) => m[1]);
   assert.equal(urls.length, 21);
   assert.equal(urls.includes('/src/css/vendor/pico.min.css'), true);
-  assert.equal(urls.includes('/src/js/ads-manager.js'), true);
+  assert.equal(urls.includes('/src/css/app.css?v=20'), true);
+  assert.equal(urls.includes('/src/js/app.js?v=23'), true);
+  assert.equal(urls.includes('/src/js/ads-manager.js?v=23'), true);
   assert.equal(urls.includes('/src/js/promos.js'), true);
   assert.equal(urls.includes('/src/images/icons/icon-96x96.png'), true);
 
@@ -314,7 +316,7 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
 
   const appSource = readRepoFile('src/js/app.js');
   assert.match(appSource, /trackEvent\('App Installed'/);
-  assert.match(appSource, /import\('\.\/ads-manager\.js'\)/);
+  assert.match(appSource, /import\('\.\/ads-manager\.js\?v=23'\)/);
   assert.match(appSource, /from '\.\/promos\.js'/);
   assert.doesNotMatch(appSource, /scheduleAdsManager/);
   assert.match(appSource, /contribute_clicked/);
@@ -640,6 +642,9 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     'ad-optin-btn',
     'ad-optin-status',
     'ad-slot-optin',
+    'ad-slot-left-secondary',
+    'ad-slot-post-calc',
+    'ad-slot-footer',
     'comments-section',
     'giscus-container',
   ];
@@ -654,9 +659,11 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     assert.doesNotMatch(html, /Google\+Sans:wght@[^"']*700/);
     assert.match(html, /Space\+Grotesk/);
     assert.match(html, /\/src\/css\/vendor\/pico\.min\.css/);
+    assert.match(html, /\/src\/css\/app\.css\?v=20/);
+    assert.match(html, /<link rel="modulepreload" href="\/src\/js\/app\.js\?v=23">/);
     assert.match(html, /<link rel="modulepreload" href="\/src\/js\/promos\.js">/);
     assert.match(html, /<script src="\/src\/js\/analytics\.js" defer fetchpriority="low"><\/script>/);
-    assert.match(html, /<script type="module" src="\/src\/js\/app\.js" fetchpriority="high"><\/script>/);
+    assert.match(html, /<script type="module" src="\/src\/js\/app\.js\?v=23" fetchpriority="high"><\/script>/);
 
     // Header uses original logo image + college H1 title; no cross-college uni-nav or page-hero
     assert.match(html, /<img class="brand-logo" src="\/src\/images\/icons\/icon-96x96\.png"/);
@@ -665,10 +672,12 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     assert.doesNotMatch(html, /class="page-hero"/);
     assert.doesNotMatch(html, /class="footer-links"/);
 
-    // Center starts directly with mode chips; Left pane is Ad-only; Right pane has Contribute ABOVE Discussions
+    // Center starts directly with mode chips; Left pane holds desktop rail ads + collapsed restore card; Right pane has Contribute ABOVE Discussions
     assert.match(html, /<div class="workspace-center">\s*<div class="mode-tabs"/);
     const leftMatch = html.match(/<aside class="workspace-left"[\s\S]*?<\/aside>/);
     assert.ok(leftMatch, `${page.file} missing .workspace-left`);
+    assert.match(leftMatch[0], /id="ad-slot-optin"/);
+    assert.match(leftMatch[0], /id="ad-slot-left-secondary"/);
     assert.match(leftMatch[0], /id="ad-control-card"/);
     assert.doesNotMatch(leftMatch[0], /id="contribute-section"/);
 
@@ -687,13 +696,12 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     assert.match(html, /data-mapping="number"/);
     assert.match(html, new RegExp(`data-term="${page.discussionTerm}"`));
 
-    // Grade Scale card and legacy ad slots removed; Announcement banner + 1 hidden opt-in left-pane ad slot
+    // Grade Scale card and old slot naming removed; 5 managed responsive ad slots (desktop announcement + 2 left desktop rails + lazy post-calc + lazy below-faq)
     assert.doesNotMatch(html, /grade-scale-card/);
-    assert.doesNotMatch(html, /ad-slot-post-calc/);
     assert.doesNotMatch(html, /ad-slot-left-rail/);
     assert.match(
       html,
-      /<section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement"[^>]*data-ad-location="announcement-banner"[^>]*data-ad-slot="6993669367"[^>]*hidden>/
+      /<section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement"[^>]*data-ad-managed="true"[^>]*data-ad-location="announcement-banner"[^>]*data-ad-slot="4654433674"[^>]*data-ad-min-width="1280"[^>]*data-ad-load="eager"[^>]*hidden>/
     );
     assert.match(
       html,
@@ -709,18 +717,38 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     );
     assert.match(
       html,
-      /id="ad-optin-btn"[^>]*aria-pressed="true"[^>]*aria-controls="ad-slot-optin"[^>]*>Hide Ad<\/button>/
+      /id="ad-optin-btn"[^>]*aria-pressed="false"[^>]*aria-controls="ad-slot-optin"[^>]*>Show ads<\/button>/
     );
+    assert.match(html, /data-ad-toggle="true"[^>]*>Hide ads \(24h\)<\/button>/);
     assert.match(html, /<span id="thisYear"><\/span>/);
     assert.doesNotMatch(html, /<span id="thisYear">\d+<\/span>/);
 
-    const adSlotMatches = html.match(/class="[^"]*\bad-slot\b/g) || [];
-    assert.equal(adSlotMatches.length, 2, `${page.file} must have strictly 2 .ad-slot containers (announcement + opt-in)`);
+    const adSlotMatches = html.match(/<section\b[^>]*class="[^"]*\bad-slot(?:\s|")/g) || [];
+    assert.equal(adSlotMatches.length, 5, `${page.file} must have strictly 5 .ad-slot containers (announcement, left primary, left secondary, post-calc, footer)`);
     assert.match(
       html,
-      /<section id="ad-slot-optin" class="ad-slot ad-slot--optin"[^>]*data-ad-location="optin-quality"[^>]*data-ad-slot-desktop="7637288848"[^>]*data-ad-slot-mobile="6993669367"[^>]*hidden>/
+      /<section id="ad-slot-optin" class="ad-slot ad-slot--optin ad-slot--sidebar ad-slot--desktop-only"[^>]*data-ad-managed="true"[^>]*data-ad-location="left-rail-primary"[^>]*data-ad-slot-desktop="7637288848"[^>]*data-ad-format-desktop="vertical"[^>]*data-ad-load="eager"[^>]*hidden>/
+    );
+    assert.match(
+      html,
+      /<section id="ad-slot-left-secondary" class="ad-slot ad-slot--sidebar ad-slot--desktop-only"[^>]*data-ad-managed="true"[^>]*data-ad-location="left-rail-secondary"[^>]*data-ad-slot-desktop="7637288848"[^>]*data-ad-format-desktop="rectangle"[^>]*data-ad-load="lazy"[^>]*hidden>/
+    );
+    assert.match(
+      html,
+      /<section id="ad-slot-post-calc" class="ad-slot ad-slot--post-calc"[^>]*data-ad-managed="true"[^>]*data-ad-location="post-calc"[^>]*data-ad-slot-desktop="4654433674"[^>]*data-ad-slot-mobile="6993669367"[^>]*data-ad-load="lazy"[^>]*hidden>/
+    );
+    assert.match(
+      html,
+      /<section id="ad-slot-footer" class="ad-slot ad-slot--footer"[^>]*data-ad-managed="true"[^>]*data-ad-location="below-faq"[^>]*data-ad-slot-desktop="4654433674"[^>]*data-ad-slot-mobile="6993669367"[^>]*data-ad-load="lazy"[^>]*hidden>/
     );
     assert.doesNotMatch(html, /360px/);
+
+    const promoIdx = html.indexOf('id="personal-promo-slot"');
+    const postCalcIdx = html.indexOf('id="ad-slot-post-calc"');
+    const faqIdx = html.indexOf('class="faq-section');
+    const footerAdIdx = html.indexOf('id="ad-slot-footer"');
+    assert.ok(promoIdx !== -1 && postCalcIdx !== -1 && faqIdx !== -1 && footerAdIdx !== -1);
+    assert.ok(promoIdx < postCalcIdx && postCalcIdx < faqIdx && faqIdx < footerAdIdx, `${page.file} center flow must be promo -> post-calc -> faq -> footer`);
 
     const calcShellMatch = html.match(/<article class="calculator-shell"[\s\S]*?<\/article>/);
     assert.ok(calcShellMatch, `${page.file} missing .calculator-shell`);
@@ -847,6 +875,12 @@ test('src/css/app.css keeps .row-list single-column at all viewports and cleans 
   assert.match(css, /\.grade-table/);
   assert.match(css, /\.side-card/);
   assert.match(css, /\.ad-slot--optin/);
+  assert.match(css, /\.ad-slot--sidebar/);
+  assert.match(css, /\.ad-slot--desktop-only/);
+  assert.match(css, /\.ad-slot--post-calc/);
+  assert.match(css, /\.ad-slot--footer/);
+  assert.match(css, /\.ad-slot-bar/);
+  assert.match(css, /button\.ad-hide-btn/);
   assert.match(css, /\.personal-promo-card/);
   assert.match(css, /@media \(max-width: 640px\)[\s\S]*?\.header-inner\s*\{\s*flex-wrap:\s*wrap;/);
   assert.match(css, /\.header-actions \.theme-toggle-mobile/);
@@ -858,6 +892,10 @@ test('src/css/app.css keeps .row-list single-column at all viewports and cleans 
   const desktopMq = css.match(/@media \(min-width: 1120px\)\s*\{([\s\S]*?)^\}/m);
   assert.ok(desktopMq, 'Missing @media (min-width: 1120px) block');
   assert.doesNotMatch(desktopMq[1], /position:\s*sticky/, 'Sidebars/display ad must scroll with the page and never stick on desktop');
+  const wideDesktopMq = css.match(/@media \(min-width: 1200px\)\s*\{([\s\S]*?)^\}/m);
+  assert.ok(wideDesktopMq, 'Missing @media (min-width: 1200px) block');
+  assert.match(wideDesktopMq[1], /302px/);
+  assert.doesNotMatch(wideDesktopMq[1], /position:\s*sticky/, 'Wide desktop layout must never stick on desktop');
   assert.match(css, /--text-title:/);
   assert.match(css, /--text-ui:/);
   assert.doesNotMatch(css, /font-weight:\s*700/, 'Google Sans must stay at 400/500 with zero heavy 700 weights');

@@ -1194,36 +1194,124 @@ iframe.giscus-frame {
 }
 
 .ad-optin-status {
-  margin: 0.5rem 0 0;
-  font-size: 0.75rem;
+  margin: 0;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   line-height: 1.4;
 }
 
-/* Lean Zero-CLS Opt-In Ad Container (strictly outside forms & comments) */
+.ad-control-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+}
+
+.ad-control-card .ad-optin-btn {
+  width: auto;
+  flex: 0 0 auto;
+  min-block-size: max(var(--target-size), 2rem);
+  padding: 0.25rem 0.625rem;
+}
+
+/* Lean Zero-CLS Ad Containers (strictly outside forms & comments) */
 .ad-slot {
   background: var(--surface-recessed);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 0.5rem 0.625rem 0.625rem;
+  padding: 0.375rem 0.5rem 0.5rem;
   overflow: hidden;
   min-inline-size: 0;
 }
 
-.ad-slot--optin {
-  margin-block-start: 0.625rem;
-  background: var(--surface-recessed);
-  border-radius: 10px;
-  padding: 0.5rem;
+.ad-slot--desktop-only {
+  display: none;
 }
 
-.ad-slot--optin .ad-frame {
+.ad-slot--sidebar {
+  margin: 0;
+  padding: 0.375rem 0 0.5rem;
+  border-radius: 12px;
+}
+
+.ad-slot--optin {
+  margin-block-start: 0;
+}
+
+.ad-slot--optin .ad-frame,
+.ad-slot--sidebar .ad-frame {
+  min-block-size: 250px;
+}
+
+.ad-slot--post-calc {
+  margin-block: 1.5rem 0;
+}
+
+.ad-slot--post-calc .ad-frame {
+  min-block-size: 250px;
+}
+
+.ad-slot--footer {
+  margin-block: 1.5rem 0 0;
+}
+
+.ad-slot--footer .ad-frame {
   min-block-size: 100px;
 }
 
-/* Top Announcement Banner (Custom Promo or Google Ad fallback) */
+.ad-slot-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-inline: 0.625rem;
+  margin-block-end: 0.375rem;
+  min-block-size: 1.5rem;
+}
+
+.ad-slot--post-calc .ad-slot-bar,
+.ad-slot--footer .ad-slot-bar,
+.ad-slot--announcement .ad-slot-bar {
+  padding-inline: 0.125rem;
+}
+
+.ad-slot-bar .ad-label {
+  margin-block-end: 0;
+  text-align: start;
+}
+
+button.ad-hide-btn {
+  margin: 0;
+  padding: 0.125rem 0.25rem;
+  min-block-size: 1.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  --pico-box-shadow: none;
+  font-family: inherit;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+button.ad-hide-btn:hover,
+button.ad-hide-btn:focus-visible {
+  color: var(--text);
+  background: transparent;
+}
+
+/* Top Announcement Banner / Desktop Leaderboard */
 .announcement-banner {
-  margin-block-end: 1rem;
+  margin-block-end: 0.875rem;
+  padding: 0.375rem 0.625rem 0.5rem;
 }
 
 .ad-slot--announcement .ad-frame {
@@ -1271,6 +1359,11 @@ iframe.giscus-frame {
   width: 100%;
   min-inline-size: 0;
   display: block;
+}
+
+.ad-slot.is-loading .ad-frame {
+  background-color: var(--surface-recessed);
+  border-radius: 8px;
 }
 
 .ad-preview-box {
@@ -1700,9 +1793,15 @@ details.faq-item > p {
 }
 
 /* Responsive Breakpoints */
+@media (max-width: 1279.98px) {
+  .ad-slot--announcement:not(.is-custom-announcement) {
+    display: none !important;
+  }
+}
+
 @media (min-width: 1120px) {
   .workspace-layout {
-    grid-template-columns: clamp(245px, 19vw, 295px) minmax(0, 1fr) clamp(310px, 25vw, 390px);
+    grid-template-columns: clamp(260px, 22vw, 296px) minmax(0, 1fr) clamp(290px, 24vw, 350px);
     grid-template-areas: "left center right";
     gap: clamp(1rem, 1.5vw, 1.5rem);
   }
@@ -1720,8 +1819,24 @@ details.faq-item > p {
     grid-area: right;
   }
 
-  .ad-slot--optin .ad-frame {
+  .ad-slot--desktop-only {
+    display: block;
+  }
+
+  .ad-slot--optin .ad-frame,
+  .ad-slot--sidebar .ad-frame {
     min-block-size: 250px;
+  }
+
+  .ad-slot--post-calc .ad-frame,
+  .ad-slot--footer .ad-frame {
+    min-block-size: 90px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .workspace-layout {
+    grid-template-columns: clamp(302px, 21.5vw, 318px) minmax(0, 1fr) clamp(300px, 23vw, 370px);
   }
 }
 
@@ -2017,6 +2132,11 @@ details.faq-item > p {
     block-size: var(--target-size);
     min-inline-size: var(--target-size);
     min-block-size: var(--target-size);
+  }
+
+  button.ad-hide-btn {
+    min-block-size: var(--target-size);
+    padding-inline: 0.375rem;
   }
 }
 

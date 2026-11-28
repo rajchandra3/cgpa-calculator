@@ -15,6 +15,8 @@ import {
 
 const THEME_STORAGE_KEY = 'color-scheme';
 const AD_PREF_STORAGE_KEY = 'cgpa_ad_optin';
+const AD_HIDE_UNTIL_STORAGE_KEY = 'cgpa_ad_hide_until';
+const AD_FREE_TTL_MS = 24 * 60 * 60 * 1000;
 const UI_VERSION_STORAGE_KEY = 'cgpa_ui_version';
 const LEGACY_THEME_KEYS = ['ui_theme', 'theme'];
 const LEGACY_TAB_MAP = Object.freeze({
@@ -1823,11 +1825,36 @@ function initApp() {
     });
   });
 
+  function getLocalAdFreeRemainingMs(now = Date.now()) {
+    const rawUntil = safeStorageGet(AD_HIDE_UNTIL_STORAGE_KEY);
+    if (rawUntil) {
+      const until = Number(rawUntil);
+      if (Number.isFinite(until) && until > now) {
+        return until - now;
+      }
+      safeStorageRemove(AD_HIDE_UNTIL_STORAGE_KEY);
+    }
+    return 0;
+  }
+
+  function isAdFreeActiveLocal(now = Date.now()) {
+    if (getLocalAdFreeRemainingMs(now) > 0) return true;
+    return safeStorageGet(AD_PREF_STORAGE_KEY) === '0';
+  }
+
+  function formatLocalRemaining(remainingMs) {
+    if (!Number.isFinite(remainingMs) || remainingMs <= 0) return '24h TTL active';
+    const hours = Math.ceil(remainingMs / 3600000);
+    return hours <= 1 ? '< 1h left' : `${hours}h left`;
+  }
+
   function initOptInAdControl() {
+    const adControlCard = document.getElementById('ad-control-card');
     const optInBtn = document.getElementById('ad-optin-btn');
     const optInStatus = document.getElementById('ad-optin-status');
     const optInSlot = document.getElementById('ad-slot-optin');
-    if (!optInBtn && !optInSlot) return;
+    const inlineToggleBtns = Array.from(document.querySelectorAll('[data-ad-toggle="true"]'));
+    if (!optInBtn && !optInSlot && inlineToggleBtns.length === 0) return;
 
     let adsEnabled = false;
     let userInteracted = false;
@@ -1835,10 +1862,17 @@ function initApp() {
 
     function syncOptInUi(enabled, statusText) {
       adsEnabled = Boolean(enabled);
+      if (adControlCard) {
+        adControlCard.hidden = adsEnabled;
+      }
       if (optInBtn) {
         optInBtn.setAttribute('aria-pressed', adsEnabled ? 'true' : 'false');
-        optInBtn.textContent = adsEnabled ? 'Hide Ad' : 'Show Quality Ad';
+        optInBtn.textContent = adsEnabled ? 'Hide ads (24h)' : 'Show ads';
       }
+      inlineToggleBtns.forEach((btn) => {
+        btn.setAttribute('aria-pressed', adsEnabled ? 'true' : 'false');
+        btn.textContent = adsEnabled ? 'Hide ads (24h)' : 'Show ads';
+      });
       if (optInStatus && statusText) {
         optInStatus.textContent = statusText;
       }
@@ -1852,30 +1886,29 @@ function initApp() {
     }
 
     async function enableOptInAd({ trigger = 'user_click', persist = true } = {}) {
-      syncOptInUi(true, 'Loading display ad…');
+      syncOptInUi(true, 'Loading display ads…');
       try {
-        const mod = await import('./ads-manager.js');
+        const mod = await import('./ads-manager.js?v=23');
         if (!adsEnabled) {
-          if (persist) mod.setAdPreference(window, false);
-          mod.hideOptInAd();
+          mod.grantAdFreePass({ win: window, source: 'user_toggle' });
+          mod.hideAllManagedAds();
           return;
         }
         if (persist) {
           mod.setAdPreference(window, true);
         }
-        const res = mod.activateOptInAd({ university: config.id, trigger });
+        const res = mod.initManagedAds({ university: config.id, trigger });
         if (!adsEnabled) {
-          mod.hideOptInAd();
+          mod.hideAllManagedAds();
           return;
         }
-        if (!res.activated) {
-          syncOptInUi(false, 'Ad slot unavailable');
+        const totalEligible = res.mountedCount + res.lazyCount;
+        if (totalEligible === 0) {
+          syncOptInUi(true, 'No eligible slots on this viewport');
         } else if (res.preview) {
-          syncOptInUi(true, 'Quality ad preview active · Zero ad scripts loaded');
-        } else if (optInSlot?.classList.contains('is-unfilled')) {
-          syncOptInUi(true, 'No ad available right now');
+          syncOptInUi(true, 'Ad preview active · Zero ad scripts loaded');
         } else {
-          syncOptInUi(true, 'Ad slot active');
+          syncOptInUi(true, 'Ad slots active');
         }
       } catch {
         if (adsEnabled) {
@@ -1885,33 +1918,48 @@ function initApp() {
     }
 
     async function disableOptInAd() {
-      syncOptInUi(false, 'Ads off · Display slot hidden');
+      const hiddenMsg = 'Ads hidden (24h left)';
+      syncOptInUi(false, hiddenMsg);
+      document.querySelectorAll('.ad-slot[data-ad-managed="true"]').forEach((slotEl) => {
+        if (slotEl.id === 'announcement-banner' && slotEl.classList.contains('is-custom-announcement')) {
+          return;
+        }
+        slotEl.hidden = true;
+      });
       if (optInSlot) {
         optInSlot.hidden = true;
       }
       try {
-        const mod = await import('./ads-manager.js');
+        const mod = await import('./ads-manager.js?v=23');
         if (adsEnabled) return;
-        mod.setAdPreference(window, false);
-        mod.hideOptInAd();
+        const pass = mod.grantAdFreePass({ win: window, source: 'user_toggle' });
+        mod.hideAllManagedAds();
+        const label = mod.formatAdFreeRemaining(pass.until - Date.now()) || '24h left';
+        syncOptInUi(false, `Ads hidden (${label})`);
       } catch {
-        safeStorageSet(AD_PREF_STORAGE_KEY, '0');
+        safeStorageSet(AD_HIDE_UNTIL_STORAGE_KEY, String(Date.now() + AD_FREE_TTL_MS));
+        safeStorageRemove(AD_PREF_STORAGE_KEY);
       }
     }
 
+    const handleToggleClick = () => {
+      userInteracted = true;
+      cancelPendingAutoEnable();
+      if (!adsEnabled) {
+        trackEvent('ad_optin_enabled', { university: config.id });
+        enableOptInAd({ trigger: 'user_click', persist: true });
+      } else {
+        trackEvent('ad_optin_disabled', { university: config.id, ttl_hours: 24 });
+        disableOptInAd();
+      }
+    };
+
     if (optInBtn) {
-      optInBtn.addEventListener('click', () => {
-        userInteracted = true;
-        cancelPendingAutoEnable();
-        if (!adsEnabled) {
-          trackEvent('ad_optin_enabled', { university: config.id });
-          enableOptInAd({ trigger: 'user_click', persist: true });
-        } else {
-          trackEvent('ad_optin_disabled', { university: config.id });
-          disableOptInAd();
-        }
-      });
+      optInBtn.addEventListener('click', handleToggleClick);
     }
+    inlineToggleBtns.forEach((btn) => {
+      btn.addEventListener('click', handleToggleClick);
+    });
 
     let previewMode = false;
     try {
@@ -1925,8 +1973,10 @@ function initApp() {
       return;
     }
 
-    if (safeStorageGet(AD_PREF_STORAGE_KEY) === '0') {
-      syncOptInUi(false, 'Ads off · Display slot hidden');
+    if (isAdFreeActiveLocal()) {
+      const remainingMs = getLocalAdFreeRemainingMs();
+      const suffix = remainingMs > 0 ? formatLocalRemaining(remainingMs) : 'manual off';
+      syncOptInUi(false, `Ads hidden (${suffix})`);
       return;
     }
 
@@ -1961,6 +2011,7 @@ function initApp() {
 
     const customAnnouncement = resolveAnnouncementBanner(config.id);
     if (customAnnouncement) {
+      bannerEl.removeAttribute('data-ad-managed');
       const shown = renderAnnouncementBanner(bannerEl, customAnnouncement, {
         onCtaClick: (item) => {
           trackEvent('announcement_clicked', {
@@ -1985,47 +2036,11 @@ function initApp() {
       previewMode = false;
     }
 
-    if (!previewMode && !ANNOUNCEMENT_BANNER.adFallbackEnabled) {
+    if (!previewMode && (!ANNOUNCEMENT_BANNER.adFallbackEnabled || isAdFreeActiveLocal())) {
+      if (!ANNOUNCEMENT_BANNER.adFallbackEnabled) {
+        bannerEl.removeAttribute('data-ad-managed');
+      }
       bannerEl.hidden = true;
-      return;
-    }
-
-    const mountFallbackAd = (trigger) => {
-      import('./ads-manager.js')
-        .then((mod) => mod.activateAnnouncementAd({ university: config.id, trigger }))
-        .catch(() => {});
-    };
-
-    if (previewMode) {
-      mountFallbackAd('preview');
-      return;
-    }
-
-    let triggered = false;
-    let fallbackTimer = null;
-    const runOnce = () => {
-      if (triggered) return;
-      triggered = true;
-      if (fallbackTimer !== null) {
-        window.clearTimeout(fallbackTimer);
-        fallbackTimer = null;
-      }
-      mountFallbackAd('announcement_fallback');
-    };
-
-    const scheduleBannerAd = () => {
-      if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(runOnce, { timeout: 1500 });
-        fallbackTimer = window.setTimeout(runOnce, 1500);
-      } else {
-        fallbackTimer = window.setTimeout(runOnce, 1200);
-      }
-    };
-
-    if (document.readyState === 'complete') {
-      scheduleBannerAd();
-    } else {
-      window.addEventListener('load', scheduleBannerAd, { once: true });
     }
   }
 
