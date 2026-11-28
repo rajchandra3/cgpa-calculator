@@ -125,6 +125,8 @@
     discussions_clicked: true,
     announcement_clicked: true,
     ui_version_switched: true,
+    next_step_clicked: true,
+    tool_nav_clicked: true,
   };
 
   function toSnakeCase(raw, maxLen) {
@@ -191,7 +193,9 @@
     }
 
     try {
-      window.gtag?.('set', 'user_properties', clean);
+      if (!window['ga-disable-G-65WDQ61WWG']) {
+        window.gtag?.('set', 'user_properties', clean);
+      }
     } catch (err) {
       // Ignore GA user_properties errors
     }
@@ -208,10 +212,12 @@
     }
 
     try {
-      var gaEventName = toGa4EventName(eventName);
-      if (gaEventName) {
-        var gaPayload = sanitizeGa4Params(payload, gaEventName);
-        window.gtag?.('event', gaEventName, gaPayload);
+      if (!window['ga-disable-G-65WDQ61WWG']) {
+        var gaEventName = toGa4EventName(eventName);
+        if (gaEventName) {
+          var gaPayload = sanitizeGa4Params(payload, gaEventName);
+          window.gtag?.('event', gaEventName, gaPayload);
+        }
       }
     } catch (err) {
       // Ignore GA transport errors

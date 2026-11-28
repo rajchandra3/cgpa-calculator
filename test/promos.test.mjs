@@ -205,7 +205,7 @@ test('matchesPromoRule validates enabled flag, URL safety, tabs, universities, r
 test('matchPromos & pickNextPromo show Day20, LinkedIn, and Twitter to everyone across tabs/scores and shuffle without repeating', () => {
   assert.equal(PERSONAL_PROMOS_ENABLED, true);
   assert.equal(ANNOUNCEMENT_BANNER.enabled, false);
-  assert.equal(ANNOUNCEMENT_BANNER.adFallbackEnabled, false);
+  assert.equal(ANNOUNCEMENT_BANNER.adFallbackEnabled, true);
 
   // Explicit kill-switch suppresses all personal promos
   assert.deepEqual(

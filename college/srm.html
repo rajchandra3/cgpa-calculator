@@ -43,8 +43,16 @@
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-65WDQ61WWG');
+    (function(){
+      var isProd = location.hostname === 'cgpa-calculator.rajchandra.me';
+      var debug = !isProd && new URLSearchParams(location.search).get('ga_debug') === '1';
+      if (!isProd && !debug) { window['ga-disable-G-65WDQ61WWG'] = true; return; }
+      gtag('js', new Date());
+      gtag('set', 'user_properties', { university: 'srm', ui_version: 'v2' });
+      var cfg = { content_group: 'college_srm' };
+      if (debug) { cfg.debug_mode = true; cfg.traffic_type = 'internal'; }
+      gtag('config', 'G-65WDQ61WWG', cfg);
+    })();
   </script>
 
   <script type="application/ld+json">
@@ -130,8 +138,8 @@
   </script>
 
   <link rel="stylesheet" href="/src/css/vendor/pico.min.css">
-  <link rel="stylesheet" href="/src/css/app.css?v=19">
-  <link rel="modulepreload" href="/src/js/app.js">
+  <link rel="stylesheet" href="/src/css/app.css?v=22">
+  <link rel="modulepreload" href="/src/js/app.js?v=26">
   <link rel="modulepreload" href="/src/js/math.js">
   <link rel="modulepreload" href="/src/js/universities.js">
   <link rel="modulepreload" href="/src/js/promos.js">
@@ -162,8 +170,10 @@
   </header>
 
   <main id="main-content" class="page-main">
-    <section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement" aria-label="Announcement" data-ad-location="announcement-banner" data-ad-slot="6993669367" data-ad-format="auto" hidden>
-      <span class="ad-label">Advertisement</span>
+    <section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement" aria-label="Announcement" data-ad-managed="true" data-ad-location="announcement-banner" data-ad-slot="4654433674" data-ad-format="horizontal" data-ad-min-width="1280" data-ad-load="eager" hidden>
+      <div class="ad-slot-bar">
+        <span class="ad-label">Advertisement</span>
+      </div>
       <div class="ad-frame"></div>
     </section>
 
@@ -191,6 +201,7 @@
             <span class="result-label">Semester GPA</span>
             <output id="grades" class="result-value"></output>
             <p id="gpa-meta" class="result-meta"></p>
+            <div id="gpa-next-actions" class="result-next-actions" hidden></div>
           </div>
         </form>
       </section>
@@ -232,6 +243,7 @@
             <span class="result-label">Updated CGPA</span>
             <output id="cgpa-msg" class="result-value"></output>
             <p id="cgpa-meta" class="result-meta"></p>
+            <div id="cgpa-next-actions" class="result-next-actions" hidden></div>
           </div>
         </form>
       </section>
@@ -251,12 +263,20 @@
             <span class="result-label">Cumulative CGPA</span>
             <output id="fcgpa" class="result-value"></output>
             <p id="fcgpa-meta" class="result-meta"></p>
+            <div id="fcgpa-next-actions" class="result-next-actions" hidden></div>
           </div>
         </form>
       </section>
     </article>
 
         <section id="personal-promo-slot" class="personal-promo" aria-label="Featured recommendation" hidden></section>
+
+        <section id="ad-slot-post-calc" class="ad-slot ad-slot--post-calc" aria-label="Advertisement" data-ad-managed="true" data-ad-location="post-calc" data-ad-slot-desktop="4654433674" data-ad-slot-mobile="6993669367" data-ad-format-desktop="horizontal" data-ad-format-mobile="auto" data-ad-load="action" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
 
         <section class="faq-section below-fold-section" aria-labelledby="faq-heading">
           <h2 id="faq-heading">Frequently Asked Questions</h2>
@@ -279,18 +299,28 @@
             </details>
           </div>
         </section>
+
+        <section id="ad-slot-footer" class="ad-slot ad-slot--footer" aria-label="Advertisement" data-ad-managed="true" data-ad-location="below-faq" data-ad-slot-desktop="4654433674" data-ad-slot-mobile="6993669367" data-ad-format-desktop="horizontal" data-ad-format-mobile="auto" data-ad-load="lazy" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
       </div>
 
-      <aside class="workspace-left" aria-label="Ad display preferences">
-        <section id="ad-control-card" class="side-card ad-control-card" aria-labelledby="ad-control-heading">
-          <h2 id="ad-control-heading">Display Ad</h2>
-          <p class="side-card-desc">A single standard display slot in the sidebar. Toggle off anytime for an ad-free view.</p>
-          <button type="button" id="ad-optin-btn" class="btn btn-secondary ad-optin-btn" aria-pressed="true" aria-controls="ad-slot-optin">Hide Ad</button>
-          <p id="ad-optin-status" class="ad-optin-status">Loading display ad…</p>
-          <section id="ad-slot-optin" class="ad-slot ad-slot--optin" aria-label="Advertisement" data-ad-location="optin-quality" data-ad-slot-desktop="7637288848" data-ad-slot-mobile="6993669367" data-ad-format="auto" hidden>
+      <aside class="workspace-left" aria-label="Display ads">
+        <section id="ad-slot-optin" class="ad-slot ad-slot--optin ad-slot--sidebar ad-slot--desktop-only" aria-label="Advertisement" data-ad-managed="true" data-ad-location="left-rail-primary" data-ad-slot-desktop="7637288848" data-ad-format-desktop="vertical" data-ad-load="eager" hidden>
+          <div class="ad-slot-bar">
             <span class="ad-label">Advertisement</span>
-            <div class="ad-frame"></div>
-          </section>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
+
+        <section id="ad-slot-left-secondary" class="ad-slot ad-slot--sidebar ad-slot--desktop-only" aria-label="Advertisement" data-ad-managed="true" data-ad-location="left-rail-secondary" data-ad-slot-desktop="7637288848" data-ad-format-desktop="rectangle" data-ad-load="lazy" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+          </div>
+          <div class="ad-frame"></div>
         </section>
       </aside>
 
@@ -344,7 +374,7 @@
     </div>
   </footer>
 
-  <script src="/src/js/analytics.js" defer fetchpriority="low"></script>
-  <script type="module" src="/src/js/app.js" fetchpriority="high"></script>
+  <script src="/src/js/analytics.js?v=26" defer fetchpriority="low"></script>
+  <script type="module" src="/src/js/app.js?v=26" fetchpriority="high"></script>
 </body>
 </html>

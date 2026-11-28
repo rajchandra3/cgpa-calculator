@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v22, precaches 21 existing assets including icon-96x96.png, pico.min.css, ads-manager.js, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v26, precaches 25 existing assets including VIT multi-page routes, pico.min.css, ads-manager.js?v=26, analytics.js?v=26, app.js?v=26, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v22'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v26'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -108,15 +108,25 @@ test('serviceWorker.js uses cgpa-calculator-v22, precaches 21 existing assets in
   assert.ok(arrayMatch, 'PRECACHE_URLS array must exist in serviceWorker.js');
 
   const urls = Array.from(arrayMatch[1].matchAll(/'([^']+)'/g), (m) => m[1]);
-  assert.equal(urls.length, 21);
+  assert.equal(urls.length, 25);
   assert.equal(urls.includes('/src/css/vendor/pico.min.css'), true);
-  assert.equal(urls.includes('/src/js/ads-manager.js'), true);
+  assert.equal(urls.includes('/src/css/app.css?v=22'), true);
+  assert.equal(urls.includes('/src/js/app.js?v=26'), true);
+  assert.equal(urls.includes('/src/js/analytics.js?v=26'), true);
+  assert.equal(urls.includes('/src/js/ads-manager.js?v=26'), true);
+  assert.equal(urls.includes('/quick-cgpa/'), true);
+  assert.equal(urls.includes('/expected-marks/'), true);
+  assert.equal(urls.includes('/all-semester-cgpa/'), true);
+  assert.equal(urls.includes('/target-cgpa/'), true);
+  assert.equal(urls.includes('/percentage-converter/'), false);
   assert.equal(urls.includes('/src/js/promos.js'), true);
   assert.equal(urls.includes('/src/images/icons/icon-96x96.png'), true);
 
   for (const urlPath of urls) {
     const cleanPath = urlPath.split('?')[0];
-    const diskRel = cleanPath === '/' ? 'index.html' : cleanPath.replace(/^\//, '');
+    const diskRel = cleanPath.endsWith('/')
+      ? `${cleanPath.replace(/^\//, '')}index.html`
+      : cleanPath.replace(/^\//, '');
     assert.equal(repoFileExists(diskRel), true, `serviceWorker precache path missing on disk: ${urlPath}`);
   }
 });
@@ -314,12 +324,24 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
 
   const appSource = readRepoFile('src/js/app.js');
   assert.match(appSource, /trackEvent\('App Installed'/);
-  assert.match(appSource, /import\('\.\/ads-manager\.js'\)/);
+  assert.match(appSource, /import\('\.\/ads-manager\.js\?v=26'\)/);
+  assert.match(appSource, /unlockActionAds/);
+  assert.match(appSource, /calculateTargetCgpa/);
+  assert.doesNotMatch(appSource, /convertCgpaPercentage|percentage-converter/);
+  assert.doesNotMatch(appSource, /ad_optin_enabled|ad_optin_disabled|Hide ads \(24h\)/);
+  assert.match(appSource, /Can I hit my target CGPA\?/);
+  assert.match(appSource, /Can I reach my target CGPA from/);
+  assert.match(appSource, /Can I still reach my target CGPA\?/);
+  assert.match(appSource, /tool_nav_clicked/);
+  assert.match(appSource, /prefill_applied/);
+  assert.match(appSource, /session_calc_index/);
+  assert.match(appSource, /session_milestone/);
+  assert.match(appSource, /form_validation_error/);
+  assert.match(appSource, /entry_source/);
+  assert.match(appSource, /ga-disable-G-65WDQ61WWG/);
   assert.match(appSource, /from '\.\/promos\.js'/);
   assert.doesNotMatch(appSource, /scheduleAdsManager/);
   assert.match(appSource, /contribute_clicked/);
-  assert.match(appSource, /ad_optin_enabled/);
-  assert.match(appSource, /ad_optin_disabled/);
   assert.match(appSource, /promo_shown/);
   assert.match(appSource, /promo_clicked/);
   assert.match(appSource, /promo_dismissed/);
@@ -333,6 +355,10 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
 
   const htmlFiles = [
     'index.html',
+    'quick-cgpa/index.html',
+    'expected-marks/index.html',
+    'all-semester-cgpa/index.html',
+    'target-cgpa/index.html',
     'college/anna-university.html',
     'college/ktu.html',
     'college/srm.html',
@@ -473,9 +499,23 @@ test('analytics.js queues Mixpanel events from boot, defers remote script until 
   mockWindow.track('123_custom', { ok: true });
   assert.deepEqual(gtagCalls[6], ['event', 'e_123_custom', { ok: true }]);
 
+  mockWindow.track('next_step_clicked', { from_tab: 'sc', target_action: 'plan_target_cgpa' });
+  assert.deepEqual(gtagCalls[7], [
+    'event',
+    'next_step_clicked',
+    { from_tab: 'sc', target_action: 'plan_target_cgpa', transport_type: 'beacon' },
+  ]);
+
+  mockWindow.track('tool_nav_clicked', { from_tab: 'sc', to_tab: 'gc' });
+  assert.deepEqual(gtagCalls[8], [
+    'event',
+    'tool_nav_clicked',
+    { from_tab: 'sc', to_tab: 'gc', transport_type: 'beacon' },
+  ]);
+
   assert.equal(typeof mockWindow.setAnalyticsUserProperties, 'function');
   mockWindow.setAnalyticsUserProperties({ university: 'vit', launchMode: 'standalone' });
-  assert.deepEqual(gtagCalls[7], [
+  assert.deepEqual(gtagCalls[9], [
     'set',
     'user_properties',
     { university: 'vit', launch_mode: 'standalone' },
@@ -484,6 +524,16 @@ test('analytics.js queues Mixpanel events from boot, defers remote script until 
     mockWindow.mixpanel.some((entry) => Array.isArray(entry) && entry[0] === 'register'),
     true
   );
+
+  // When ga-disable-G-65WDQ61WWG is true, GA4 hits & user properties are suppressed while Mixpanel continues recording
+  const prevGtagCount = gtagCalls.length;
+  const prevMixpanelCount = mockWindow.mixpanel.length;
+  mockWindow['ga-disable-G-65WDQ61WWG'] = true;
+  mockWindow.setAnalyticsUserProperties({ university: 'ktu' });
+  mockWindow.track('computed_gpa', { gpa: 8.5 });
+  assert.equal(gtagCalls.length, prevGtagCount);
+  assert.equal(mockWindow.mixpanel.length, prevMixpanelCount + 2);
+  delete mockWindow['ga-disable-G-65WDQ61WWG'];
 
   // Trigger window.load -> schedules idle callback + fallback timer, still not injected until idle
   assert.equal(loadListeners.length, 1);
@@ -575,10 +625,11 @@ test('resolveGiscusTheme maps light, dark, and system theme modes', () => {
   assert.equal(resolveGiscusTheme(null), 'preferred_color_scheme');
 });
 
-test('getScoreBand buckets 10-point GPA/CGPA and 100-point marks cleanly', () => {
+test('getScoreBand buckets 10-point GPA/CGPA and 100-point marks/percentage cleanly', () => {
   assert.equal(getScoreBand('sc', 9.5), '9_plus');
   assert.equal(getScoreBand('gc', 9.0), '9_plus');
   assert.equal(getScoreBand('fc', 8.4), '8_to_9');
+  assert.equal(getScoreBand('target', 8.9), '8_to_9');
   assert.equal(getScoreBand('sc', 7.0), '7_to_8');
   assert.equal(getScoreBand('sc', 6.8), 'below_7');
   assert.equal(getScoreBand('ec', 92), '90_plus');
@@ -589,20 +640,8 @@ test('getScoreBand buckets 10-point GPA/CGPA and 100-point marks cleanly', () =>
   assert.equal(getScoreBand('ec', 'not-a-number'), 'unknown');
 });
 
-test('all 4 HTML pages match DOM contract IDs, header logo/title, independent college pages, per-college Discussions, Contribute above Discussion, Left Ad pane, Announcement Banner, Pico CSS, fonts, AdSense meta, and analytics', () => {
-  const pages = [
-    { file: 'index.html', uni: 'vit', hasEc: true, headerTitle: 'VIT CGPA Calculator', discussionTerm: '5' },
-    { file: 'college/anna-university.html', uni: 'anna', hasEc: false, headerTitle: 'Anna University CGPA Calculator', discussionTerm: '6' },
-    { file: 'college/ktu.html', uni: 'ktu', hasEc: false, headerTitle: 'KTU CGPA Calculator', discussionTerm: '7' },
-    { file: 'college/srm.html', uni: 'srm', hasEc: false, headerTitle: 'SRM CGPA Calculator', discussionTerm: '8' },
-  ];
-
-  const requiredIds = [
-    'theme-selector',
-    'install-app-btn',
-    'share-app-btn',
-    'thisYear',
-    'announcement-banner',
+test('all 8 calculator pages (5 VIT routes + 3 college pages) match DOM contracts, ad slots, action-unlocked ads, JSON-LD parity, and sitemap', () => {
+  const spaSharedIds = [
     'gpa-form',
     'gpa-rows',
     'add-course-btn',
@@ -612,6 +651,7 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     'gpa-result',
     'grades',
     'gpa-meta',
+    'gpa-next-actions',
     'quick-cgpa-form',
     'tc',
     'cgpa',
@@ -623,6 +663,7 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     'cgpa-result',
     'cgpa-msg',
     'cgpa-meta',
+    'cgpa-next-actions',
     'all-sem-form',
     'sem-rows',
     'add-sem-btn',
@@ -632,14 +673,95 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     'fcgpa-result',
     'fcgpa',
     'fcgpa-meta',
+    'fcgpa-next-actions',
+  ];
+
+  const pages = [
+    {
+      file: 'index.html',
+      uni: 'vit',
+      headerTitle: 'VIT CGPA Calculator',
+      discussionTerm: '5',
+      hasClassicLink: true,
+      hasLegacyRedirect: true,
+      pageIds: ['gpa-form', 'gpa-rows', 'add-course-btn', 'reset-gpa-btn', 'gbtn', 'gpa-result', 'grades', 'gpa-meta', 'gpa-next-actions'],
+    },
+    {
+      file: 'quick-cgpa/index.html',
+      uni: 'vit',
+      headerTitle: 'VIT CGPA Calculator',
+      discussionTerm: '5',
+      hasClassicLink: true,
+      hasLegacyRedirect: true,
+      pageIds: ['quick-cgpa-form', 'quick-prefill-note', 'tc', 'cgpa', 'c', 'gpa', 'reset-qcc-btn', 'submit', 'cgpa-result', 'cgpa-msg', 'cgpa-meta', 'cgpa-next-actions'],
+    },
+    {
+      file: 'expected-marks/index.html',
+      uni: 'vit',
+      headerTitle: 'VIT CGPA Calculator',
+      discussionTerm: '5',
+      hasClassicLink: true,
+      hasLegacyRedirect: true,
+      pageIds: ['expected-marks-form', 'cat1', 'cat2', 'da', 'al', 'lab', 'j-comp', 'fat', 'ec-submit', 'marks-result', 'marks', 'marks-meta', 'marks-next-actions'],
+    },
+    {
+      file: 'all-semester-cgpa/index.html',
+      uni: 'vit',
+      headerTitle: 'VIT CGPA Calculator',
+      discussionTerm: '5',
+      hasClassicLink: true,
+      hasLegacyRedirect: true,
+      pageIds: ['all-sem-form', 'sem-rows', 'add-sem-btn', 'reset-fc-btn', 'sem-cgpa-btn', 'fcgpa-result', 'fcgpa', 'fcgpa-meta', 'fcgpa-next-actions'],
+    },
+    {
+      file: 'target-cgpa/index.html',
+      uni: 'vit',
+      headerTitle: 'VIT CGPA Calculator',
+      discussionTerm: '5',
+      hasClassicLink: true,
+      hasLegacyRedirect: false,
+      pageIds: ['target-cgpa-form', 'target-prefill-note', 'target-current-cgpa', 'target-completed-credits', 'target-goal-cgpa', 'target-remaining-credits', 'target-submit-btn', 'target-result', 'target-required-gpa', 'target-meta', 'target-next-actions'],
+    },
+    {
+      file: 'college/anna-university.html',
+      uni: 'anna',
+      headerTitle: 'Anna University CGPA Calculator',
+      discussionTerm: '6',
+      hasClassicLink: false,
+      pageIds: spaSharedIds,
+    },
+    {
+      file: 'college/ktu.html',
+      uni: 'ktu',
+      headerTitle: 'KTU CGPA Calculator',
+      discussionTerm: '7',
+      hasClassicLink: false,
+      pageIds: spaSharedIds,
+    },
+    {
+      file: 'college/srm.html',
+      uni: 'srm',
+      headerTitle: 'SRM CGPA Calculator',
+      discussionTerm: '8',
+      hasClassicLink: false,
+      pageIds: spaSharedIds,
+    },
+  ];
+
+  const commonRequiredIds = [
+    'theme-selector',
+    'install-app-btn',
+    'share-app-btn',
+    'thisYear',
+    'announcement-banner',
     'personal-promo-slot',
     'contribute-section',
     'contribute-repo-link',
     'contribute-issue-link',
-    'ad-control-card',
-    'ad-optin-btn',
-    'ad-optin-status',
     'ad-slot-optin',
+    'ad-slot-left-secondary',
+    'ad-slot-post-calc',
+    'ad-slot-footer',
     'comments-section',
     'giscus-container',
   ];
@@ -654,9 +776,14 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     assert.doesNotMatch(html, /Google\+Sans:wght@[^"']*700/);
     assert.match(html, /Space\+Grotesk/);
     assert.match(html, /\/src\/css\/vendor\/pico\.min\.css/);
+    assert.match(html, /\/src\/css\/app\.css\?v=22/);
+    assert.match(html, /<link rel="modulepreload" href="\/src\/js\/app\.js\?v=26">/);
     assert.match(html, /<link rel="modulepreload" href="\/src\/js\/promos\.js">/);
-    assert.match(html, /<script src="\/src\/js\/analytics\.js" defer fetchpriority="low"><\/script>/);
-    assert.match(html, /<script type="module" src="\/src\/js\/app\.js" fetchpriority="high"><\/script>/);
+    assert.match(html, /<script src="\/src\/js\/analytics\.js\?v=26" defer fetchpriority="low"><\/script>/);
+    assert.match(html, /<script type="module" src="\/src\/js\/app\.js\?v=26" fetchpriority="high"><\/script>/);
+    assert.match(html, /ga-disable-G-65WDQ61WWG/);
+    assert.match(html, /content_group:\s*'/);
+    assert.match(html, /gtag\('set',\s*'user_properties'/);
 
     // Header uses original logo image + college H1 title; no cross-college uni-nav or page-hero
     assert.match(html, /<img class="brand-logo" src="\/src\/images\/icons\/icon-96x96\.png"/);
@@ -664,12 +791,16 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     assert.doesNotMatch(html, /class="uni-nav"/);
     assert.doesNotMatch(html, /class="page-hero"/);
     assert.doesNotMatch(html, /class="footer-links"/);
+    assert.doesNotMatch(html, /percentage-converter/);
+    assert.doesNotMatch(html, /ad-control-card|data-ad-toggle|Hide ads/);
 
-    // Center starts directly with mode chips; Left pane is Ad-only; Right pane has Contribute ABOVE Discussions
-    assert.match(html, /<div class="workspace-center">\s*<div class="mode-tabs"/);
+    // Center starts directly with mode-tabs (nav or role=tablist); Left pane holds desktop rail ads only; Right pane has Contribute ABOVE Discussions
+    assert.match(html, /<div class="workspace-center">\s*<(?:nav|div) class="mode-tabs"/);
     const leftMatch = html.match(/<aside class="workspace-left"[\s\S]*?<\/aside>/);
     assert.ok(leftMatch, `${page.file} missing .workspace-left`);
-    assert.match(leftMatch[0], /id="ad-control-card"/);
+    assert.match(leftMatch[0], /id="ad-slot-optin"/);
+    assert.match(leftMatch[0], /id="ad-slot-left-secondary"/);
+    assert.doesNotMatch(leftMatch[0], /id="ad-control-card"/);
     assert.doesNotMatch(leftMatch[0], /id="contribute-section"/);
 
     const rightMatch = html.match(/<aside class="workspace-right"[\s\S]*?<\/aside>/);
@@ -687,13 +818,12 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     assert.match(html, /data-mapping="number"/);
     assert.match(html, new RegExp(`data-term="${page.discussionTerm}"`));
 
-    // Grade Scale card and legacy ad slots removed; Announcement banner + 1 hidden opt-in left-pane ad slot
+    // Grade Scale card removed; 5 managed responsive ad slots (desktop announcement + 2 left desktop rails + action-unlocked post-calc + lazy below-faq)
     assert.doesNotMatch(html, /grade-scale-card/);
-    assert.doesNotMatch(html, /ad-slot-post-calc/);
     assert.doesNotMatch(html, /ad-slot-left-rail/);
     assert.match(
       html,
-      /<section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement"[^>]*data-ad-location="announcement-banner"[^>]*data-ad-slot="6993669367"[^>]*hidden>/
+      /<section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement"[^>]*data-ad-managed="true"[^>]*data-ad-location="announcement-banner"[^>]*data-ad-slot="4654433674"[^>]*data-ad-min-width="1280"[^>]*data-ad-load="eager"[^>]*hidden>/
     );
     assert.match(
       html,
@@ -707,20 +837,35 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
       html,
       /id="contribute-issue-link"[^>]*data-contribute-action="issue"[^>]*href="https:\/\/github\.com\/rajchandra3\/cgpa-calculator\/issues\/new"/
     );
-    assert.match(
-      html,
-      /id="ad-optin-btn"[^>]*aria-pressed="true"[^>]*aria-controls="ad-slot-optin"[^>]*>Hide Ad<\/button>/
-    );
     assert.match(html, /<span id="thisYear"><\/span>/);
     assert.doesNotMatch(html, /<span id="thisYear">\d+<\/span>/);
 
-    const adSlotMatches = html.match(/class="[^"]*\bad-slot\b/g) || [];
-    assert.equal(adSlotMatches.length, 2, `${page.file} must have strictly 2 .ad-slot containers (announcement + opt-in)`);
+    const adSlotMatches = html.match(/<section\b[^>]*class="[^"]*\bad-slot(?:\s|")/g) || [];
+    assert.equal(adSlotMatches.length, 5, `${page.file} must have strictly 5 .ad-slot containers (announcement, left primary, left secondary, post-calc, footer)`);
     assert.match(
       html,
-      /<section id="ad-slot-optin" class="ad-slot ad-slot--optin"[^>]*data-ad-location="optin-quality"[^>]*data-ad-slot-desktop="7637288848"[^>]*data-ad-slot-mobile="6993669367"[^>]*hidden>/
+      /<section id="ad-slot-optin" class="ad-slot ad-slot--optin ad-slot--sidebar ad-slot--desktop-only"[^>]*data-ad-managed="true"[^>]*data-ad-location="left-rail-primary"[^>]*data-ad-slot-desktop="7637288848"[^>]*data-ad-format-desktop="vertical"[^>]*data-ad-load="eager"[^>]*hidden>/
+    );
+    assert.match(
+      html,
+      /<section id="ad-slot-left-secondary" class="ad-slot ad-slot--sidebar ad-slot--desktop-only"[^>]*data-ad-managed="true"[^>]*data-ad-location="left-rail-secondary"[^>]*data-ad-slot-desktop="7637288848"[^>]*data-ad-format-desktop="rectangle"[^>]*data-ad-load="lazy"[^>]*hidden>/
+    );
+    assert.match(
+      html,
+      /<section id="ad-slot-post-calc" class="ad-slot ad-slot--post-calc"[^>]*data-ad-managed="true"[^>]*data-ad-location="post-calc"[^>]*data-ad-slot-desktop="4654433674"[^>]*data-ad-slot-mobile="6993669367"[^>]*data-ad-load="action"[^>]*hidden>/
+    );
+    assert.match(
+      html,
+      /<section id="ad-slot-footer" class="ad-slot ad-slot--footer"[^>]*data-ad-managed="true"[^>]*data-ad-location="below-faq"[^>]*data-ad-slot-desktop="4654433674"[^>]*data-ad-slot-mobile="6993669367"[^>]*data-ad-load="lazy"[^>]*hidden>/
     );
     assert.doesNotMatch(html, /360px/);
+
+    const promoIdx = html.indexOf('id="personal-promo-slot"');
+    const postCalcIdx = html.indexOf('id="ad-slot-post-calc"');
+    const faqIdx = html.indexOf('class="faq-section');
+    const footerAdIdx = html.indexOf('id="ad-slot-footer"');
+    assert.ok(promoIdx !== -1 && postCalcIdx !== -1 && faqIdx !== -1 && footerAdIdx !== -1);
+    assert.ok(promoIdx < postCalcIdx && postCalcIdx < faqIdx && faqIdx < footerAdIdx, `${page.file} center flow must be promo -> post-calc -> faq -> footer`);
 
     const calcShellMatch = html.match(/<article class="calculator-shell"[\s\S]*?<\/article>/);
     assert.ok(calcShellMatch, `${page.file} missing .calculator-shell`);
@@ -746,7 +891,7 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
       `${page.file} visible FAQ answers must match JSON-LD 1:1`
     );
 
-    for (const id of requiredIds) {
+    for (const id of [...commonRequiredIds, ...page.pageIds]) {
       assert.match(html, new RegExp(`id="${id}"`), `${page.file} missing #${id}`);
     }
 
@@ -758,18 +903,24 @@ test('all 4 HTML pages match DOM contract IDs, header logo/title, independent co
     assert.ok(headerMatch, `${page.file} missing .site-header`);
     assert.doesNotMatch(headerMatch[0], /id="install-app-btn"/, `${page.file} #install-app-btn must not live in .site-header`);
 
-    if (page.hasEc) {
-      assert.match(html, /id="expected-marks-form"/);
-      assert.match(html, /id="legacy-ui-link"[^>]*href="\/legacy\/"/);
-      assert.match(html, /cgpa_ui_version/);
-      for (const ecId of ['cat1', 'cat2', 'da', 'al', 'lab', 'j-comp', 'fat', 'ec-submit']) {
-        assert.match(html, new RegExp(`id="${ecId}"`), `${page.file} missing #${ecId}`);
+    if (page.hasClassicLink) {
+      assert.match(html, /id="legacy-ui-link"[^>]*href="\/legacy\//);
+      if (page.hasLegacyRedirect) {
+        assert.match(html, /cgpa_ui_version/);
       }
     } else {
       assert.doesNotMatch(html, /id="expected-marks-form"/);
       assert.doesNotMatch(html, /id="legacy-ui-link"/);
     }
   }
+
+  // XML sitemap covers all canonical VIT routes + college routes (and excludes removed percentage converter)
+  const sitemapXml = readRepoFile('sitemap.xml');
+  for (const route of ['/', '/quick-cgpa/', '/expected-marks/', '/all-semester-cgpa/', '/target-cgpa/']) {
+    assert.match(sitemapXml, new RegExp(`https:\\/\\/cgpa-calculator\\.rajchandra\\.me${route.replace(/\//g, '\\/')}`));
+  }
+  assert.doesNotMatch(sitemapXml, /percentage-converter/);
+  assert.equal(repoFileExists('percentage-converter/index.html'), false);
 });
 
 test('VIT /legacy/ Classic UI snapshot exists, uses manual AdSense slots (no Auto Ads), is noindex, and has safe JS + 2.0 switch toggle', () => {
@@ -785,14 +936,23 @@ test('VIT /legacy/ Classic UI snapshot exists, uses manual AdSense slots (no Aut
     assert.equal(repoFileExists(file), true, `Missing legacy file: ${file}`);
   }
 
+  const sitemapHtml = readRepoFile('sitemap.html');
+  assert.match(sitemapHtml, /ga-disable-G-65WDQ61WWG/);
+  assert.match(sitemapHtml, /content_group:\s*'sitemap'/);
+  assert.match(sitemapHtml, /\/src\/js\/analytics\.js\?v=26/);
+  assert.match(sitemapHtml, /\/src\/js\/app\.js\?v=26/);
+
   const legacyHtml = readRepoFile('legacy/index.html');
   assert.match(legacyHtml, /<meta name="robots" content="noindex, follow">/);
   assert.match(legacyHtml, /<link rel="canonical" href="https:\/\/cgpa-calculator\.rajchandra\.me\/">/);
   assert.match(legacyHtml, /<meta name="google-adsense-account" content="ca-pub-8598751574376549">/);
   assert.match(legacyHtml, /G-65WDQ61WWG/);
+  assert.match(legacyHtml, /ga-disable-G-65WDQ61WWG/);
+  assert.match(legacyHtml, /content_group:\s*'vit_legacy'/);
+  assert.match(legacyHtml, /gtag\('set',\s*'user_properties'/);
   assert.doesNotMatch(legacyHtml, /G-8SGELQM6QV/);
-  assert.match(legacyHtml, /\/src\/js\/analytics\.js/);
-  assert.match(legacyHtml, /\/legacy\/js\/legacy\.js\?v=22/);
+  assert.match(legacyHtml, /\/src\/js\/analytics\.js\?v=26/);
+  assert.match(legacyHtml, /\/legacy\/js\/legacy\.js\?v=23/);
   assert.match(legacyHtml, /id="switch-to-v2-btn"/);
   assert.match(legacyHtml, /id="banner-switch-v2"/);
   assert.match(legacyHtml, /\[data-bs-theme="dark"\] \.legacy-v2-banner/);
@@ -832,6 +992,9 @@ test('VIT /legacy/ Classic UI snapshot exists, uses manual AdSense slots (no Aut
   assert.match(legacyJs, /offsetWidth <= 0/);
   assert.match(legacyJs, /adsbygoogle/);
   assert.match(legacyJs, /ad_slot_requested/);
+  assert.match(legacyJs, /ad_slot_viewable/);
+  assert.match(legacyJs, /viewport_bucket/);
+  assert.match(legacyJs, /no_fill/);
   assert.match(legacyJs, /ui_version_switched/);
   assert.match(legacyJs, /calculation_completed/);
 });
@@ -846,7 +1009,18 @@ test('src/css/app.css keeps .row-list single-column at all viewports and cleans 
   assert.match(css, /\.table-wrap/);
   assert.match(css, /\.grade-table/);
   assert.match(css, /\.side-card/);
+  assert.match(css, /:is\(button, a\)\.mode-tab/);
+  assert.match(css, /\.result-next-actions/);
+  assert.match(css, /\.btn-next-step/);
+  assert.match(css, /\.prefill-note/);
+  assert.match(css, /\.result-panel\.is-warning/);
   assert.match(css, /\.ad-slot--optin/);
+  assert.match(css, /\.ad-slot--sidebar/);
+  assert.match(css, /\.ad-slot--desktop-only/);
+  assert.match(css, /\.ad-slot--post-calc/);
+  assert.match(css, /\.ad-slot--footer/);
+  assert.match(css, /\.ad-slot-bar/);
+  assert.doesNotMatch(css, /button\.ad-hide-btn|\.ad-control-card/);
   assert.match(css, /\.personal-promo-card/);
   assert.match(css, /@media \(max-width: 640px\)[\s\S]*?\.header-inner\s*\{\s*flex-wrap:\s*wrap;/);
   assert.match(css, /\.header-actions \.theme-toggle-mobile/);
@@ -858,6 +1032,10 @@ test('src/css/app.css keeps .row-list single-column at all viewports and cleans 
   const desktopMq = css.match(/@media \(min-width: 1120px\)\s*\{([\s\S]*?)^\}/m);
   assert.ok(desktopMq, 'Missing @media (min-width: 1120px) block');
   assert.doesNotMatch(desktopMq[1], /position:\s*sticky/, 'Sidebars/display ad must scroll with the page and never stick on desktop');
+  const wideDesktopMq = css.match(/@media \(min-width: 1200px\)\s*\{([\s\S]*?)^\}/m);
+  assert.ok(wideDesktopMq, 'Missing @media (min-width: 1200px) block');
+  assert.match(wideDesktopMq[1], /302px/);
+  assert.doesNotMatch(wideDesktopMq[1], /position:\s*sticky/, 'Wide desktop layout must never stick on desktop');
   assert.match(css, /--text-title:/);
   assert.match(css, /--text-ui:/);
   assert.doesNotMatch(css, /font-weight:\s*700/, 'Google Sans must stay at 400/500 with zero heavy 700 weights');

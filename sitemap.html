@@ -30,13 +30,21 @@
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-65WDQ61WWG');
+    (function(){
+      var isProd = location.hostname === 'cgpa-calculator.rajchandra.me';
+      var debug = !isProd && new URLSearchParams(location.search).get('ga_debug') === '1';
+      if (!isProd && !debug) { window['ga-disable-G-65WDQ61WWG'] = true; return; }
+      gtag('js', new Date());
+      gtag('set', 'user_properties', { university: 'all', ui_version: 'v2' });
+      var cfg = { content_group: 'sitemap' };
+      if (debug) { cfg.debug_mode = true; cfg.traffic_type = 'internal'; }
+      gtag('config', 'G-65WDQ61WWG', cfg);
+    })();
   </script>
 
   <link rel="stylesheet" href="/src/css/vendor/pico.min.css">
-  <link rel="stylesheet" href="/src/css/app.css?v=19">
-  <link rel="modulepreload" href="/src/js/app.js">
+  <link rel="stylesheet" href="/src/css/app.css?v=22">
+  <link rel="modulepreload" href="/src/js/app.js?v=26">
   <link rel="modulepreload" href="/src/js/math.js">
   <link rel="modulepreload" href="/src/js/universities.js">
 </head>
@@ -98,24 +106,44 @@
             </thead>
             <tbody>
               <tr>
-                <th scope="row"><a href="/">VIT CGPA Calculator</a></th>
+                <th scope="row"><a href="/">VIT Semester GPA Calculator</a></th>
                 <td><code>https://cgpa-calculator.rajchandra.me/</code></td>
-                <td class="num">2026-11-24</td>
+                <td class="num">2026-11-28</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="/quick-cgpa/">VIT Quick CGPA Calculator</a></th>
+                <td><code>https://cgpa-calculator.rajchandra.me/quick-cgpa/</code></td>
+                <td class="num">2026-11-28</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="/expected-marks/">VIT Expected Course Marks Calculator</a></th>
+                <td><code>https://cgpa-calculator.rajchandra.me/expected-marks/</code></td>
+                <td class="num">2026-11-28</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="/all-semester-cgpa/">VIT All-Semester CGPA Calculator</a></th>
+                <td><code>https://cgpa-calculator.rajchandra.me/all-semester-cgpa/</code></td>
+                <td class="num">2026-11-28</td>
+              </tr>
+              <tr>
+                <th scope="row"><a href="/target-cgpa/">Target CGPA Planner</a></th>
+                <td><code>https://cgpa-calculator.rajchandra.me/target-cgpa/</code></td>
+                <td class="num">2026-11-28</td>
               </tr>
               <tr>
                 <th scope="row"><a href="/college/anna-university.html">Anna University CGPA Calculator</a></th>
                 <td><code>https://cgpa-calculator.rajchandra.me/college/anna-university.html</code></td>
-                <td class="num">2026-11-24</td>
+                <td class="num">2026-11-28</td>
               </tr>
               <tr>
                 <th scope="row"><a href="/college/ktu.html">KTU CGPA Calculator</a></th>
                 <td><code>https://cgpa-calculator.rajchandra.me/college/ktu.html</code></td>
-                <td class="num">2026-11-24</td>
+                <td class="num">2026-11-28</td>
               </tr>
               <tr>
                 <th scope="row"><a href="/college/srm.html">SRM CGPA Calculator</a></th>
                 <td><code>https://cgpa-calculator.rajchandra.me/college/srm.html</code></td>
-                <td class="num">2026-11-24</td>
+                <td class="num">2026-11-28</td>
               </tr>
             </tbody>
           </table>
@@ -140,7 +168,7 @@
     </div>
   </footer>
 
-  <script src="/src/js/analytics.js" defer fetchpriority="low"></script>
-  <script type="module" src="/src/js/app.js" fetchpriority="high"></script>
+  <script src="/src/js/analytics.js?v=26" defer fetchpriority="low"></script>
+  <script type="module" src="/src/js/app.js?v=26" fetchpriority="high"></script>
 </body>
 </html>

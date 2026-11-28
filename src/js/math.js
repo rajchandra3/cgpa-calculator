@@ -279,3 +279,57 @@ export function calculateAllSemCgpa(semesters) {
     percentage: formatScore(raw * 10),
   };
 }
+
+/**
+ * Calculate required average GPA across remaining credits to reach a target CGPA.
+ */
+export function calculateTargetCgpa(input = {}) {
+  const data = input && typeof input === 'object' ? input : {};
+  const currentCgpa = parseOptionalNumber(data.currentCgpa);
+  const completedCredits = parseOptionalNumber(data.completedCredits);
+  const targetCgpa = parseOptionalNumber(data.targetCgpa);
+  const remainingCredits = parseOptionalNumber(data.remainingCredits);
+
+  const invalidFields = [];
+  if (!isInRange(currentCgpa, 0, 10)) invalidFields.push('currentCgpa');
+  if (!isInRange(completedCredits, 0, 300)) invalidFields.push('completedCredits');
+  if (!isInRange(targetCgpa, 0, 10)) invalidFields.push('targetCgpa');
+  if (
+    remainingCredits === null ||
+    Number.isNaN(remainingCredits) ||
+    remainingCredits <= 0 ||
+    remainingCredits > 250
+  ) {
+    invalidFields.push('remainingCredits');
+  }
+
+  if (invalidFields.length > 0) {
+    return {
+      ok: false,
+      error:
+        'Enter valid numbers within range (CGPA 0–10, Completed Credits 0–300, Remaining Credits 1–250).',
+      invalidFields,
+    };
+  }
+
+  const totalCredits = completedCredits + remainingCredits;
+  const rawRequired = (targetCgpa * totalCredits - currentCgpa * completedCredits) / remainingCredits;
+  const maxPossibleRaw = (currentCgpa * completedCredits + 10 * remainingCredits) / totalCredits;
+
+  let status = 'achievable';
+  if (rawRequired <= 0) status = 'already_achieved';
+  else if (rawRequired > 10) status = 'impossible';
+
+  const requiredGpa = rawRequired <= 0 ? 0 : roundToTwo(rawRequired);
+
+  return {
+    ok: true,
+    status,
+    requiredGpa,
+    formatted: formatScore(requiredGpa),
+    rawRequired: roundToTwo(rawRequired),
+    totalCredits: roundToTwo(totalCredits),
+    maxPossibleCgpa: roundToTwo(maxPossibleRaw),
+    maxPossibleFormatted: formatScore(maxPossibleRaw),
+  };
+}

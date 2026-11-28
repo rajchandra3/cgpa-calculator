@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <script>try{var s=localStorage.getItem('color-scheme')||localStorage.getItem('ui_theme')||localStorage.getItem('theme');if(s==='light'||s==='dark'){document.querySelector('meta[name="color-scheme"]').content=s;document.documentElement.dataset.theme=s;}}catch(e){}</script>
+  <script>try{if(localStorage.getItem('cgpa_ui_version')==='legacy'){location.replace('/legacy/?tab=fc');}}catch(e){}</script>
+
+  <title>All-Semester CGPA Calculator — Multi-Semester VIT CGPA | CGPA Calculator</title>
+  <meta name="description" content="Calculate your cumulative VIT CGPA across 1 to 12+ completed semesters by entering each semester's GPA and credit total.">
+  <meta name="keywords" content="VIT all semester CGPA calculator, VIT cumulative CGPA, multi semester CGPA, Raj Chandra CGPA calculator">
+  <meta name="author" content="Raj Chandra">
+  <meta name="robots" content="index, follow">
+  <meta name="google-adsense-account" content="ca-pub-8598751574376549">
+  <link rel="canonical" href="https://cgpa-calculator.rajchandra.me/all-semester-cgpa/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CGPA Calculator">
+  <meta property="og:title" content="All-Semester VIT CGPA Calculator (1–12+ Semesters)">
+  <meta property="og:description" content="Enter GPA and total credits for each completed semester to compute your exact credit-weighted VIT CGPA.">
+  <meta property="og:url" content="https://cgpa-calculator.rajchandra.me/all-semester-cgpa/">
+  <meta property="og:image" content="https://cgpa-calculator.rajchandra.me/src/images/icons/icon-512x512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="All-Semester VIT CGPA Calculator">
+  <meta name="twitter:description" content="Enter individual semester GPAs and credits across 1 to 12+ semesters.">
+  <meta name="twitter:image" content="https://cgpa-calculator.rajchandra.me/src/images/icons/icon-512x512.png">
+
+  <link rel="icon" type="image/png" href="/src/images/icons/favicon.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="/src/images/icons/icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="96x96" href="/src/images/icons/icon-96x96.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="/src/images/icons/icon-128x128.png">
+  <link rel="apple-touch-icon" sizes="256x256" href="/src/images/icons/icon-256x256.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/src/images/icons/icon-512x512.png">
+  <link rel="manifest" href="/manifest/vit.json">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap"></noscript>
+
+  <script async fetchpriority="low" src="https://www.googletagmanager.com/gtag/js?id=G-65WDQ61WWG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    (function(){
+      var isProd = location.hostname === 'cgpa-calculator.rajchandra.me';
+      var debug = !isProd && new URLSearchParams(location.search).get('ga_debug') === '1';
+      if (!isProd && !debug) { window['ga-disable-G-65WDQ61WWG'] = true; return; }
+      gtag('js', new Date());
+      gtag('set', 'user_properties', { university: 'vit', ui_version: 'v2' });
+      var cfg = { content_group: 'vit_all_sem_cgpa' };
+      if (debug) { cfg.debug_mode = true; cfg.traffic_type = 'internal'; }
+      gtag('config', 'G-65WDQ61WWG', cfg);
+    })();
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "VIT All-Semester CGPA Calculator",
+        "url": "https://cgpa-calculator.rajchandra.me/all-semester-cgpa/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "description": "Compute cumulative VIT CGPA across 1 to 12+ completed semesters from each semester's GPA and credit load.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+        "author": { "@type": "Person", "name": "Raj Chandra", "url": "https://rajchandra.me" }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How is All-Semester CGPA calculated?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Cumulative CGPA is the credit-weighted average across all entered semesters: sum(Semester GPA × Semester Credits) divided by sum(Semester Credits), rounded to two decimal places."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do I need to fill all 8 default semester rows?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Blank semester rows are skipped automatically, and you can add up to 12 semesters using the Add Semester button."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "When should I use All-Sem CGPA instead of Quick CGPA?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Use All-Sem CGPA to compute your cumulative CGPA from scratch across individual semesters, or use Quick CGPA when you already know your previous cumulative CGPA and credits."
+            }
+          }
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "VIT CGPA Calculator", "item": "https://cgpa-calculator.rajchandra.me/" },
+          { "@type": "ListItem", "position": 2, "name": "All-Sem CGPA", "item": "https://cgpa-calculator.rajchandra.me/all-semester-cgpa/" }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="stylesheet" href="/src/css/vendor/pico.min.css">
+  <link rel="stylesheet" href="/src/css/app.css?v=22">
+  <link rel="modulepreload" href="/src/js/app.js?v=26">
+  <link rel="modulepreload" href="/src/js/math.js">
+  <link rel="modulepreload" href="/src/js/universities.js">
+  <link rel="modulepreload" href="/src/js/promos.js">
+</head>
+<body data-university="vit">
+  <a class="visually-hidden" href="#main-content">Skip to calculator</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/">
+        <img class="brand-logo" src="/src/images/icons/icon-96x96.png" width="32" height="32" alt="">
+        <h1 class="brand-title">VIT CGPA Calculator</h1>
+      </a>
+      <div class="header-actions">
+        <a id="legacy-ui-link" class="btn btn-subtle btn-classic-ui" href="/legacy/?tab=fc" aria-label="Switch to Classic UI" title="Classic UI">
+          <svg class="btn-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+          <span class="btn-label">Classic UI</span>
+        </a>
+        <label class="visually-hidden" for="theme-selector">Color theme</label>
+        <select id="theme-selector" class="theme-select" aria-label="Color theme">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+        <button type="button" id="theme-toggle-btn" class="btn btn-subtle btn-icon-only theme-toggle-mobile" aria-label="Switch color theme" title="Switch theme">
+          <svg class="btn-icon-svg" data-theme-icon="system" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor"/></svg>
+          <svg class="btn-icon-svg" data-theme-icon="light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <svg class="btn-icon-svg" data-theme-icon="dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="page-main">
+    <section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement" aria-label="Announcement" data-ad-managed="true" data-ad-location="announcement-banner" data-ad-slot="4654433674" data-ad-format="horizontal" data-ad-min-width="1280" data-ad-load="eager" hidden>
+      <div class="ad-slot-bar">
+        <span class="ad-label">Advertisement</span>
+      </div>
+      <div class="ad-frame"></div>
+    </section>
+
+    <div class="workspace-layout">
+      <div class="workspace-center">
+        <nav class="mode-tabs" aria-label="VIT Calculator tools">
+          <a id="tab-sc" class="mode-tab" data-tab="sc" href="/">Semester GPA</a>
+          <a id="tab-gc" class="mode-tab" data-tab="gc" href="/quick-cgpa/">Quick CGPA</a>
+          <a id="tab-ec" class="mode-tab" data-tab="ec" href="/expected-marks/">Expected Marks</a>
+          <a id="tab-fc" class="mode-tab is-active" data-tab="fc" href="/all-semester-cgpa/" aria-current="page">All-Sem CGPA</a>
+          <a id="tab-target" class="mode-tab" data-tab="target" href="/target-cgpa/">Target CGPA</a>
+        </nav>
+
+        <article class="calculator-shell" aria-label="All-Semester CGPA Calculator">
+          <section id="fc" class="calculator-panel is-active" aria-labelledby="fc-heading">
+            <h2 id="fc-heading">All-Semester CGPA Calculator</h2>
+            <p class="panel-desc">Enter your GPA and total credits for each completed semester. Add up to 12 semesters; empty rows are skipped.</p>
+            <form id="all-sem-form" aria-labelledby="fc-heading" novalidate>
+              <div id="sem-rows" class="row-list"></div>
+              <div class="form-actions">
+                <button type="button" id="add-sem-btn" class="btn btn-secondary">Add Semester</button>
+                <button type="reset" id="reset-fc-btn" class="btn btn-subtle">Reset</button>
+                <button type="submit" id="sem-cgpa-btn" class="btn btn-primary">Calculate CGPA</button>
+              </div>
+              <p id="all-sem-error" class="form-error-banner" role="alert" hidden></p>
+              <div id="fcgpa-result" class="result-panel" aria-live="polite" hidden>
+                <span class="result-label">Cumulative CGPA</span>
+                <output id="fcgpa" class="result-value"></output>
+                <p id="fcgpa-meta" class="result-meta"></p>
+                <div id="fcgpa-next-actions" class="result-next-actions" hidden></div>
+              </div>
+            </form>
+          </section>
+        </article>
+
+        <section id="personal-promo-slot" class="personal-promo" aria-label="Featured recommendation" hidden></section>
+
+        <section id="ad-slot-post-calc" class="ad-slot ad-slot--post-calc" aria-label="Advertisement" data-ad-managed="true" data-ad-location="post-calc" data-ad-slot-desktop="4654433674" data-ad-slot-mobile="6993669367" data-ad-format-desktop="horizontal" data-ad-format-mobile="auto" data-ad-load="action" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
+
+        <section class="faq-section below-fold-section" aria-labelledby="faq-heading">
+          <h2 id="faq-heading">Frequently Asked Questions</h2>
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary>How is All-Semester CGPA calculated?</summary>
+              <p>Cumulative CGPA is the credit-weighted average across all entered semesters: sum(Semester GPA × Semester Credits) divided by sum(Semester Credits), rounded to two decimal places.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Do I need to fill all 8 default semester rows?</summary>
+              <p>No. Blank semester rows are skipped automatically, and you can add up to 12 semesters using the Add Semester button.</p>
+            </details>
+            <details class="faq-item">
+              <summary>When should I use All-Sem CGPA instead of Quick CGPA?</summary>
+              <p>Use All-Sem CGPA to compute your cumulative CGPA from scratch across individual semesters, or use Quick CGPA when you already know your previous cumulative CGPA and credits.</p>
+            </details>
+          </div>
+        </section>
+
+        <section id="ad-slot-footer" class="ad-slot ad-slot--footer" aria-label="Advertisement" data-ad-managed="true" data-ad-location="below-faq" data-ad-slot-desktop="4654433674" data-ad-slot-mobile="6993669367" data-ad-format-desktop="horizontal" data-ad-format-mobile="auto" data-ad-load="lazy" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
+      </div>
+
+      <aside class="workspace-left" aria-label="Display ads">
+        <section id="ad-slot-optin" class="ad-slot ad-slot--optin ad-slot--sidebar ad-slot--desktop-only" aria-label="Advertisement" data-ad-managed="true" data-ad-location="left-rail-primary" data-ad-slot-desktop="7637288848" data-ad-format-desktop="vertical" data-ad-load="eager" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
+
+        <section id="ad-slot-left-secondary" class="ad-slot ad-slot--sidebar ad-slot--desktop-only" aria-label="Advertisement" data-ad-managed="true" data-ad-location="left-rail-secondary" data-ad-slot-desktop="7637288848" data-ad-format-desktop="rectangle" data-ad-load="lazy" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
+      </aside>
+
+      <aside class="workspace-right" aria-label="Contribute &amp; VIT discussions">
+        <section id="contribute-section" class="side-card contribute-card" aria-labelledby="contribute-heading">
+          <h2 id="contribute-heading">Spot an issue? Contribute</h2>
+          <p class="side-card-desc">VIT FFCS grade scales, credit rules, or formulas look off? This calculator is open source — report an issue or send a PR on GitHub.</p>
+          <div class="side-card-actions">
+            <a id="contribute-repo-link" class="btn btn-secondary" data-contribute-action="repo" href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer">Contribute on GitHub &#8599;</a>
+            <a id="contribute-issue-link" class="btn btn-subtle" data-contribute-action="issue" href="https://github.com/rajchandra3/cgpa-calculator/issues/new" target="_blank" rel="noopener noreferrer">Report an Issue &#8599;</a>
+          </div>
+        </section>
+
+        <section id="comments-section" class="comments-sidebar" aria-labelledby="comments-heading">
+          <div class="comments-header">
+            <h2 id="comments-heading">VIT Discussions &amp; Feedback</h2>
+            <a class="comments-ext-link" href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Open on GitHub &#8599;</a>
+          </div>
+          <p class="comments-desc">Share VIT feedback, report grade-scale updates, or ask questions in <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">VIT Discussion #5</a>.</p>
+          <div
+            id="giscus-container"
+            class="giscus-host"
+            data-repo="rajchandra3/cgpa-calculator"
+            data-repo-id="R_kgDOGqICXQ"
+            data-category="General"
+            data-category-id="DIC_kwDOGqICXc4DL4Gy"
+            data-mapping="number"
+            data-term="5"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-lang="en"
+          ></div>
+          <p class="comments-footnote">Open-source comments via <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Discussion #5 (Giscus)</a>.</p>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p class="footer-copyright"><span>&copy; 2017–<span id="thisYear"></span></span> <a href="https://rajchandra.me" target="_blank" rel="noopener noreferrer">Raj Chandra</a></p>
+    <div class="footer-actions">
+      <button type="button" id="install-app-btn" class="btn btn-subtle btn-install-footer" aria-label="Install App" title="Install App" hidden>
+        <svg class="btn-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Install App</span>
+      </button>
+      <button type="button" id="share-app-btn" class="btn btn-subtle" hidden>Share</button>
+      <a href="https://www.linkedin.com/in/rajchandra3/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      <a href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </div>
+  </footer>
+
+  <script src="/src/js/analytics.js?v=26" defer fetchpriority="low"></script>
+  <script type="module" src="/src/js/app.js?v=26" fetchpriority="high"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import {
   calculateExpectedMarks,
   calculateGpa,
   calculateQuickCgpa,
+  calculateTargetCgpa,
 } from './math.js';
 import {
   ANNOUNCEMENT_BANNER,
@@ -14,8 +15,10 @@ import {
 } from './promos.js';
 
 const THEME_STORAGE_KEY = 'color-scheme';
-const AD_PREF_STORAGE_KEY = 'cgpa_ad_optin';
 const UI_VERSION_STORAGE_KEY = 'cgpa_ui_version';
+const SESSION_CALCS_KEY = 'cgpa_session_calcs';
+const SESSION_DWELL_KEY = 'cgpa_session_dwell_sec';
+const SESSION_MILESTONES_KEY = 'cgpa_session_milestones';
 const LEGACY_THEME_KEYS = ['ui_theme', 'theme'];
 const LEGACY_TAB_MAP = Object.freeze({
   qcc: 'gc',
@@ -85,6 +88,22 @@ function safeStorageRemove(key) {
   }
 }
 
+function safeSessionGet(key) {
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSessionSet(key, value) {
+  try {
+    window.sessionStorage.setItem(key, value);
+  } catch {
+    // Ignore blocked sessionStorage
+  }
+}
+
 function trackEvent(eventName, props = {}) {
   try {
     if (typeof window === 'undefined') return;
@@ -92,7 +111,7 @@ function trackEvent(eventName, props = {}) {
       window.track(eventName, props);
       return;
     }
-    if (typeof window.gtag === 'function') {
+    if (!window['ga-disable-G-65WDQ61WWG'] && typeof window.gtag === 'function') {
       const normalized = String(eventName || '')
         .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
         .toLowerCase()
@@ -113,7 +132,7 @@ function setUserProperties(props = {}) {
     if (typeof window === 'undefined') return;
     if (typeof window.setAnalyticsUserProperties === 'function') {
       window.setAnalyticsUserProperties(props);
-    } else if (typeof window.gtag === 'function') {
+    } else if (!window['ga-disable-G-65WDQ61WWG'] && typeof window.gtag === 'function') {
       window.gtag('set', 'user_properties', props);
     }
   } catch {
@@ -450,6 +469,17 @@ function initApp() {
   // Usage-Pattern Calculation Tracker (Submit + Debounced Live Auto-Calc)
   const liveCalcTimers = new Map();
   const lastTrackedCalcSig = new Map();
+  let actionAdsUnlocked = false;
+
+  function unlockPostCalcAds(trigger = 'calculation_completed') {
+    if (actionAdsUnlocked) return;
+    actionAdsUnlocked = true;
+    import('./ads-manager.js?v=26')
+      .then((mod) => mod.unlockActionAds({ university: config.id, trigger }))
+      .catch(() => {
+        actionAdsUnlocked = false;
+      });
+  }
 
   function cancelPendingLiveCalc(tab) {
     const timer = liveCalcTimers.get(tab);
@@ -472,7 +502,15 @@ function initApp() {
     lastTrackedCalcSig.delete(tab);
   }
 
+  function nextSessionCalcIndex() {
+    const prev = Number(safeSessionGet(SESSION_CALCS_KEY) || 0);
+    const next = Number.isFinite(prev) && prev >= 0 ? Math.floor(prev) + 1 : 1;
+    safeSessionSet(SESSION_CALCS_KEY, String(next));
+    return next;
+  }
+
   function emitCalculationEvents(tab, eventName, payload, score, trigger) {
+    const sessionCalcIndex = nextSessionCalcIndex();
     trackEvent(eventName, { ...payload, trigger });
     trackEvent('calculation_completed', {
       calculator: tab,
@@ -480,6 +518,8 @@ function initApp() {
       trigger,
       score,
       score_band: getScoreBand(tab, score),
+      entry_source: entrySource,
+      session_calc_index: sessionCalcIndex,
     });
   }
 
@@ -488,6 +528,7 @@ function initApp() {
     if (isSubmit) {
       lastTrackedCalcSig.set(tab, signature);
       emitCalculationEvents(tab, eventName, payload, score, 'submit');
+      unlockPostCalcAds('submit_calc');
       return;
     }
     if (lastTrackedCalcSig.get(tab) === signature) {
@@ -498,6 +539,7 @@ function initApp() {
       if (lastTrackedCalcSig.get(tab) === signature) return;
       lastTrackedCalcSig.set(tab, signature);
       emitCalculationEvents(tab, eventName, payload, score, 'live');
+      unlockPostCalcAds('live_calc');
     }, 800);
     liveCalcTimers.set(tab, timer);
   }
@@ -664,17 +706,40 @@ function initApp() {
     activateTab(param, { updateHistory: false, scroll: true, trackChange: false });
   });
 
-  const initialTabParam = new URLSearchParams(window.location.search).get('tab');
+  const initialSearchParams = new URLSearchParams(window.location.search);
+  const initialTabParam = initialSearchParams.get('tab');
   const activeTab = activateTab(initialTabParam, {
     updateHistory: false,
     scroll: false,
     trackChange: false,
   });
 
+  const pageTab =
+    activeTab ||
+    document.querySelector('.mode-tab[aria-current="page"][data-tab]')?.dataset?.tab ||
+    'sc';
+  const hasCarryForwardParams =
+    (pageTab === 'gc' && (initialSearchParams.has('gpa') || initialSearchParams.has('c'))) ||
+    (pageTab === 'target' &&
+      (initialSearchParams.has('cgpa') || initialSearchParams.has('credits')));
+  const entrySource = hasCarryForwardParams ? 'carry_forward' : 'direct';
+
   trackEvent('page_view', {
     university: config.id,
-    calculator: activeTab || 'sc',
+    calculator: pageTab,
+    entry_source: entrySource,
     referrer: document.referrer,
+  });
+
+  document.querySelectorAll('a.mode-tab[href][data-tab]').forEach((link) => {
+    if (link.getAttribute('aria-current') === 'page') return;
+    link.addEventListener('click', () => {
+      trackEvent('tool_nav_clicked', {
+        from_tab: pageTab,
+        to_tab: link.dataset.tab || '',
+        university: config.id,
+      });
+    });
   });
 
   // Shared UI & Dynamic Row Helpers
@@ -684,17 +749,53 @@ function initApp() {
     el.hidden = !message;
   }
 
-  function hideResult(container, valueEl, metaEl) {
-    if (container) container.hidden = true;
+  function hideResult(container, valueEl, metaEl, nextActionsEl) {
+    if (container) {
+      container.hidden = true;
+      container.classList.remove('is-warning');
+    }
     if (valueEl) valueEl.textContent = '';
     if (metaEl) metaEl.textContent = '';
+    if (nextActionsEl) {
+      nextActionsEl.hidden = true;
+      nextActionsEl.replaceChildren();
+    }
   }
 
-  function showResult(container, valueEl, metaEl, valueText, metaText, { scroll = false } = {}) {
+  function showResult(container, valueEl, metaEl, valueText, metaText, { scroll = false, warning = false } = {}) {
     if (valueEl) valueEl.textContent = valueText;
     if (metaEl) metaEl.textContent = metaText;
-    if (container) container.hidden = false;
+    if (container) {
+      container.classList.toggle('is-warning', Boolean(warning));
+      container.hidden = false;
+    }
     if (scroll) revealElement(container, { smooth: true });
+  }
+
+  function renderNextActions(container, actions, fromTab) {
+    if (!container) return;
+    if (!Array.isArray(actions) || actions.length === 0) {
+      container.hidden = true;
+      container.replaceChildren();
+      return;
+    }
+    const links = actions.map((item) => {
+      const link = createEl(
+        'a',
+        { class: 'btn btn-subtle btn-next-step', href: item.href },
+        item.label
+      );
+      link.addEventListener('click', () => {
+        trackEvent('next_step_clicked', {
+          from_tab: fromTab,
+          target_action: item.actionName,
+          university: config.id,
+        });
+      });
+      return link;
+    });
+    container.replaceChildren(...links);
+    container.hidden = false;
   }
 
   function revealElement(el, { smooth = false } = {}) {
@@ -769,6 +870,7 @@ function initApp() {
   const gpaResultBox = document.getElementById('gpa-result');
   const gpaValueEl = document.getElementById('grades');
   const gpaMetaEl = document.getElementById('gpa-meta');
+  const gpaNextActionsEl = document.getElementById('gpa-next-actions');
 
   const gpaFieldSpecs = [
     { key: 'grade', labelSuffix: 'grade' },
@@ -886,6 +988,28 @@ function initApp() {
         `${res.courseCount} ${courseWord} · ${res.totalCredits} credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
+      const gpaActions =
+        config.id === 'vit'
+          ? [
+              {
+                label: `Check updated CGPA with ${res.formatted} →`,
+                href: `/quick-cgpa/?gpa=${encodeURIComponent(res.formatted)}&c=${encodeURIComponent(res.totalCredits)}`,
+                actionName: 'carry_to_quick_cgpa',
+              },
+              {
+                label: 'Can I hit my target CGPA? →',
+                href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=vit`,
+                actionName: 'plan_target_cgpa',
+              },
+            ]
+          : [
+              {
+                label: 'Can I hit my target CGPA? →',
+                href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=${encodeURIComponent(config.id)}`,
+                actionName: 'plan_target_cgpa',
+              },
+            ];
+      renderNextActions(gpaNextActionsEl, gpaActions, 'sc');
       schedulePersonalPromo(
         { ok: true, tab: 'sc', result: res.gpa, credits: res.totalCredits },
         { immediate: true, forceShuffle: isSubmit }
@@ -905,7 +1029,7 @@ function initApp() {
       return res;
     }
 
-    hideResult(gpaResultBox, gpaValueEl, gpaMetaEl);
+    hideResult(gpaResultBox, gpaValueEl, gpaMetaEl, gpaNextActionsEl);
     clearPersonalPromo();
     clearCalcTracking('sc');
 
@@ -925,6 +1049,11 @@ function initApp() {
     }
 
     setBanner(gpaErrorBanner, res.error);
+    trackEvent('form_validation_error', {
+      calculator: 'sc',
+      university: config.id,
+      error_count: res.invalidRows?.length || 1,
+    });
     let firstInvalid = null;
     if (res.invalidRows?.length) {
       const invalidSet = new Set(res.invalidRows);
@@ -1027,7 +1156,7 @@ function initApp() {
 
     wireResetButton('reset-gpa-btn', gpaForm, () => {
       setBanner(gpaErrorBanner, '');
-      hideResult(gpaResultBox, gpaValueEl, gpaMetaEl);
+      hideResult(gpaResultBox, gpaValueEl, gpaMetaEl, gpaNextActionsEl);
       clearPersonalPromo();
       clearCalcTracking('sc');
       trackEvent('calculator_reset', { calculator: 'sc', university: config.id });
@@ -1040,10 +1169,12 @@ function initApp() {
   const cgpaInput = document.getElementById('cgpa');
   const cInput = document.getElementById('c');
   const gpaInput = document.getElementById('gpa');
+  const quickPrefillNote = document.getElementById('quick-prefill-note');
   const quickErrorBanner = document.getElementById('quick-cgpa-error');
   const quickResultBox = document.getElementById('cgpa-result');
   const quickValueEl = document.getElementById('cgpa-msg');
   const quickMetaEl = document.getElementById('cgpa-meta');
+  const quickNextActionsEl = document.getElementById('cgpa-next-actions');
 
   const quickFieldMap = {
     prevCredits: tcInput,
@@ -1087,6 +1218,21 @@ function initApp() {
         `${res.totalCredits} total credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
+      const quickActions = [
+        {
+          label: `Can I reach my target CGPA from ${res.formatted}? →`,
+          href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=${encodeURIComponent(config.id)}`,
+          actionName: 'plan_target_cgpa',
+        },
+      ];
+      if (config.id === 'vit') {
+        quickActions.push({
+          label: 'Calculate Semester GPA →',
+          href: '/',
+          actionName: 'go_to_semester_gpa',
+        });
+      }
+      renderNextActions(quickNextActionsEl, quickActions, 'gc');
       schedulePersonalPromo(
         { ok: true, tab: 'gc', result: res.cgpa, credits: res.totalCredits },
         { immediate: isSubmit }
@@ -1105,12 +1251,17 @@ function initApp() {
       return res;
     }
 
-    hideResult(quickResultBox, quickValueEl, quickMetaEl);
+    hideResult(quickResultBox, quickValueEl, quickMetaEl, quickNextActionsEl);
     clearPersonalPromo();
     clearCalcTracking('gc');
     if (!isSubmit) return res;
 
     setBanner(quickErrorBanner, res.error);
+    trackEvent('form_validation_error', {
+      calculator: 'gc',
+      university: config.id,
+      error_count: res.invalidFields?.length || 1,
+    });
     let firstInvalid = null;
     const invalidSet = new Set(res.invalidFields || []);
 
@@ -1151,11 +1302,38 @@ function initApp() {
 
     wireResetButton('reset-qcc-btn', quickForm, () => {
       setBanner(quickErrorBanner, '');
-      hideResult(quickResultBox, quickValueEl, quickMetaEl);
+      setBanner(quickPrefillNote, '');
+      hideResult(quickResultBox, quickValueEl, quickMetaEl, quickNextActionsEl);
       clearPersonalPromo();
       clearCalcTracking('gc');
       trackEvent('calculator_reset', { calculator: 'gc', university: config.id });
     });
+
+    try {
+      const qParams = new URLSearchParams(window.location.search);
+      const qGpa = Number(qParams.get('gpa'));
+      const qCredits = Number(qParams.get('c'));
+      const hasGpa = qParams.has('gpa') && Number.isFinite(qGpa) && qGpa >= 0 && qGpa <= 10;
+      const hasCred = qParams.has('c') && Number.isFinite(qCredits) && qCredits >= 0 && qCredits <= 39;
+      if (hasGpa && gpaInput && !gpaInput.value) gpaInput.value = String(qGpa);
+      if (hasCred && cInput && !cInput.value) cInput.value = String(qCredits);
+      if ((hasGpa || hasCred) && quickPrefillNote) {
+        const parts = [];
+        if (hasGpa) parts.push(`${qGpa.toFixed(2)} GPA`);
+        if (hasCred) parts.push(`${qCredits} credits`);
+        setBanner(
+          quickPrefillNote,
+          `Carried forward from Semester GPA (${parts.join(' · ')}) — enter your prior completed credits and CGPA below.`
+        );
+        trackEvent('prefill_applied', {
+          calculator: 'gc',
+          university: config.id,
+          source_params: hasGpa && hasCred ? 'gpa_credits' : hasGpa ? 'gpa' : 'credits',
+        });
+      }
+    } catch {
+      // Ignore query prefill errors
+    }
   }
 
   // 6. Expected Marks Calculator (#expected-marks-form, VIT only)
@@ -1173,6 +1351,7 @@ function initApp() {
   const ecResultBox = document.getElementById('marks-result');
   const ecValueEl = document.getElementById('marks');
   const ecMetaEl = document.getElementById('marks-meta');
+  const ecNextActionsEl = document.getElementById('marks-next-actions');
 
   function evaluateExpectedMarks({ isSubmit = false } = {}) {
     const inputs = Object.values(ecFieldMap).filter(Boolean);
@@ -1212,6 +1391,22 @@ function initApp() {
         `Internals: ${res.internals}/60 · ${res.modeLabel}`,
         { scroll: isSubmit }
       );
+      renderNextActions(
+        ecNextActionsEl,
+        [
+          {
+            label: 'See how this impacts Semester GPA →',
+            href: '/',
+            actionName: 'go_to_semester_gpa',
+          },
+          {
+            label: 'Can I still reach my target CGPA? →',
+            href: '/target-cgpa/?uni=vit',
+            actionName: 'plan_target_cgpa',
+          },
+        ],
+        'ec'
+      );
       schedulePersonalPromo({ ok: true, tab: 'ec', result: res.marks }, { immediate: isSubmit });
       recordCalculation(
         'ec',
@@ -1228,12 +1423,17 @@ function initApp() {
       return res;
     }
 
-    hideResult(ecResultBox, ecValueEl, ecMetaEl);
+    hideResult(ecResultBox, ecValueEl, ecMetaEl, ecNextActionsEl);
     clearPersonalPromo();
     clearCalcTracking('ec');
     if (!isSubmit) return res;
 
     setBanner(ecErrorBanner, res.error);
+    trackEvent('form_validation_error', {
+      calculator: 'ec',
+      university: config.id,
+      error_count: res.invalidFields?.length || 1,
+    });
     let firstInvalid = null;
     const invalidSet = new Set(res.invalidFields || []);
 
@@ -1265,7 +1465,7 @@ function initApp() {
 
     wireResetButton('reset-ec-btn', ecForm, () => {
       setBanner(ecErrorBanner, '');
-      hideResult(ecResultBox, ecValueEl, ecMetaEl);
+      hideResult(ecResultBox, ecValueEl, ecMetaEl, ecNextActionsEl);
       clearPersonalPromo();
       clearCalcTracking('ec');
       trackEvent('calculator_reset', { calculator: 'ec', university: config.id });
@@ -1280,6 +1480,7 @@ function initApp() {
   const allSemResultBox = document.getElementById('fcgpa-result');
   const allSemValueEl = document.getElementById('fcgpa');
   const allSemMetaEl = document.getElementById('fcgpa-meta');
+  const allSemNextActionsEl = document.getElementById('fcgpa-next-actions');
 
   const semFieldSpecs = [
     { key: 'gpa', labelSuffix: 'GPA' },
@@ -1401,6 +1602,21 @@ function initApp() {
         `${res.semesterCount} ${semWord} · ${res.totalCredits} credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
+      const allSemActions = [
+        {
+          label: `Can I reach my target CGPA from ${res.formatted}? →`,
+          href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=${encodeURIComponent(config.id)}`,
+          actionName: 'plan_target_cgpa',
+        },
+      ];
+      if (config.id === 'vit') {
+        allSemActions.push({
+          label: 'Calculate Semester GPA →',
+          href: '/',
+          actionName: 'go_to_semester_gpa',
+        });
+      }
+      renderNextActions(allSemNextActionsEl, allSemActions, 'fc');
       schedulePersonalPromo(
         { ok: true, tab: 'fc', result: res.cgpa, credits: res.totalCredits },
         { immediate: isSubmit }
@@ -1420,7 +1636,7 @@ function initApp() {
       return res;
     }
 
-    hideResult(allSemResultBox, allSemValueEl, allSemMetaEl);
+    hideResult(allSemResultBox, allSemValueEl, allSemMetaEl, allSemNextActionsEl);
     clearPersonalPromo();
     clearCalcTracking('fc');
 
@@ -1440,6 +1656,11 @@ function initApp() {
     }
 
     setBanner(allSemErrorBanner, res.error);
+    trackEvent('form_validation_error', {
+      calculator: 'fc',
+      university: config.id,
+      error_count: res.invalidRows?.length || 1,
+    });
     let firstInvalid = null;
 
     if (res.invalidRows?.length) {
@@ -1558,11 +1779,180 @@ function initApp() {
 
     wireResetButton('reset-fc-btn', allSemForm, () => {
       setBanner(allSemErrorBanner, '');
-      hideResult(allSemResultBox, allSemValueEl, allSemMetaEl);
+      hideResult(allSemResultBox, allSemValueEl, allSemMetaEl, allSemNextActionsEl);
       clearPersonalPromo();
       clearCalcTracking('fc');
       trackEvent('calculator_reset', { calculator: 'fc', university: config.id });
     });
+  }
+
+  // 7b. Target CGPA Planner (#target-cgpa-form)
+  const targetForm = document.getElementById('target-cgpa-form');
+  const targetFieldMap = {
+    currentCgpa: document.getElementById('target-current-cgpa'),
+    completedCredits: document.getElementById('target-completed-credits'),
+    targetCgpa: document.getElementById('target-goal-cgpa'),
+    remainingCredits: document.getElementById('target-remaining-credits'),
+  };
+  const targetPrefillNote = document.getElementById('target-prefill-note');
+  const targetErrorBanner = document.getElementById('target-form-error');
+  const targetResultBox = document.getElementById('target-result');
+  const targetValueEl = document.getElementById('target-required-gpa');
+  const targetMetaEl = document.getElementById('target-meta');
+  const targetNextActionsEl = document.getElementById('target-next-actions');
+
+  function evaluateTargetCgpa({ isSubmit = false } = {}) {
+    const inputs = Object.values(targetFieldMap).filter(Boolean);
+    const allBlank = inputs.every((el) => !el.validity?.badInput && el.value === '');
+
+    if (!isSubmit && allBlank) {
+      hideResult(targetResultBox, targetValueEl, targetMetaEl, targetNextActionsEl);
+      clearPersonalPromo();
+      clearCalcTracking('target');
+      if (targetForm?.dataset.submitted !== 'true') {
+        setBanner(targetErrorBanner, '');
+      }
+      return { ok: false };
+    }
+
+    const res = calculateTargetCgpa({
+      currentCgpa: readNumberInput(targetFieldMap.currentCgpa),
+      completedCredits: readNumberInput(targetFieldMap.completedCredits),
+      targetCgpa: readNumberInput(targetFieldMap.targetCgpa),
+      remainingCredits: readNumberInput(targetFieldMap.remainingCredits),
+    });
+
+    if (res.ok) {
+      inputs.forEach((el) => {
+        if (el.validity?.valid) el.classList.remove('user-invalid-fallback');
+        syncAria(el, false);
+      });
+      setBanner(targetErrorBanner, '');
+
+      const isImpossible = res.status === 'impossible';
+      const displayVal = isImpossible ? `> 10.00 (${res.formatted})` : res.formatted;
+      let metaMsg;
+      if (res.status === 'already_achieved') {
+        metaMsg = `Already achieved! Even 0.00 GPA keeps your CGPA at or above target across ${res.totalCredits} total credits.`;
+      } else if (isImpossible) {
+        metaMsg = `Not achievable on a 10-point scale. Max possible CGPA is ${res.maxPossibleFormatted} across ${res.totalCredits} total credits.`;
+      } else {
+        metaMsg = `Required average GPA across remaining credits · Max possible: ${res.maxPossibleFormatted}`;
+      }
+
+      showResult(targetResultBox, targetValueEl, targetMetaEl, displayVal, metaMsg, {
+        scroll: isSubmit,
+        warning: isImpossible,
+      });
+      const simLabel = isImpossible
+        ? 'Simulate max Semester GPA →'
+        : `Simulate ${res.formatted} Semester GPA →`;
+      renderNextActions(
+        targetNextActionsEl,
+        [
+          {
+            label: simLabel,
+            href: '/',
+            actionName: 'simulate_semester_gpa',
+          },
+          {
+            label: 'Check Quick CGPA →',
+            href: '/quick-cgpa/',
+            actionName: 'go_to_quick_cgpa',
+          },
+        ],
+        'target'
+      );
+      schedulePersonalPromo(
+        { ok: true, tab: 'target', result: res.requiredGpa, credits: res.totalCredits },
+        { immediate: isSubmit }
+      );
+      recordCalculation(
+        'target',
+        'computed_target_cgpa',
+        {
+          university: config.id,
+          required_gpa: res.requiredGpa,
+          status: res.status,
+          total_credits: res.totalCredits,
+        },
+        res.requiredGpa,
+        { isSubmit, signature: `${res.requiredGpa}:${res.status}:${res.totalCredits}` }
+      );
+      return res;
+    }
+
+    hideResult(targetResultBox, targetValueEl, targetMetaEl, targetNextActionsEl);
+    clearPersonalPromo();
+    clearCalcTracking('target');
+    if (!isSubmit) return res;
+
+    setBanner(targetErrorBanner, res.error);
+    trackEvent('form_validation_error', {
+      calculator: 'target',
+      university: config.id,
+      error_count: res.invalidFields?.length || 1,
+    });
+    let firstInvalid = null;
+    const invalidSet = new Set(res.invalidFields || []);
+    for (const [key, el] of Object.entries(targetFieldMap)) {
+      if (!el) continue;
+      if (invalidSet.has(key)) {
+        setControlError(el, { showVisual: !el.validity.valid, announce: false });
+        if (!firstInvalid) firstInvalid = el;
+      } else if (el.validity.valid) {
+        clearErrorState(el);
+      }
+    }
+    if (firstInvalid) firstInvalid.focus();
+    else revealElement(targetErrorBanner);
+    return res;
+  }
+
+  if (targetForm) {
+    const handleTargetChange = () => evaluateTargetCgpa({ isSubmit: false });
+    targetForm.addEventListener('input', handleTargetChange);
+    targetForm.addEventListener('change', handleTargetChange);
+    targetForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      targetForm.dataset.submitted = 'true';
+      evaluateTargetCgpa({ isSubmit: true });
+    });
+
+    wireResetButton('reset-target-btn', targetForm, () => {
+      setBanner(targetErrorBanner, '');
+      setBanner(targetPrefillNote, '');
+      hideResult(targetResultBox, targetValueEl, targetMetaEl, targetNextActionsEl);
+      clearPersonalPromo();
+      clearCalcTracking('target');
+      trackEvent('calculator_reset', { calculator: 'target', university: config.id });
+    });
+
+    try {
+      const tParams = new URLSearchParams(window.location.search);
+      const tCgpa = Number(tParams.get('cgpa'));
+      const tCred = Number(tParams.get('credits'));
+      const hasCgpa = tParams.has('cgpa') && Number.isFinite(tCgpa) && tCgpa >= 0 && tCgpa <= 10;
+      const hasCred = tParams.has('credits') && Number.isFinite(tCred) && tCred >= 0 && tCred <= 300;
+      if (hasCgpa && targetFieldMap.currentCgpa) targetFieldMap.currentCgpa.value = String(tCgpa);
+      if (hasCred && targetFieldMap.completedCredits) targetFieldMap.completedCredits.value = String(tCred);
+      if ((hasCgpa || hasCred) && targetPrefillNote) {
+        const parts = [];
+        if (hasCgpa) parts.push(`${tCgpa.toFixed(2)} CGPA`);
+        if (hasCred) parts.push(`${tCred} completed credits`);
+        setBanner(
+          targetPrefillNote,
+          `Carried forward (${parts.join(' · ')}) — set your target CGPA and remaining credits.`
+        );
+        trackEvent('prefill_applied', {
+          calculator: 'target',
+          university: config.id,
+          source_params: hasCgpa && hasCred ? 'cgpa_credits' : hasCgpa ? 'cgpa' : 'credits',
+        });
+      }
+    } catch {
+      // Ignore query prefill errors
+    }
   }
 
   // 8. PWA Registration, Install Prompt, Display Mode & Share Button, Footer Year
@@ -1641,10 +2031,12 @@ function initApp() {
         to: 'legacy',
         university: config.id,
       });
-      const activeBtn = document.querySelector('[role="tab"][aria-selected="true"][data-tab]');
+      const activeBtn =
+        document.querySelector('[role="tab"][aria-selected="true"][data-tab]') ||
+        document.querySelector('.mode-tab[aria-current="page"][data-tab]');
       const activeTabId = activeBtn?.dataset?.tab;
       const targetUrl = new URL('/legacy/', window.location.origin);
-      if (activeTabId && activeTabId !== 'sc') {
+      if (activeTabId && ['gc', 'ec', 'fc'].includes(activeTabId)) {
         targetUrl.searchParams.set('tab', activeTabId);
       }
       window.location.assign(targetUrl.toString());
@@ -1823,96 +2215,7 @@ function initApp() {
     });
   });
 
-  function initOptInAdControl() {
-    const optInBtn = document.getElementById('ad-optin-btn');
-    const optInStatus = document.getElementById('ad-optin-status');
-    const optInSlot = document.getElementById('ad-slot-optin');
-    if (!optInBtn && !optInSlot) return;
-
-    let adsEnabled = false;
-    let userInteracted = false;
-    let idleTimer = null;
-
-    function syncOptInUi(enabled, statusText) {
-      adsEnabled = Boolean(enabled);
-      if (optInBtn) {
-        optInBtn.setAttribute('aria-pressed', adsEnabled ? 'true' : 'false');
-        optInBtn.textContent = adsEnabled ? 'Hide Ad' : 'Show Quality Ad';
-      }
-      if (optInStatus && statusText) {
-        optInStatus.textContent = statusText;
-      }
-    }
-
-    function cancelPendingAutoEnable() {
-      if (idleTimer !== null) {
-        window.clearTimeout(idleTimer);
-        idleTimer = null;
-      }
-    }
-
-    async function enableOptInAd({ trigger = 'user_click', persist = true } = {}) {
-      syncOptInUi(true, 'Loading display ad…');
-      try {
-        const mod = await import('./ads-manager.js');
-        if (!adsEnabled) {
-          if (persist) mod.setAdPreference(window, false);
-          mod.hideOptInAd();
-          return;
-        }
-        if (persist) {
-          mod.setAdPreference(window, true);
-        }
-        const res = mod.activateOptInAd({ university: config.id, trigger });
-        if (!adsEnabled) {
-          mod.hideOptInAd();
-          return;
-        }
-        if (!res.activated) {
-          syncOptInUi(false, 'Ad slot unavailable');
-        } else if (res.preview) {
-          syncOptInUi(true, 'Quality ad preview active · Zero ad scripts loaded');
-        } else if (optInSlot?.classList.contains('is-unfilled')) {
-          syncOptInUi(true, 'No ad available right now');
-        } else {
-          syncOptInUi(true, 'Ad slot active');
-        }
-      } catch {
-        if (adsEnabled) {
-          syncOptInUi(false, 'Ads off · Unable to load ad module');
-        }
-      }
-    }
-
-    async function disableOptInAd() {
-      syncOptInUi(false, 'Ads off · Display slot hidden');
-      if (optInSlot) {
-        optInSlot.hidden = true;
-      }
-      try {
-        const mod = await import('./ads-manager.js');
-        if (adsEnabled) return;
-        mod.setAdPreference(window, false);
-        mod.hideOptInAd();
-      } catch {
-        safeStorageSet(AD_PREF_STORAGE_KEY, '0');
-      }
-    }
-
-    if (optInBtn) {
-      optInBtn.addEventListener('click', () => {
-        userInteracted = true;
-        cancelPendingAutoEnable();
-        if (!adsEnabled) {
-          trackEvent('ad_optin_enabled', { university: config.id });
-          enableOptInAd({ trigger: 'user_click', persist: true });
-        } else {
-          trackEvent('ad_optin_disabled', { university: config.id });
-          disableOptInAd();
-        }
-      });
-    }
-
+  function initDisplayAds() {
     let previewMode = false;
     try {
       previewMode = new URLSearchParams(window.location.search).get('ads') === 'preview';
@@ -1920,38 +2223,38 @@ function initApp() {
       previewMode = false;
     }
 
-    if (previewMode) {
-      enableOptInAd({ trigger: 'preview', persist: false });
-      return;
-    }
-
-    if (safeStorageGet(AD_PREF_STORAGE_KEY) === '0') {
-      syncOptInUi(false, 'Ads off · Display slot hidden');
-      return;
-    }
-
-    let autoStarted = false;
-    const runDefaultLeftAd = () => {
-      if (autoStarted || userInteracted) return;
-      autoStarted = true;
-      cancelPendingAutoEnable();
-      enableOptInAd({ trigger: 'default_on', persist: false });
+    let started = false;
+    const mountAds = (trigger) => {
+      if (started) return;
+      started = true;
+      import('./ads-manager.js?v=26')
+        .then((mod) => {
+          mod.initManagedAds({ university: config.id, trigger });
+        })
+        .catch(() => {
+          started = false;
+        });
     };
 
-    const scheduleDefaultLeftAd = () => {
-      if (autoStarted || userInteracted) return;
+    if (previewMode) {
+      mountAds('preview');
+      return;
+    }
+
+    const scheduleMount = () => {
+      if (started) return;
       if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(runDefaultLeftAd, { timeout: 1500 });
-        idleTimer = window.setTimeout(runDefaultLeftAd, 1500);
+        window.requestIdleCallback(() => mountAds('default_on'), { timeout: 1500 });
+        window.setTimeout(() => mountAds('default_on'), 1500);
       } else {
-        idleTimer = window.setTimeout(runDefaultLeftAd, 1500);
+        window.setTimeout(() => mountAds('default_on'), 1500);
       }
     };
 
     if (document.readyState === 'complete') {
-      scheduleDefaultLeftAd();
+      scheduleMount();
     } else {
-      window.addEventListener('load', scheduleDefaultLeftAd, { once: true });
+      window.addEventListener('load', scheduleMount, { once: true });
     }
   }
 
@@ -1961,6 +2264,7 @@ function initApp() {
 
     const customAnnouncement = resolveAnnouncementBanner(config.id);
     if (customAnnouncement) {
+      bannerEl.removeAttribute('data-ad-managed');
       const shown = renderAnnouncementBanner(bannerEl, customAnnouncement, {
         onCtaClick: (item) => {
           trackEvent('announcement_clicked', {
@@ -1986,52 +2290,65 @@ function initApp() {
     }
 
     if (!previewMode && !ANNOUNCEMENT_BANNER.adFallbackEnabled) {
+      bannerEl.removeAttribute('data-ad-managed');
       bannerEl.hidden = true;
-      return;
     }
+  }
 
-    const mountFallbackAd = (trigger) => {
-      import('./ads-manager.js')
-        .then((mod) => mod.activateAnnouncementAd({ university: config.id, trigger }))
-        .catch(() => {});
-    };
+  function initSessionMilestones() {
+    const thresholds = [60, 180, 300];
+    const readSent = () =>
+      new Set(
+        String(safeSessionGet(SESSION_MILESTONES_KEY) || '')
+          .split(',')
+          .filter(Boolean)
+          .map(Number)
+      );
 
-    if (previewMode) {
-      mountFallbackAd('preview');
-      return;
-    }
+    if (thresholds.every((m) => readSent().has(m))) return;
 
-    let triggered = false;
-    let fallbackTimer = null;
-    const runOnce = () => {
-      if (triggered) return;
-      triggered = true;
-      if (fallbackTimer !== null) {
-        window.clearTimeout(fallbackTimer);
-        fallbackTimer = null;
+    let dwellSec = Number(safeSessionGet(SESSION_DWELL_KEY) || 0);
+    if (!Number.isFinite(dwellSec) || dwellSec < 0) dwellSec = 0;
+
+    let timerId = null;
+    const tick = () => {
+      if (document.visibilityState !== 'visible') return;
+      dwellSec += 5;
+      safeSessionSet(SESSION_DWELL_KEY, String(dwellSec));
+
+      const sent = readSent();
+      let updated = false;
+      for (const m of thresholds) {
+        if (dwellSec >= m && !sent.has(m)) {
+          sent.add(m);
+          updated = true;
+          trackEvent('session_milestone', {
+            milestone_sec: m,
+            calc_count: Number(safeSessionGet(SESSION_CALCS_KEY) || 0),
+            university: config.id,
+            calculator: pageTab,
+          });
+        }
       }
-      mountFallbackAd('announcement_fallback');
-    };
-
-    const scheduleBannerAd = () => {
-      if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(runOnce, { timeout: 1500 });
-        fallbackTimer = window.setTimeout(runOnce, 1500);
-      } else {
-        fallbackTimer = window.setTimeout(runOnce, 1200);
+      if (updated) {
+        safeSessionSet(SESSION_MILESTONES_KEY, Array.from(sent).join(','));
+        if (thresholds.every((m) => sent.has(m)) && timerId !== null) {
+          window.clearInterval(timerId);
+          timerId = null;
+        }
       }
     };
 
-    if (document.readyState === 'complete') {
-      scheduleBannerAd();
-    } else {
-      window.addEventListener('load', scheduleBannerAd, { once: true });
-    }
+    timerId = window.setInterval(tick, 5000);
+    window.addEventListener('pagehide', () => {
+      safeSessionSet(SESSION_DWELL_KEY, String(dwellSec));
+    });
   }
 
   initAnnouncementBanner();
   initGiscusComments();
-  initOptInAdControl();
+  initDisplayAds();
+  initSessionMilestones();
 }
 
 if (typeof document !== 'undefined') {

@@ -24,7 +24,7 @@
 export const ANNOUNCEMENT_BANNER = Object.freeze({
   id: 'custom-announcement',
   enabled: false, // Set to true to display a custom announcement banner
-  adFallbackEnabled: false, // Set to true to fall back to a top Google Ad banner when enabled is false
+  adFallbackEnabled: true, // Fallback to desktop-only (>= 1280px) horizontal leaderboard when custom banner is disabled
   universities: Object.freeze(['*']),
   badge: 'Announcement',
   disclosure: 'By Raj Chandra',
