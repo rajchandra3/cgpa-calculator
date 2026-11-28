@@ -445,6 +445,7 @@ export function initManagedAds({
 
   const mounted = [];
   const lazyQueue = [];
+  let actionCount = 0;
 
   for (const slotEl of candidates) {
     const slotId = resolveQualitySlotId(slotEl, viewportWidth);
@@ -453,7 +454,14 @@ export function initManagedAds({
       continue;
     }
 
-    const isLazy = slotEl.dataset?.adLoad === 'lazy';
+    const loadMode = slotEl.dataset?.adLoad || 'eager';
+    if (loadMode === 'action' && !preview) {
+      slotEl.hidden = true;
+      actionCount += 1;
+      continue;
+    }
+
+    const isLazy = loadMode === 'lazy';
     if (!isLazy) {
       const res = mountManagedSlot(slotEl, {
         university,
@@ -517,7 +525,42 @@ export function initManagedAds({
     preview,
     mountedCount: mounted.length,
     lazyCount,
+    actionCount,
     slots: mounted,
+  };
+}
+
+export function unlockActionAds({
+  university = 'vit',
+  trigger = 'calculation_completed',
+  doc = document,
+  win = window,
+} = {}) {
+  const preview = isPreviewMode(win?.location?.search || '');
+  if (!preview && !getAdPreference(win)) {
+    return { preview: false, mountedCount: 0, slots: [] };
+  }
+
+  const queried = doc?.querySelectorAll?.('.ad-slot[data-ad-managed="true"][data-ad-load="action"]');
+  const candidates = queried ? Array.from(queried) : [];
+  const slots = [];
+
+  for (const slotEl of candidates) {
+    const res = mountManagedSlot(slotEl, {
+      university,
+      trigger: preview ? 'preview' : trigger,
+      doc,
+      win,
+    });
+    if (res.activated && !res.reused) {
+      slots.push(res.slot);
+    }
+  }
+
+  return {
+    preview,
+    mountedCount: slots.length,
+    slots,
   };
 }
 

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <script>try{var s=localStorage.getItem('color-scheme')||localStorage.getItem('ui_theme')||localStorage.getItem('theme');if(s==='light'||s==='dark'){document.querySelector('meta[name="color-scheme"]').content=s;document.documentElement.dataset.theme=s;}}catch(e){}</script>
-  <script>try{var p=new URLSearchParams(location.search);if(p.get('ui')==='v2'){localStorage.setItem('cgpa_ui_version','v2');}else if(localStorage.getItem('cgpa_ui_version')==='legacy'){var t=p.get('tab');location.replace('/legacy/'+(t?'?tab='+encodeURIComponent(t):''));}}catch(e){}</script>
+  <script>try{var p=new URLSearchParams(location.search);if(p.get('ui')==='v2'){localStorage.setItem('cgpa_ui_version','v2');}else if(localStorage.getItem('cgpa_ui_version')==='legacy'){var t=p.get('tab');location.replace('/legacy/'+(t?'?tab='+encodeURIComponent(t):''));}else{var rt=(p.get('tab')||'').toLowerCase();var map={gc:'/quick-cgpa/',qcc:'/quick-cgpa/',ec:'/expected-marks/',emc:'/expected-marks/',fc:'/all-semester-cgpa/',ascc:'/all-semester-cgpa/',target:'/target-cgpa/',pct:'/percentage-converter/'};if(map[rt]){p.delete('tab');var qs=p.toString();location.replace(map[rt]+(qs?'?'+qs:''));}}}catch(e){}</script>
 
   <title>VIT CGPA Calculator | GPA, Quick CGPA &amp; Expected Marks</title>
   <meta name="description" content="Calculate VIT semester GPA, cumulative CGPA, and expected FAT marks under FFCS. Over 1M+ views since 2017 and trusted by VIT students for over 9+ years.">
@@ -125,8 +125,8 @@
   </script>
 
   <link rel="stylesheet" href="/src/css/vendor/pico.min.css">
-  <link rel="stylesheet" href="/src/css/app.css?v=20">
-  <link rel="modulepreload" href="/src/js/app.js?v=23">
+  <link rel="stylesheet" href="/src/css/app.css?v=21">
+  <link rel="modulepreload" href="/src/js/app.js?v=24">
   <link rel="modulepreload" href="/src/js/math.js">
   <link rel="modulepreload" href="/src/js/universities.js">
   <link rel="modulepreload" href="/src/js/promos.js">
@@ -171,156 +171,40 @@
 
     <div class="workspace-layout">
       <div class="workspace-center">
-        <div class="mode-tabs" role="tablist" aria-label="Calculator modes">
-          <button type="button" id="tab-sc" role="tab" class="mode-tab is-active" data-tab="sc" aria-selected="true" tabindex="0">Semester GPA</button>
-          <button type="button" id="tab-gc" role="tab" class="mode-tab" data-tab="gc" aria-selected="false" tabindex="-1">Quick CGPA</button>
-          <button type="button" id="tab-ec" role="tab" class="mode-tab" data-tab="ec" aria-selected="false" tabindex="-1">Expected Marks</button>
-          <button type="button" id="tab-fc" role="tab" class="mode-tab" data-tab="fc" aria-selected="false" tabindex="-1">All-Sem CGPA</button>
-        </div>
+        <nav class="mode-tabs" aria-label="VIT Calculator tools">
+          <a id="tab-sc" class="mode-tab is-active" data-tab="sc" href="/" aria-current="page">Semester GPA</a>
+          <a id="tab-gc" class="mode-tab" data-tab="gc" href="/quick-cgpa/">Quick CGPA</a>
+          <a id="tab-ec" class="mode-tab" data-tab="ec" href="/expected-marks/">Expected Marks</a>
+          <a id="tab-fc" class="mode-tab" data-tab="fc" href="/all-semester-cgpa/">All-Sem CGPA</a>
+          <a id="tab-target" class="mode-tab" data-tab="target" href="/target-cgpa/">Target CGPA</a>
+          <a id="tab-pct" class="mode-tab" data-tab="pct" href="/percentage-converter/">% Converter</a>
+        </nav>
 
-        <article class="calculator-shell" aria-label="Calculators">
-      <section id="sc" class="calculator-panel" role="tabpanel" aria-labelledby="tab-sc">
-        <h2 id="sc-heading">Calculate Semester GPA</h2>
-        <p class="panel-desc">Select the grade and credit weight for each VIT FFCS course this semester. Empty rows are skipped.</p>
-        <form id="gpa-form" aria-labelledby="sc-heading" novalidate>
-          <div id="gpa-rows" class="row-list"></div>
-          <div class="form-actions">
-            <button type="button" id="add-course-btn" class="btn btn-secondary">Add Course</button>
-            <button type="reset" id="reset-gpa-btn" class="btn btn-subtle">Reset</button>
-            <button type="submit" id="gbtn" class="btn btn-primary">Calculate GPA</button>
-          </div>
-          <p id="gpa-form-error" class="form-error-banner" role="alert" hidden></p>
-          <div id="gpa-result" class="result-panel" aria-live="polite" hidden>
-            <span class="result-label">Semester GPA</span>
-            <output id="grades" class="result-value"></output>
-            <p id="gpa-meta" class="result-meta"></p>
-          </div>
-        </form>
-      </section>
-
-      <section id="gc" class="calculator-panel" role="tabpanel" aria-labelledby="tab-gc" hidden>
-        <h2 id="gc-heading">Quick CGPA Calculator</h2>
-        <p class="panel-desc">Compute your updated VIT CGPA by combining your prior completed credits with this semester's GPA.</p>
-        <form id="quick-cgpa-form" class="field-grid" aria-labelledby="gc-heading" novalidate>
-          <div class="field">
-            <label for="tc">Completed credits (prior semesters)</label>
-            <span id="tc-hint" class="field-hint">Enter 0 to 250</span>
-            <input type="number" id="tc" name="tc" inputmode="decimal" step="any" min="0" max="250" required aria-describedby="tc-hint" aria-invalid="false" data-error="tc-error" placeholder="e.g. 84">
-            <p id="tc-error" class="field-error">Enter prior completed credits between 0 and 250.</p>
-          </div>
-          <div class="field">
-            <label for="cgpa">Current CGPA (prior semesters)</label>
-            <span id="cgpa-hint" class="field-hint">Enter 0 to 10</span>
-            <input type="number" id="cgpa" name="cgpa" inputmode="decimal" step="any" min="0" max="10" required aria-describedby="cgpa-hint" aria-invalid="false" data-error="cgpa-error" placeholder="e.g. 8.75">
-            <p id="cgpa-error" class="field-error">Enter a valid prior CGPA between 0 and 10.</p>
-          </div>
-          <div class="field">
-            <label for="c">Credits this semester</label>
-            <span id="c-hint" class="field-hint">Enter 0 to 39</span>
-            <input type="number" id="c" name="c" inputmode="decimal" step="any" min="0" max="39" required aria-describedby="c-hint" aria-invalid="false" data-error="c-error" placeholder="e.g. 22">
-            <p id="c-error" class="field-error">Enter semester credits between 0 and 39.</p>
-          </div>
-          <div class="field">
-            <label for="gpa">GPA this semester</label>
-            <span id="gpa-hint" class="field-hint">Enter 0 to 10</span>
-            <input type="number" id="gpa" name="gpa" inputmode="decimal" step="any" min="0" max="10" required aria-describedby="gpa-hint" aria-invalid="false" data-error="gpa-error" placeholder="e.g. 9.10">
-            <p id="gpa-error" class="field-error">Enter a valid semester GPA between 0 and 10.</p>
-          </div>
-          <div class="form-actions full-span">
-            <button type="reset" id="reset-qcc-btn" class="btn btn-subtle">Reset</button>
-            <button type="submit" id="submit" class="btn btn-primary">Calculate CGPA</button>
-          </div>
-          <p id="quick-cgpa-error" class="form-error-banner full-span" role="alert" hidden></p>
-          <div id="cgpa-result" class="result-panel full-span" aria-live="polite" hidden>
-            <span class="result-label">Updated CGPA</span>
-            <output id="cgpa-msg" class="result-value"></output>
-            <p id="cgpa-meta" class="result-meta"></p>
-          </div>
-        </form>
-      </section>
-
-      <section id="ec" class="calculator-panel" role="tabpanel" aria-labelledby="tab-ec" hidden>
-        <h2 id="ec-heading">Expected Course Marks</h2>
-        <p class="panel-desc">Theory = min((CAT 1 + CAT 2) &times; 0.5 + Internals/DA + Additional Learning, 60) + FAT &times; 0.4. Leave Lab and J-Component empty when a course does not include them.</p>
-        <form id="expected-marks-form" class="field-grid" aria-labelledby="ec-heading" novalidate>
-          <div class="field">
-            <label for="cat1">CAT 1 marks</label>
-            <span id="cat1-hint" class="field-hint">Required · 0 to 30</span>
-            <input type="number" id="cat1" name="cat1" inputmode="decimal" step="any" min="0" max="30" required aria-describedby="cat1-hint" aria-invalid="false" data-error="cat1-error" placeholder="e.g. 24">
-            <p id="cat1-error" class="field-error">Enter CAT 1 marks between 0 and 30.</p>
-          </div>
-          <div class="field">
-            <label for="cat2">CAT 2 marks</label>
-            <span id="cat2-hint" class="field-hint">Required · 0 to 30</span>
-            <input type="number" id="cat2" name="cat2" inputmode="decimal" step="any" min="0" max="30" required aria-describedby="cat2-hint" aria-invalid="false" data-error="cat2-error" placeholder="e.g. 25">
-            <p id="cat2-error" class="field-error">Enter CAT 2 marks between 0 and 30.</p>
-          </div>
-          <div class="field">
-            <label for="da">Internals / DA marks</label>
-            <span id="da-hint" class="field-hint">Required · 0 to 30</span>
-            <input type="number" id="da" name="da" inputmode="decimal" step="any" min="0" max="30" required aria-describedby="da-hint" aria-invalid="false" data-error="da-error" placeholder="e.g. 28">
-            <p id="da-error" class="field-error">Enter internals or DA marks between 0 and 30.</p>
-          </div>
-          <div class="field">
-            <label for="al">Additional Learning (optional)</label>
-            <span id="al-hint" class="field-hint">Optional · 0 to 10 (defaults to 0)</span>
-            <input type="number" id="al" name="al" inputmode="decimal" step="any" min="0" max="10" aria-describedby="al-hint" aria-invalid="false" data-error="al-error" placeholder="0">
-            <p id="al-error" class="field-error">Enter Additional Learning marks between 0 and 10.</p>
-          </div>
-          <div class="field">
-            <label for="lab">Lab component marks (optional)</label>
-            <span id="lab-hint" class="field-hint">Optional · 0 to 100 (leave blank if none)</span>
-            <input type="number" id="lab" name="lab" inputmode="decimal" step="any" min="0" max="100" aria-describedby="lab-hint" aria-invalid="false" data-error="lab-error" placeholder="Leave blank if none">
-            <p id="lab-error" class="field-error">Enter Lab marks between 0 and 100.</p>
-          </div>
-          <div class="field">
-            <label for="j-comp">J-Component marks (optional)</label>
-            <span id="j-comp-hint" class="field-hint">Optional · 0 to 100 (leave blank if none)</span>
-            <input type="number" id="j-comp" name="jComp" inputmode="decimal" step="any" min="0" max="100" aria-describedby="j-comp-hint" aria-invalid="false" data-error="j-comp-error" placeholder="Leave blank if none">
-            <p id="j-comp-error" class="field-error">Enter J-Component marks between 0 and 100.</p>
-          </div>
-          <div class="field">
-            <label for="fat">Expected FAT marks</label>
-            <span id="fat-hint" class="field-hint">Required · 0 to 100</span>
-            <input type="number" id="fat" name="fat" inputmode="decimal" step="any" min="0" max="100" required aria-describedby="fat-hint" aria-invalid="false" data-error="fat-error" placeholder="e.g. 85">
-            <p id="fat-error" class="field-error">Enter expected FAT marks between 0 and 100.</p>
-          </div>
-          <div class="form-actions full-span">
-            <button type="reset" id="reset-ec-btn" class="btn btn-subtle">Reset</button>
-            <button type="submit" id="ec-submit" class="btn btn-primary">Calculate Marks</button>
-          </div>
-          <p id="ec-form-error" class="form-error-banner full-span" role="alert" hidden></p>
-          <div id="marks-result" class="result-panel full-span" aria-live="polite" hidden>
-            <span class="result-label">Expected Total Marks</span>
-            <output id="marks" class="result-value"></output>
-            <p id="marks-meta" class="result-meta"></p>
-          </div>
-        </form>
-      </section>
-
-      <section id="fc" class="calculator-panel" role="tabpanel" aria-labelledby="tab-fc" hidden>
-        <h2 id="fc-heading">All-Semester CGPA Calculator</h2>
-        <p class="panel-desc">Enter your GPA and total credits for each completed semester. Add up to 12 semesters; empty rows are skipped.</p>
-        <form id="all-sem-form" aria-labelledby="fc-heading" novalidate>
-          <div id="sem-rows" class="row-list"></div>
-          <div class="form-actions">
-            <button type="button" id="add-sem-btn" class="btn btn-secondary">Add Semester</button>
-            <button type="reset" id="reset-fc-btn" class="btn btn-subtle">Reset</button>
-            <button type="submit" id="sem-cgpa-btn" class="btn btn-primary">Calculate CGPA</button>
-          </div>
-          <p id="all-sem-error" class="form-error-banner" role="alert" hidden></p>
-          <div id="fcgpa-result" class="result-panel" aria-live="polite" hidden>
-            <span class="result-label">Cumulative CGPA</span>
-            <output id="fcgpa" class="result-value"></output>
-            <p id="fcgpa-meta" class="result-meta"></p>
-          </div>
-        </form>
-      </section>
-    </article>
+        <article class="calculator-shell" aria-label="Semester GPA Calculator">
+          <section id="sc" class="calculator-panel is-active" aria-labelledby="sc-heading">
+            <h2 id="sc-heading">Calculate Semester GPA</h2>
+            <p class="panel-desc">Select the grade and credit weight for each VIT FFCS course this semester. Empty rows are skipped.</p>
+            <form id="gpa-form" aria-labelledby="sc-heading" novalidate>
+              <div id="gpa-rows" class="row-list"></div>
+              <div class="form-actions">
+                <button type="button" id="add-course-btn" class="btn btn-secondary">Add Course</button>
+                <button type="reset" id="reset-gpa-btn" class="btn btn-subtle">Reset</button>
+                <button type="submit" id="gbtn" class="btn btn-primary">Calculate GPA</button>
+              </div>
+              <p id="gpa-form-error" class="form-error-banner" role="alert" hidden></p>
+              <div id="gpa-result" class="result-panel" aria-live="polite" hidden>
+                <span class="result-label">Semester GPA</span>
+                <output id="grades" class="result-value"></output>
+                <p id="gpa-meta" class="result-meta"></p>
+                <div id="gpa-next-actions" class="result-next-actions" hidden></div>
+              </div>
+            </form>
+          </section>
+        </article>
 
         <section id="personal-promo-slot" class="personal-promo" aria-label="Featured recommendation" hidden></section>
 
-        <section id="ad-slot-post-calc" class="ad-slot ad-slot--post-calc" aria-label="Advertisement" data-ad-managed="true" data-ad-location="post-calc" data-ad-slot-desktop="4654433674" data-ad-slot-mobile="6993669367" data-ad-format-desktop="horizontal" data-ad-format-mobile="auto" data-ad-load="lazy" hidden>
+        <section id="ad-slot-post-calc" class="ad-slot ad-slot--post-calc" aria-label="Advertisement" data-ad-managed="true" data-ad-location="post-calc" data-ad-slot-desktop="4654433674" data-ad-slot-mobile="6993669367" data-ad-format-desktop="horizontal" data-ad-format-mobile="auto" data-ad-load="action" hidden>
           <div class="ad-slot-bar">
             <span class="ad-label">Advertisement</span>
             <button type="button" class="ad-hide-btn" data-ad-toggle="true" aria-pressed="true">Hide ads (24h)</button>
@@ -431,6 +315,6 @@
   </footer>
 
   <script src="/src/js/analytics.js" defer fetchpriority="low"></script>
-  <script type="module" src="/src/js/app.js?v=23" fetchpriority="high"></script>
+  <script type="module" src="/src/js/app.js?v=24" fetchpriority="high"></script>
 </body>
 </html>

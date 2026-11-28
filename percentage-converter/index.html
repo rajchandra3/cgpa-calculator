@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <script>try{var s=localStorage.getItem('color-scheme')||localStorage.getItem('ui_theme')||localStorage.getItem('theme');if(s==='light'||s==='dark'){document.querySelector('meta[name="color-scheme"]').content=s;document.documentElement.dataset.theme=s;}}catch(e){}</script>
+
+  <title>CGPA to Percentage Converter (VIT, Anna, KTU, SRM) | CGPA Calculator</title>
+  <meta name="description" content="Convert CGPA to Percentage or Percentage to CGPA using university-specific formulas for VIT (× 10), Anna University, SRMIST, and KTU ((CGPA × 10) − 3.75).">
+  <meta name="keywords" content="CGPA to percentage converter, VIT CGPA to percentage, KTU CGPA to percentage formula, Anna University CGPA converter, SRM CGPA percentage">
+  <meta name="author" content="Raj Chandra">
+  <meta name="robots" content="index, follow">
+  <meta name="google-adsense-account" content="ca-pub-8598751574376549">
+  <link rel="canonical" href="https://cgpa-calculator.rajchandra.me/percentage-converter/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CGPA Calculator">
+  <meta property="og:title" content="CGPA to Percentage Converter (VIT, Anna, KTU, SRM)">
+  <meta property="og:description" content="Convert between 10-point CGPA and percentage with VIT, Anna University, KTU, and SRM formulas.">
+  <meta property="og:url" content="https://cgpa-calculator.rajchandra.me/percentage-converter/">
+  <meta property="og:image" content="https://cgpa-calculator.rajchandra.me/src/images/icons/icon-512x512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CGPA ↔ Percentage Converter">
+  <meta name="twitter:description" content="Convert CGPA to Percentage or back for VIT, Anna University, KTU, and SRMIST.">
+  <meta name="twitter:image" content="https://cgpa-calculator.rajchandra.me/src/images/icons/icon-512x512.png">
+
+  <link rel="icon" type="image/png" href="/src/images/icons/favicon.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="/src/images/icons/icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="96x96" href="/src/images/icons/icon-96x96.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="/src/images/icons/icon-128x128.png">
+  <link rel="apple-touch-icon" sizes="256x256" href="/src/images/icons/icon-256x256.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/src/images/icons/icon-512x512.png">
+  <link rel="manifest" href="/manifest/vit.json">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap"></noscript>
+
+  <script async fetchpriority="low" src="https://www.googletagmanager.com/gtag/js?id=G-65WDQ61WWG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-65WDQ61WWG');
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "CGPA to Percentage Converter",
+        "url": "https://cgpa-calculator.rajchandra.me/percentage-converter/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "description": "Convert CGPA to Percentage or Percentage to CGPA for VIT, Anna University, KTU, and SRMIST.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+        "author": { "@type": "Person", "name": "Raj Chandra", "url": "https://rajchandra.me" }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How does VIT convert CGPA to percentage?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "VIT converts CGPA on its 10-point FFCS scale directly using CGPA × 10 (for example, 9.25 CGPA equals 92.50%)."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What formula does KTU use for CGPA to percentage?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "KTU's official regulation formula subtracts 3.75 after multiplying by 10: Percentage = (CGPA × 10) − 3.75, floored at 0%."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I convert percentage back to CGPA?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Switch the direction dropdown to Percentage → CGPA to convert any percentage score back onto the university's 10-point scale."
+            }
+          }
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "VIT CGPA Calculator", "item": "https://cgpa-calculator.rajchandra.me/" },
+          { "@type": "ListItem", "position": 2, "name": "% Converter", "item": "https://cgpa-calculator.rajchandra.me/percentage-converter/" }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="stylesheet" href="/src/css/vendor/pico.min.css">
+  <link rel="stylesheet" href="/src/css/app.css?v=21">
+  <link rel="modulepreload" href="/src/js/app.js?v=24">
+  <link rel="modulepreload" href="/src/js/math.js">
+  <link rel="modulepreload" href="/src/js/universities.js">
+  <link rel="modulepreload" href="/src/js/promos.js">
+</head>
+<body data-university="vit">
+  <a class="visually-hidden" href="#main-content">Skip to converter</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/">
+        <img class="brand-logo" src="/src/images/icons/icon-96x96.png" width="32" height="32" alt="">
+        <h1 class="brand-title">VIT CGPA Calculator</h1>
+      </a>
+      <div class="header-actions">
+        <a id="legacy-ui-link" class="btn btn-subtle btn-classic-ui" href="/legacy/" aria-label="Switch to Classic UI" title="Classic UI">
+          <svg class="btn-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+          <span class="btn-label">Classic UI</span>
+        </a>
+        <label class="visually-hidden" for="theme-selector">Color theme</label>
+        <select id="theme-selector" class="theme-select" aria-label="Color theme">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+        <button type="button" id="theme-toggle-btn" class="btn btn-subtle btn-icon-only theme-toggle-mobile" aria-label="Switch color theme" title="Switch theme">
+          <svg class="btn-icon-svg" data-theme-icon="system" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor"/></svg>
+          <svg class="btn-icon-svg" data-theme-icon="light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <svg class="btn-icon-svg" data-theme-icon="dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="page-main">
+    <section id="announcement-banner" class="announcement-banner ad-slot ad-slot--announcement" aria-label="Announcement" data-ad-managed="true" data-ad-location="announcement-banner" data-ad-slot="4654433674" data-ad-format="horizontal" data-ad-min-width="1280" data-ad-load="eager" hidden>
+      <div class="ad-slot-bar">
+        <span class="ad-label">Advertisement</span>
+        <button type="button" class="ad-hide-btn" data-ad-toggle="true" aria-pressed="true">Hide ads (24h)</button>
+      </div>
+      <div class="ad-frame"></div>
+    </section>
+
+    <div class="workspace-layout">
+      <div class="workspace-center">
+        <nav class="mode-tabs" aria-label="VIT Calculator tools">
+          <a id="tab-sc" class="mode-tab" data-tab="sc" href="/">Semester GPA</a>
+          <a id="tab-gc" class="mode-tab" data-tab="gc" href="/quick-cgpa/">Quick CGPA</a>
+          <a id="tab-ec" class="mode-tab" data-tab="ec" href="/expected-marks/">Expected Marks</a>
+          <a id="tab-fc" class="mode-tab" data-tab="fc" href="/all-semester-cgpa/">All-Sem CGPA</a>
+          <a id="tab-target" class="mode-tab" data-tab="target" href="/target-cgpa/">Target CGPA</a>
+          <a id="tab-pct" class="mode-tab is-active" data-tab="pct" href="/percentage-converter/" aria-current="page">% Converter</a>
+        </nav>
+
+        <article class="calculator-shell" aria-label="CGPA to Percentage Converter">
+          <section id="pct" class="calculator-panel is-active" aria-labelledby="pct-heading">
+            <h2 id="pct-heading">CGPA &harr; Percentage Converter</h2>
+            <p class="panel-desc">Convert between 10-point CGPA and percentage for resumes, transcripts, and applications using official university formulas.</p>
+            <form id="percentage-form" class="field-grid" aria-labelledby="pct-heading" novalidate>
+              <div class="field">
+                <label for="pct-university">University formula</label>
+                <span id="pct-university-hint" class="field-hint">Select grading regulation</span>
+                <select id="pct-university" name="university" aria-describedby="pct-university-hint" aria-invalid="false">
+                  <option value="vit">VIT (CGPA × 10)</option>
+                  <option value="anna">Anna University (CGPA × 10)</option>
+                  <option value="ktu">KTU ((CGPA × 10) − 3.75)</option>
+                  <option value="srm">SRMIST (CGPA × 10)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="pct-direction">Conversion direction</label>
+                <span id="pct-direction-hint" class="field-hint">Choose input unit</span>
+                <select id="pct-direction" name="mode" aria-describedby="pct-direction-hint" aria-invalid="false">
+                  <option value="cgpa-to-pct">CGPA &rarr; Percentage (%)</option>
+                  <option value="pct-to-cgpa">Percentage (%) &rarr; CGPA</option>
+                </select>
+              </div>
+              <div class="field full-span">
+                <label id="pct-value-label" for="pct-value">CGPA or GPA</label>
+                <span id="pct-value-hint" class="field-hint">Enter 0 to 10</span>
+                <input type="number" id="pct-value" name="value" inputmode="decimal" step="any" min="0" max="10" required aria-describedby="pct-value-hint" aria-invalid="false" data-error="pct-value-error" placeholder="e.g. 9.15">
+                <p id="pct-value-error" class="field-error">Enter a valid CGPA between 0 and 10.</p>
+              </div>
+              <div class="form-actions full-span">
+                <button type="reset" id="reset-pct-btn" class="btn btn-subtle">Reset</button>
+                <button type="submit" id="pct-submit-btn" class="btn btn-primary">Convert</button>
+              </div>
+              <p id="pct-form-error" class="form-error-banner full-span" role="alert" hidden></p>
+              <div id="pct-result" class="result-panel full-span" aria-live="polite" hidden>
+                <span id="pct-result-label" class="result-label">Equivalent Percentage</span>
+                <output id="pct-output" class="result-value"></output>
+                <p id="pct-meta" class="result-meta"></p>
+                <div id="pct-next-actions" class="result-next-actions" hidden></div>
+              </div>
+            </form>
+          </section>
+        </article>
+
+        <section id="personal-promo-slot" class="personal-promo" aria-label="Featured recommendation" hidden></section>
+
+        <section id="ad-slot-post-calc" class="ad-slot ad-slot--post-calc" aria-label="Advertisement" data-ad-managed="true" data-ad-location="post-calc" data-ad-slot-desktop="4654433674" data-ad-slot-mobile="6993669367" data-ad-format-desktop="horizontal" data-ad-format-mobile="auto" data-ad-load="action" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+            <button type="button" class="ad-hide-btn" data-ad-toggle="true" aria-pressed="true">Hide ads (24h)</button>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
+
+        <section class="faq-section below-fold-section" aria-labelledby="faq-heading">
+          <h2 id="faq-heading">Frequently Asked Questions</h2>
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary>How does VIT convert CGPA to percentage?</summary>
+              <p>VIT converts CGPA on its 10-point FFCS scale directly using CGPA × 10 (for example, 9.25 CGPA equals 92.50%).</p>
+            </details>
+            <details class="faq-item">
+              <summary>What formula does KTU use for CGPA to percentage?</summary>
+              <p>KTU's official regulation formula subtracts 3.75 after multiplying by 10: Percentage = (CGPA × 10) − 3.75, floored at 0%.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Can I convert percentage back to CGPA?</summary>
+              <p>Yes. Switch the direction dropdown to Percentage → CGPA to convert any percentage score back onto the university's 10-point scale.</p>
+            </details>
+          </div>
+        </section>
+
+        <section id="ad-slot-footer" class="ad-slot ad-slot--footer" aria-label="Advertisement" data-ad-managed="true" data-ad-location="below-faq" data-ad-slot-desktop="4654433674" data-ad-slot-mobile="6993669367" data-ad-format-desktop="horizontal" data-ad-format-mobile="auto" data-ad-load="lazy" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
+      </div>
+
+      <aside class="workspace-left" aria-label="Display ads">
+        <section id="ad-slot-optin" class="ad-slot ad-slot--optin ad-slot--sidebar ad-slot--desktop-only" aria-label="Advertisement" data-ad-managed="true" data-ad-location="left-rail-primary" data-ad-slot-desktop="7637288848" data-ad-format-desktop="vertical" data-ad-load="eager" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+            <button type="button" class="ad-hide-btn" data-ad-toggle="true" aria-pressed="true">Hide ads (24h)</button>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
+
+        <section id="ad-slot-left-secondary" class="ad-slot ad-slot--sidebar ad-slot--desktop-only" aria-label="Advertisement" data-ad-managed="true" data-ad-location="left-rail-secondary" data-ad-slot-desktop="7637288848" data-ad-format-desktop="rectangle" data-ad-load="lazy" hidden>
+          <div class="ad-slot-bar">
+            <span class="ad-label">Advertisement</span>
+          </div>
+          <div class="ad-frame"></div>
+        </section>
+
+        <section id="ad-control-card" class="side-card ad-control-card" aria-label="Ad display preferences" hidden>
+          <p id="ad-optin-status" class="ad-optin-status">Ads hidden for 24h</p>
+          <button type="button" id="ad-optin-btn" class="btn btn-subtle ad-optin-btn" aria-pressed="false" aria-controls="ad-slot-optin">Show ads</button>
+        </section>
+      </aside>
+
+      <aside class="workspace-right" aria-label="Contribute &amp; VIT discussions">
+        <section id="contribute-section" class="side-card contribute-card" aria-labelledby="contribute-heading">
+          <h2 id="contribute-heading">Spot an issue? Contribute</h2>
+          <p class="side-card-desc">VIT FFCS grade scales, credit rules, or formulas look off? This calculator is open source — report an issue or send a PR on GitHub.</p>
+          <div class="side-card-actions">
+            <a id="contribute-repo-link" class="btn btn-secondary" data-contribute-action="repo" href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer">Contribute on GitHub &#8599;</a>
+            <a id="contribute-issue-link" class="btn btn-subtle" data-contribute-action="issue" href="https://github.com/rajchandra3/cgpa-calculator/issues/new" target="_blank" rel="noopener noreferrer">Report an Issue &#8599;</a>
+          </div>
+        </section>
+
+        <section id="comments-section" class="comments-sidebar" aria-labelledby="comments-heading">
+          <div class="comments-header">
+            <h2 id="comments-heading">VIT Discussions &amp; Feedback</h2>
+            <a class="comments-ext-link" href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Open on GitHub &#8599;</a>
+          </div>
+          <p class="comments-desc">Share VIT feedback, report grade-scale updates, or ask questions in <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">VIT Discussion #5</a>.</p>
+          <div
+            id="giscus-container"
+            class="giscus-host"
+            data-repo="rajchandra3/cgpa-calculator"
+            data-repo-id="R_kgDOGqICXQ"
+            data-category="General"
+            data-category-id="DIC_kwDOGqICXc4DL4Gy"
+            data-mapping="number"
+            data-term="5"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-lang="en"
+          ></div>
+          <p class="comments-footnote">Open-source comments via <a href="https://github.com/rajchandra3/cgpa-calculator/discussions/5" target="_blank" rel="noopener noreferrer">Discussion #5 (Giscus)</a>.</p>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p class="footer-copyright"><span>&copy; 2017–<span id="thisYear"></span></span> <a href="https://rajchandra.me" target="_blank" rel="noopener noreferrer">Raj Chandra</a></p>
+    <div class="footer-actions">
+      <button type="button" id="install-app-btn" class="btn btn-subtle btn-install-footer" aria-label="Install App" title="Install App" hidden>
+        <svg class="btn-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Install App</span>
+      </button>
+      <button type="button" id="share-app-btn" class="btn btn-subtle" hidden>Share</button>
+      <a href="https://www.linkedin.com/in/rajchandra3/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      <a href="https://github.com/rajchandra3/cgpa-calculator" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </div>
+  </footer>
+
+  <script src="/src/js/analytics.js" defer fetchpriority="low"></script>
+  <script type="module" src="/src/js/app.js?v=24" fetchpriority="high"></script>
+</body>
+</html>

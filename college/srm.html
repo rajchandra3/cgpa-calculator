@@ -130,8 +130,8 @@
   </script>
 
   <link rel="stylesheet" href="/src/css/vendor/pico.min.css">
-  <link rel="stylesheet" href="/src/css/app.css?v=20">
-  <link rel="modulepreload" href="/src/js/app.js?v=23">
+  <link rel="stylesheet" href="/src/css/app.css?v=21">
+  <link rel="modulepreload" href="/src/js/app.js?v=24">
   <link rel="modulepreload" href="/src/js/math.js">
   <link rel="modulepreload" href="/src/js/universities.js">
   <link rel="modulepreload" href="/src/js/promos.js">
@@ -194,6 +194,7 @@
             <span class="result-label">Semester GPA</span>
             <output id="grades" class="result-value"></output>
             <p id="gpa-meta" class="result-meta"></p>
+            <div id="gpa-next-actions" class="result-next-actions" hidden></div>
           </div>
         </form>
       </section>
@@ -235,6 +236,7 @@
             <span class="result-label">Updated CGPA</span>
             <output id="cgpa-msg" class="result-value"></output>
             <p id="cgpa-meta" class="result-meta"></p>
+            <div id="cgpa-next-actions" class="result-next-actions" hidden></div>
           </div>
         </form>
       </section>
@@ -254,6 +256,7 @@
             <span class="result-label">Cumulative CGPA</span>
             <output id="fcgpa" class="result-value"></output>
             <p id="fcgpa-meta" class="result-meta"></p>
+            <div id="fcgpa-next-actions" class="result-next-actions" hidden></div>
           </div>
         </form>
       </section>
@@ -261,7 +264,7 @@
 
         <section id="personal-promo-slot" class="personal-promo" aria-label="Featured recommendation" hidden></section>
 
-        <section id="ad-slot-post-calc" class="ad-slot ad-slot--post-calc" aria-label="Advertisement" data-ad-managed="true" data-ad-location="post-calc" data-ad-slot-desktop="4654433674" data-ad-slot-mobile="6993669367" data-ad-format-desktop="horizontal" data-ad-format-mobile="auto" data-ad-load="lazy" hidden>
+        <section id="ad-slot-post-calc" class="ad-slot ad-slot--post-calc" aria-label="Advertisement" data-ad-managed="true" data-ad-location="post-calc" data-ad-slot-desktop="4654433674" data-ad-slot-mobile="6993669367" data-ad-format-desktop="horizontal" data-ad-format-mobile="auto" data-ad-load="action" hidden>
           <div class="ad-slot-bar">
             <span class="ad-label">Advertisement</span>
             <button type="button" class="ad-hide-btn" data-ad-toggle="true" aria-pressed="true">Hide ads (24h)</button>
@@ -372,6 +375,6 @@
   </footer>
 
   <script src="/src/js/analytics.js" defer fetchpriority="low"></script>
-  <script type="module" src="/src/js/app.js?v=23" fetchpriority="high"></script>
+  <script type="module" src="/src/js/app.js?v=24" fetchpriority="high"></script>
 </body>
 </html>

@@ -10,6 +10,8 @@ import {
   calculateQuickCgpa,
   calculateExpectedMarks,
   calculateAllSemCgpa,
+  calculateTargetCgpa,
+  convertCgpaPercentage,
 } from '../src/js/math.js';
 
 test('UNIVERSITIES config matches exact grade scales and credits', () => {
@@ -421,4 +423,110 @@ test('calculateAllSemCgpa supports 1..12+ semesters and validates partial/range/
     error: 'Enter both GPA (0–10) and credits (0–32) for every entered semester.',
     invalidRows: [0, 1],
   });
+});
+
+test('calculateTargetCgpa computes achievable, already_achieved, impossible, and invalid bounds cleanly', () => {
+  // Achievable: 8.60 over 90 credits, target 9.00 with 44 remaining -> (9*134 - 8.6*90)/44 = 432/44 = 9.818 -> 9.82
+  const achievable = calculateTargetCgpa({
+    currentCgpa: 8.6,
+    completedCredits: 90,
+    targetCgpa: 9.0,
+    remainingCredits: 44,
+  });
+  assert.equal(achievable.ok, true);
+  assert.equal(achievable.status, 'achievable');
+  assert.equal(achievable.requiredGpa, 9.82);
+  assert.equal(achievable.formatted, '9.82');
+  assert.equal(achievable.totalCredits, 134);
+  assert.equal(achievable.maxPossibleCgpa, 9.06);
+
+  // Already achieved (target below weighted floor -> required clamped to 0.00)
+  const achieved = calculateTargetCgpa({
+    currentCgpa: 9.2,
+    completedCredits: 100,
+    targetCgpa: 7.5,
+    remainingCredits: 20,
+  });
+  assert.equal(achieved.ok, true);
+  assert.equal(achieved.status, 'already_achieved');
+  assert.equal(achieved.requiredGpa, 0);
+  assert.equal(achieved.formatted, '0.00');
+
+  // Impossible (> 10.00 required)
+  const impossible = calculateTargetCgpa({
+    currentCgpa: 7.0,
+    completedCredits: 120,
+    targetCgpa: 9.5,
+    remainingCredits: 20,
+  });
+  assert.equal(impossible.ok, true);
+  assert.equal(impossible.status, 'impossible');
+  assert.ok(impossible.requiredGpa > 10);
+  assert.equal(impossible.maxPossibleFormatted, '7.43');
+
+  // Validation errors
+  const bad = calculateTargetCgpa({
+    currentCgpa: 11,
+    completedCredits: -1,
+    targetCgpa: 10.5,
+    remainingCredits: 0,
+  });
+  assert.equal(bad.ok, false);
+  assert.deepEqual(bad.invalidFields, [
+    'currentCgpa',
+    'completedCredits',
+    'targetCgpa',
+    'remainingCredits',
+  ]);
+  assert.equal(calculateTargetCgpa({ currentCgpa: 8, completedCredits: 50, targetCgpa: 9, remainingCredits: 251 }).ok, false);
+  assert.equal(calculateTargetCgpa(null).ok, false);
+  assert.equal(calculateTargetCgpa().ok, false);
+  assert.equal(calculateTargetCgpa('bad').ok, false);
+});
+
+test('convertCgpaPercentage converts both directions across VIT, Anna, KTU, SRM and validates bounds', () => {
+  // VIT / Anna / SRM: CGPA * 10
+  const vit = convertCgpaPercentage({ university: 'vit', mode: 'cgpa-to-pct', value: '9.57' });
+  assert.deepEqual(vit, {
+    ok: true,
+    mode: 'cgpa-to-pct',
+    university: 'vit',
+    cgpa: 9.57,
+    cgpaFormatted: '9.57',
+    percentage: 95.7,
+    percentageFormatted: '95.70',
+    referenceTenX: '95.70',
+    formulaLabel: 'CGPA × 10',
+  });
+
+  // Reverse pct-to-cgpa (defaults to vit on unknown uni)
+  const revUnknown = convertCgpaPercentage({ university: 'other', mode: 'pct-to-cgpa', value: '88.5' });
+  assert.equal(revUnknown.ok, true);
+  assert.equal(revUnknown.university, 'vit');
+  assert.equal(revUnknown.cgpaFormatted, '8.85');
+
+  // KTU official formula: (CGPA * 10) - 3.75 floored at 0
+  const ktuPct = convertCgpaPercentage({ university: 'KTU', mode: 'cgpa-to-pct', value: 9 });
+  assert.equal(ktuPct.ok, true);
+  assert.equal(ktuPct.percentageFormatted, '86.25');
+  assert.equal(ktuPct.referenceTenX, '90.00');
+  assert.match(ktuPct.formulaLabel, /KTU Official/);
+
+  const ktuLow = convertCgpaPercentage({ university: 'ktu', mode: 'cgpa-to-pct', value: 0.2 });
+  assert.equal(ktuLow.percentage, 0);
+
+  const ktuRev = convertCgpaPercentage({ university: 'ktu', mode: 'pct-to-cgpa', value: 86.25 });
+  assert.equal(ktuRev.ok, true);
+  assert.equal(ktuRev.cgpaFormatted, '9.00');
+
+  const ktuRevCap = convertCgpaPercentage({ university: 'ktu', mode: 'pct-to-cgpa', value: 100 });
+  assert.equal(ktuRevCap.cgpa, 10);
+
+  // Invalid mode and out-of-range inputs
+  assert.equal(convertCgpaPercentage({ mode: 'bad', value: 9 }).ok, false);
+  assert.equal(convertCgpaPercentage({ mode: 'cgpa-to-pct', value: 10.5 }).ok, false);
+  assert.equal(convertCgpaPercentage({ mode: 'pct-to-cgpa', value: 101 }).ok, false);
+  assert.equal(convertCgpaPercentage(null).ok, false);
+  assert.equal(convertCgpaPercentage('bad').ok, false);
+  assert.equal(convertCgpaPercentage().ok, false);
 });

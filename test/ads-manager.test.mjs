@@ -28,6 +28,7 @@ import {
   resolveAdFormat,
   resolveQualitySlotId,
   setAdPreference,
+  unlockActionAds,
 } from '../src/js/ads-manager.js';
 
 function createClassList(initial = []) {
@@ -727,6 +728,7 @@ test('initManagedAds and hideAllManagedAds orchestrate eager vs scroll-lazy slot
     preview: false,
     mountedCount: 2,
     lazyCount: 2,
+    actionCount: 0,
     slots: ['4654433674', '7637288848'],
   });
   assert.equal(deskEnv.win.adsbygoogle.length, 2);
@@ -786,6 +788,7 @@ test('initManagedAds and hideAllManagedAds orchestrate eager vs scroll-lazy slot
     preview: false,
     mountedCount: 1,
     lazyCount: 0,
+    actionCount: 0,
     slots: ['6993669367'],
   });
   assert.equal(mobHiddenTop.slotEl.hidden, true);
@@ -903,6 +906,7 @@ test('?ads=preview renders Preview wireframes for desktop, mobile, and lazy init
     preview: true,
     mountedCount: 2,
     lazyCount: 0,
+    actionCount: 0,
     slots: ['7637288848', '4654433674'],
   });
   assert.equal(desktopEnv.headChildren.length, 0);
@@ -982,4 +986,73 @@ test('activateAnnouncementAd mounts announcement banner above 1280px, enforces a
   });
   noIdEnv.doc.querySelector = (sel) => (sel.includes('announcement-banner') ? bannerEl : null);
   assert.equal(activateAnnouncementAd({ doc: noIdEnv.doc, win: noIdEnv.win }).reused, true);
+});
+
+test('data-ad-load="action" stays hidden on boot and mounts once on unlockActionAds while honoring 24h ad-free TTL', () => {
+  const actionSlot = createOptInSlot({
+    id: 'ad-slot-post-calc',
+    location: 'post-calc',
+    desktopSlot: '4654433674',
+    mobileSlot: '6993669367',
+    adLoad: 'action',
+  });
+  const env = createEnvironment({
+    slot: null,
+    managedSlots: [actionSlot.slotEl],
+    width: 375,
+  });
+  env.doc.querySelectorAll = (sel) => {
+    if (sel === '.ad-slot[data-ad-managed="true"]') return [actionSlot.slotEl];
+    if (sel === '.ad-slot[data-ad-managed="true"][data-ad-load="action"]') return [actionSlot.slotEl];
+    return [];
+  };
+
+  // Boot skips action slots on mobile (0 ads before calculation)
+  const boot = initManagedAds({ university: 'vit', doc: env.doc, win: env.win });
+  assert.deepEqual(boot, {
+    preview: false,
+    mountedCount: 0,
+    lazyCount: 0,
+    actionCount: 1,
+    slots: [],
+  });
+  assert.equal(actionSlot.slotEl.hidden, true);
+  assert.equal(env.win.adsbygoogle.length, 0);
+
+  // First calculation unlocks once
+  const firstUnlock = unlockActionAds({ university: 'vit', trigger: 'submit_calc', doc: env.doc, win: env.win });
+  assert.deepEqual(firstUnlock, { preview: false, mountedCount: 1, slots: ['6993669367'] });
+  assert.equal(actionSlot.slotEl.hidden, false);
+  assert.equal(env.win.adsbygoogle.length, 1);
+
+  // Second unlock never re-pushes
+  const secondUnlock = unlockActionAds({ university: 'vit', trigger: 'live_calc', doc: env.doc, win: env.win });
+  assert.deepEqual(secondUnlock, { preview: false, mountedCount: 0, slots: [] });
+  assert.equal(env.win.adsbygoogle.length, 1);
+
+  // 24h ad-free TTL suppresses action unlock unless preview mode
+  setAdPreference(env.win, false);
+  assert.deepEqual(unlockActionAds({ doc: env.doc, win: env.win }), {
+    preview: false,
+    mountedCount: 0,
+    slots: [],
+  });
+
+  // Preview mode mounts action slot immediately during initManagedAds
+  const prevActionSlot = createOptInSlot({
+    id: 'ad-slot-post-calc',
+    location: 'post-calc',
+    desktopSlot: '4654433674',
+    mobileSlot: '6993669367',
+    adLoad: 'action',
+  });
+  const prevEnv = createEnvironment({
+    slot: null,
+    managedSlots: [prevActionSlot.slotEl],
+    width: 375,
+    search: '?ads=preview',
+  });
+  const prevInit = initManagedAds({ doc: prevEnv.doc, win: prevEnv.win });
+  assert.equal(prevInit.mountedCount, 1);
+  assert.equal(prevActionSlot.slotEl.hidden, false);
 });

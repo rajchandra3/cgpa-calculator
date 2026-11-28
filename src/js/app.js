@@ -4,6 +4,8 @@ import {
   calculateExpectedMarks,
   calculateGpa,
   calculateQuickCgpa,
+  calculateTargetCgpa,
+  convertCgpaPercentage,
 } from './math.js';
 import {
   ANNOUNCEMENT_BANNER,
@@ -51,7 +53,7 @@ export function resolveGiscusTheme(mode) {
 export function getScoreBand(tab, score) {
   const num = Number(score);
   if (!Number.isFinite(num)) return 'unknown';
-  if (tab === 'ec') {
+  if (tab === 'ec' || tab === 'pct') {
     if (num >= 90) return '90_plus';
     if (num >= 80) return '80_to_90';
     if (num >= 70) return '70_to_80';
@@ -452,6 +454,17 @@ function initApp() {
   // Usage-Pattern Calculation Tracker (Submit + Debounced Live Auto-Calc)
   const liveCalcTimers = new Map();
   const lastTrackedCalcSig = new Map();
+  let actionAdsUnlocked = false;
+
+  function unlockPostCalcAds(trigger = 'calculation_completed') {
+    if (actionAdsUnlocked || isAdFreeActiveLocal()) return;
+    actionAdsUnlocked = true;
+    import('./ads-manager.js?v=24')
+      .then((mod) => mod.unlockActionAds({ university: config.id, trigger }))
+      .catch(() => {
+        actionAdsUnlocked = false;
+      });
+  }
 
   function cancelPendingLiveCalc(tab) {
     const timer = liveCalcTimers.get(tab);
@@ -490,6 +503,7 @@ function initApp() {
     if (isSubmit) {
       lastTrackedCalcSig.set(tab, signature);
       emitCalculationEvents(tab, eventName, payload, score, 'submit');
+      unlockPostCalcAds('submit_calc');
       return;
     }
     if (lastTrackedCalcSig.get(tab) === signature) {
@@ -500,6 +514,7 @@ function initApp() {
       if (lastTrackedCalcSig.get(tab) === signature) return;
       lastTrackedCalcSig.set(tab, signature);
       emitCalculationEvents(tab, eventName, payload, score, 'live');
+      unlockPostCalcAds('live_calc');
     }, 800);
     liveCalcTimers.set(tab, timer);
   }
@@ -686,17 +701,53 @@ function initApp() {
     el.hidden = !message;
   }
 
-  function hideResult(container, valueEl, metaEl) {
-    if (container) container.hidden = true;
+  function hideResult(container, valueEl, metaEl, nextActionsEl) {
+    if (container) {
+      container.hidden = true;
+      container.classList.remove('is-warning');
+    }
     if (valueEl) valueEl.textContent = '';
     if (metaEl) metaEl.textContent = '';
+    if (nextActionsEl) {
+      nextActionsEl.hidden = true;
+      nextActionsEl.replaceChildren();
+    }
   }
 
-  function showResult(container, valueEl, metaEl, valueText, metaText, { scroll = false } = {}) {
+  function showResult(container, valueEl, metaEl, valueText, metaText, { scroll = false, warning = false } = {}) {
     if (valueEl) valueEl.textContent = valueText;
     if (metaEl) metaEl.textContent = metaText;
-    if (container) container.hidden = false;
+    if (container) {
+      container.classList.toggle('is-warning', Boolean(warning));
+      container.hidden = false;
+    }
     if (scroll) revealElement(container, { smooth: true });
+  }
+
+  function renderNextActions(container, actions, fromTab) {
+    if (!container) return;
+    if (!Array.isArray(actions) || actions.length === 0) {
+      container.hidden = true;
+      container.replaceChildren();
+      return;
+    }
+    const links = actions.map((item) => {
+      const link = createEl(
+        'a',
+        { class: 'btn btn-subtle btn-next-step', href: item.href },
+        item.label
+      );
+      link.addEventListener('click', () => {
+        trackEvent('next_step_clicked', {
+          from_tab: fromTab,
+          target_action: item.actionName,
+          university: config.id,
+        });
+      });
+      return link;
+    });
+    container.replaceChildren(...links);
+    container.hidden = false;
   }
 
   function revealElement(el, { smooth = false } = {}) {
@@ -771,6 +822,7 @@ function initApp() {
   const gpaResultBox = document.getElementById('gpa-result');
   const gpaValueEl = document.getElementById('grades');
   const gpaMetaEl = document.getElementById('gpa-meta');
+  const gpaNextActionsEl = document.getElementById('gpa-next-actions');
 
   const gpaFieldSpecs = [
     { key: 'grade', labelSuffix: 'grade' },
@@ -888,6 +940,28 @@ function initApp() {
         `${res.courseCount} ${courseWord} · ${res.totalCredits} credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
+      const gpaActions =
+        config.id === 'vit'
+          ? [
+              {
+                label: `Check updated CGPA with ${res.formatted} →`,
+                href: `/quick-cgpa/?gpa=${encodeURIComponent(res.formatted)}&c=${encodeURIComponent(res.totalCredits)}`,
+                actionName: 'carry_to_quick_cgpa',
+              },
+              {
+                label: `Convert ${res.formatted} to % →`,
+                href: `/percentage-converter/?cgpa=${encodeURIComponent(res.formatted)}&uni=vit`,
+                actionName: 'convert_to_percentage',
+              },
+            ]
+          : [
+              {
+                label: `Convert ${res.formatted} to % →`,
+                href: `/percentage-converter/?cgpa=${encodeURIComponent(res.formatted)}&uni=${encodeURIComponent(config.id)}`,
+                actionName: 'convert_to_percentage',
+              },
+            ];
+      renderNextActions(gpaNextActionsEl, gpaActions, 'sc');
       schedulePersonalPromo(
         { ok: true, tab: 'sc', result: res.gpa, credits: res.totalCredits },
         { immediate: true, forceShuffle: isSubmit }
@@ -907,7 +981,7 @@ function initApp() {
       return res;
     }
 
-    hideResult(gpaResultBox, gpaValueEl, gpaMetaEl);
+    hideResult(gpaResultBox, gpaValueEl, gpaMetaEl, gpaNextActionsEl);
     clearPersonalPromo();
     clearCalcTracking('sc');
 
@@ -1029,7 +1103,7 @@ function initApp() {
 
     wireResetButton('reset-gpa-btn', gpaForm, () => {
       setBanner(gpaErrorBanner, '');
-      hideResult(gpaResultBox, gpaValueEl, gpaMetaEl);
+      hideResult(gpaResultBox, gpaValueEl, gpaMetaEl, gpaNextActionsEl);
       clearPersonalPromo();
       clearCalcTracking('sc');
       trackEvent('calculator_reset', { calculator: 'sc', university: config.id });
@@ -1042,10 +1116,12 @@ function initApp() {
   const cgpaInput = document.getElementById('cgpa');
   const cInput = document.getElementById('c');
   const gpaInput = document.getElementById('gpa');
+  const quickPrefillNote = document.getElementById('quick-prefill-note');
   const quickErrorBanner = document.getElementById('quick-cgpa-error');
   const quickResultBox = document.getElementById('cgpa-result');
   const quickValueEl = document.getElementById('cgpa-msg');
   const quickMetaEl = document.getElementById('cgpa-meta');
+  const quickNextActionsEl = document.getElementById('cgpa-next-actions');
 
   const quickFieldMap = {
     prevCredits: tcInput,
@@ -1089,6 +1165,22 @@ function initApp() {
         `${res.totalCredits} total credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
+      renderNextActions(
+        quickNextActionsEl,
+        [
+          {
+            label: `Plan target CGPA from ${res.formatted} →`,
+            href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=${encodeURIComponent(config.id)}`,
+            actionName: 'plan_target_cgpa',
+          },
+          {
+            label: `Convert ${res.formatted} to % →`,
+            href: `/percentage-converter/?cgpa=${encodeURIComponent(res.formatted)}&uni=${encodeURIComponent(config.id)}`,
+            actionName: 'convert_to_percentage',
+          },
+        ],
+        'gc'
+      );
       schedulePersonalPromo(
         { ok: true, tab: 'gc', result: res.cgpa, credits: res.totalCredits },
         { immediate: isSubmit }
@@ -1107,7 +1199,7 @@ function initApp() {
       return res;
     }
 
-    hideResult(quickResultBox, quickValueEl, quickMetaEl);
+    hideResult(quickResultBox, quickValueEl, quickMetaEl, quickNextActionsEl);
     clearPersonalPromo();
     clearCalcTracking('gc');
     if (!isSubmit) return res;
@@ -1153,11 +1245,33 @@ function initApp() {
 
     wireResetButton('reset-qcc-btn', quickForm, () => {
       setBanner(quickErrorBanner, '');
-      hideResult(quickResultBox, quickValueEl, quickMetaEl);
+      setBanner(quickPrefillNote, '');
+      hideResult(quickResultBox, quickValueEl, quickMetaEl, quickNextActionsEl);
       clearPersonalPromo();
       clearCalcTracking('gc');
       trackEvent('calculator_reset', { calculator: 'gc', university: config.id });
     });
+
+    try {
+      const qParams = new URLSearchParams(window.location.search);
+      const qGpa = Number(qParams.get('gpa'));
+      const qCredits = Number(qParams.get('c'));
+      const hasGpa = qParams.has('gpa') && Number.isFinite(qGpa) && qGpa >= 0 && qGpa <= 10;
+      const hasCred = qParams.has('c') && Number.isFinite(qCredits) && qCredits >= 0 && qCredits <= 39;
+      if (hasGpa && gpaInput && !gpaInput.value) gpaInput.value = String(qGpa);
+      if (hasCred && cInput && !cInput.value) cInput.value = String(qCredits);
+      if ((hasGpa || hasCred) && quickPrefillNote) {
+        const parts = [];
+        if (hasGpa) parts.push(`${qGpa.toFixed(2)} GPA`);
+        if (hasCred) parts.push(`${qCredits} credits`);
+        setBanner(
+          quickPrefillNote,
+          `Carried forward from Semester GPA (${parts.join(' · ')}) — enter your prior completed credits and CGPA below.`
+        );
+      }
+    } catch {
+      // Ignore query prefill errors
+    }
   }
 
   // 6. Expected Marks Calculator (#expected-marks-form, VIT only)
@@ -1175,6 +1289,7 @@ function initApp() {
   const ecResultBox = document.getElementById('marks-result');
   const ecValueEl = document.getElementById('marks');
   const ecMetaEl = document.getElementById('marks-meta');
+  const ecNextActionsEl = document.getElementById('marks-next-actions');
 
   function evaluateExpectedMarks({ isSubmit = false } = {}) {
     const inputs = Object.values(ecFieldMap).filter(Boolean);
@@ -1214,6 +1329,22 @@ function initApp() {
         `Internals: ${res.internals}/60 · ${res.modeLabel}`,
         { scroll: isSubmit }
       );
+      renderNextActions(
+        ecNextActionsEl,
+        [
+          {
+            label: 'Calculate Semester GPA →',
+            href: '/',
+            actionName: 'go_to_semester_gpa',
+          },
+          {
+            label: 'Quick CGPA Calculator →',
+            href: '/quick-cgpa/',
+            actionName: 'go_to_quick_cgpa',
+          },
+        ],
+        'ec'
+      );
       schedulePersonalPromo({ ok: true, tab: 'ec', result: res.marks }, { immediate: isSubmit });
       recordCalculation(
         'ec',
@@ -1230,7 +1361,7 @@ function initApp() {
       return res;
     }
 
-    hideResult(ecResultBox, ecValueEl, ecMetaEl);
+    hideResult(ecResultBox, ecValueEl, ecMetaEl, ecNextActionsEl);
     clearPersonalPromo();
     clearCalcTracking('ec');
     if (!isSubmit) return res;
@@ -1267,7 +1398,7 @@ function initApp() {
 
     wireResetButton('reset-ec-btn', ecForm, () => {
       setBanner(ecErrorBanner, '');
-      hideResult(ecResultBox, ecValueEl, ecMetaEl);
+      hideResult(ecResultBox, ecValueEl, ecMetaEl, ecNextActionsEl);
       clearPersonalPromo();
       clearCalcTracking('ec');
       trackEvent('calculator_reset', { calculator: 'ec', university: config.id });
@@ -1282,6 +1413,7 @@ function initApp() {
   const allSemResultBox = document.getElementById('fcgpa-result');
   const allSemValueEl = document.getElementById('fcgpa');
   const allSemMetaEl = document.getElementById('fcgpa-meta');
+  const allSemNextActionsEl = document.getElementById('fcgpa-next-actions');
 
   const semFieldSpecs = [
     { key: 'gpa', labelSuffix: 'GPA' },
@@ -1403,6 +1535,22 @@ function initApp() {
         `${res.semesterCount} ${semWord} · ${res.totalCredits} credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
+      renderNextActions(
+        allSemNextActionsEl,
+        [
+          {
+            label: `Plan target CGPA from ${res.formatted} →`,
+            href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=${encodeURIComponent(config.id)}`,
+            actionName: 'plan_target_cgpa',
+          },
+          {
+            label: `Convert ${res.formatted} to % →`,
+            href: `/percentage-converter/?cgpa=${encodeURIComponent(res.formatted)}&uni=${encodeURIComponent(config.id)}`,
+            actionName: 'convert_to_percentage',
+          },
+        ],
+        'fc'
+      );
       schedulePersonalPromo(
         { ok: true, tab: 'fc', result: res.cgpa, credits: res.totalCredits },
         { immediate: isSubmit }
@@ -1422,7 +1570,7 @@ function initApp() {
       return res;
     }
 
-    hideResult(allSemResultBox, allSemValueEl, allSemMetaEl);
+    hideResult(allSemResultBox, allSemValueEl, allSemMetaEl, allSemNextActionsEl);
     clearPersonalPromo();
     clearCalcTracking('fc');
 
@@ -1560,11 +1708,328 @@ function initApp() {
 
     wireResetButton('reset-fc-btn', allSemForm, () => {
       setBanner(allSemErrorBanner, '');
-      hideResult(allSemResultBox, allSemValueEl, allSemMetaEl);
+      hideResult(allSemResultBox, allSemValueEl, allSemMetaEl, allSemNextActionsEl);
       clearPersonalPromo();
       clearCalcTracking('fc');
       trackEvent('calculator_reset', { calculator: 'fc', university: config.id });
     });
+  }
+
+  // 7b. Target CGPA Planner (#target-cgpa-form)
+  const targetForm = document.getElementById('target-cgpa-form');
+  const targetFieldMap = {
+    currentCgpa: document.getElementById('target-current-cgpa'),
+    completedCredits: document.getElementById('target-completed-credits'),
+    targetCgpa: document.getElementById('target-goal-cgpa'),
+    remainingCredits: document.getElementById('target-remaining-credits'),
+  };
+  const targetPrefillNote = document.getElementById('target-prefill-note');
+  const targetErrorBanner = document.getElementById('target-form-error');
+  const targetResultBox = document.getElementById('target-result');
+  const targetValueEl = document.getElementById('target-required-gpa');
+  const targetMetaEl = document.getElementById('target-meta');
+  const targetNextActionsEl = document.getElementById('target-next-actions');
+
+  function evaluateTargetCgpa({ isSubmit = false } = {}) {
+    const inputs = Object.values(targetFieldMap).filter(Boolean);
+    const allBlank = inputs.every((el) => !el.validity?.badInput && el.value === '');
+
+    if (!isSubmit && allBlank) {
+      hideResult(targetResultBox, targetValueEl, targetMetaEl, targetNextActionsEl);
+      clearPersonalPromo();
+      clearCalcTracking('target');
+      if (targetForm?.dataset.submitted !== 'true') {
+        setBanner(targetErrorBanner, '');
+      }
+      return { ok: false };
+    }
+
+    const res = calculateTargetCgpa({
+      currentCgpa: readNumberInput(targetFieldMap.currentCgpa),
+      completedCredits: readNumberInput(targetFieldMap.completedCredits),
+      targetCgpa: readNumberInput(targetFieldMap.targetCgpa),
+      remainingCredits: readNumberInput(targetFieldMap.remainingCredits),
+    });
+
+    if (res.ok) {
+      inputs.forEach((el) => {
+        if (el.validity?.valid) el.classList.remove('user-invalid-fallback');
+        syncAria(el, false);
+      });
+      setBanner(targetErrorBanner, '');
+
+      const isImpossible = res.status === 'impossible';
+      const displayVal = isImpossible ? `> 10.00 (${res.formatted})` : res.formatted;
+      let metaMsg;
+      if (res.status === 'already_achieved') {
+        metaMsg = `Already achieved! Even 0.00 GPA keeps your CGPA at or above target across ${res.totalCredits} total credits.`;
+      } else if (isImpossible) {
+        metaMsg = `Not achievable on a 10-point scale. Max possible CGPA is ${res.maxPossibleFormatted} across ${res.totalCredits} total credits.`;
+      } else {
+        metaMsg = `Required average GPA across remaining credits · Max possible: ${res.maxPossibleFormatted}`;
+      }
+
+      showResult(targetResultBox, targetValueEl, targetMetaEl, displayVal, metaMsg, {
+        scroll: isSubmit,
+        warning: isImpossible,
+      });
+      renderNextActions(
+        targetNextActionsEl,
+        [
+          {
+            label: 'Simulate Semester GPA →',
+            href: '/',
+            actionName: 'simulate_semester_gpa',
+          },
+          {
+            label: 'Quick CGPA Calculator →',
+            href: '/quick-cgpa/',
+            actionName: 'go_to_quick_cgpa',
+          },
+        ],
+        'target'
+      );
+      schedulePersonalPromo(
+        { ok: true, tab: 'target', result: res.requiredGpa, credits: res.totalCredits },
+        { immediate: isSubmit }
+      );
+      recordCalculation(
+        'target',
+        'computed_target_cgpa',
+        {
+          university: config.id,
+          required_gpa: res.requiredGpa,
+          status: res.status,
+          total_credits: res.totalCredits,
+        },
+        res.requiredGpa,
+        { isSubmit, signature: `${res.requiredGpa}:${res.status}:${res.totalCredits}` }
+      );
+      return res;
+    }
+
+    hideResult(targetResultBox, targetValueEl, targetMetaEl, targetNextActionsEl);
+    clearPersonalPromo();
+    clearCalcTracking('target');
+    if (!isSubmit) return res;
+
+    setBanner(targetErrorBanner, res.error);
+    let firstInvalid = null;
+    const invalidSet = new Set(res.invalidFields || []);
+    for (const [key, el] of Object.entries(targetFieldMap)) {
+      if (!el) continue;
+      if (invalidSet.has(key)) {
+        setControlError(el, { showVisual: !el.validity.valid, announce: false });
+        if (!firstInvalid) firstInvalid = el;
+      } else if (el.validity.valid) {
+        clearErrorState(el);
+      }
+    }
+    if (firstInvalid) firstInvalid.focus();
+    else revealElement(targetErrorBanner);
+    return res;
+  }
+
+  if (targetForm) {
+    const handleTargetChange = () => evaluateTargetCgpa({ isSubmit: false });
+    targetForm.addEventListener('input', handleTargetChange);
+    targetForm.addEventListener('change', handleTargetChange);
+    targetForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      targetForm.dataset.submitted = 'true';
+      evaluateTargetCgpa({ isSubmit: true });
+    });
+
+    wireResetButton('reset-target-btn', targetForm, () => {
+      setBanner(targetErrorBanner, '');
+      setBanner(targetPrefillNote, '');
+      hideResult(targetResultBox, targetValueEl, targetMetaEl, targetNextActionsEl);
+      clearPersonalPromo();
+      clearCalcTracking('target');
+      trackEvent('calculator_reset', { calculator: 'target', university: config.id });
+    });
+
+    try {
+      const tParams = new URLSearchParams(window.location.search);
+      const tCgpa = Number(tParams.get('cgpa'));
+      const tCred = Number(tParams.get('credits'));
+      const hasCgpa = tParams.has('cgpa') && Number.isFinite(tCgpa) && tCgpa >= 0 && tCgpa <= 10;
+      const hasCred = tParams.has('credits') && Number.isFinite(tCred) && tCred >= 0 && tCred <= 300;
+      if (hasCgpa && targetFieldMap.currentCgpa) targetFieldMap.currentCgpa.value = String(tCgpa);
+      if (hasCred && targetFieldMap.completedCredits) targetFieldMap.completedCredits.value = String(tCred);
+      if ((hasCgpa || hasCred) && targetPrefillNote) {
+        const parts = [];
+        if (hasCgpa) parts.push(`${tCgpa.toFixed(2)} CGPA`);
+        if (hasCred) parts.push(`${tCred} completed credits`);
+        setBanner(
+          targetPrefillNote,
+          `Carried forward (${parts.join(' · ')}) — set your target CGPA and remaining credits.`
+        );
+      }
+    } catch {
+      // Ignore query prefill errors
+    }
+  }
+
+  // 7c. CGPA <-> Percentage Converter (#percentage-form)
+  const pctForm = document.getElementById('percentage-form');
+  const pctUniSelect = document.getElementById('pct-university');
+  const pctDirectionSelect = document.getElementById('pct-direction');
+  const pctValueInput = document.getElementById('pct-value');
+  const pctValueLabel = document.getElementById('pct-value-label');
+  const pctValueHint = document.getElementById('pct-value-hint');
+  const pctValueError = document.getElementById('pct-value-error');
+  const pctErrorBanner = document.getElementById('pct-form-error');
+  const pctResultBox = document.getElementById('pct-result');
+  const pctResultLabel = document.getElementById('pct-result-label');
+  const pctValueEl = document.getElementById('pct-output');
+  const pctMetaEl = document.getElementById('pct-meta');
+  const pctNextActionsEl = document.getElementById('pct-next-actions');
+
+  function syncPctDirectionUi() {
+    if (!pctDirectionSelect || !pctValueInput) return;
+    const isPctToCgpa = pctDirectionSelect.value === 'pct-to-cgpa';
+    if (pctValueLabel) {
+      pctValueLabel.textContent = isPctToCgpa ? 'Percentage (%)' : 'CGPA or GPA';
+    }
+    if (pctValueHint) {
+      pctValueHint.textContent = isPctToCgpa ? 'Enter 0 to 100' : 'Enter 0 to 10';
+    }
+    if (pctValueError) {
+      pctValueError.textContent = isPctToCgpa
+        ? 'Enter a valid percentage between 0 and 100.'
+        : 'Enter a valid CGPA between 0 and 10.';
+    }
+    pctValueInput.setAttribute('max', isPctToCgpa ? '100' : '10');
+    pctValueInput.setAttribute('placeholder', isPctToCgpa ? 'e.g. 88.50' : 'e.g. 9.15');
+    if (pctResultLabel) {
+      pctResultLabel.textContent = isPctToCgpa ? 'Equivalent CGPA' : 'Equivalent Percentage';
+    }
+  }
+
+  function evaluatePercentage({ isSubmit = false } = {}) {
+    if (!pctForm || !pctValueInput) return { ok: false };
+    syncPctDirectionUi();
+    if (!isSubmit && !pctValueInput.validity?.badInput && pctValueInput.value === '') {
+      hideResult(pctResultBox, pctValueEl, pctMetaEl, pctNextActionsEl);
+      clearPersonalPromo();
+      clearCalcTracking('pct');
+      if (pctForm.dataset.submitted !== 'true') {
+        setBanner(pctErrorBanner, '');
+      }
+      return { ok: false };
+    }
+
+    const res = convertCgpaPercentage({
+      university: pctUniSelect?.value || config.id,
+      mode: pctDirectionSelect?.value || 'cgpa-to-pct',
+      value: readNumberInput(pctValueInput),
+    });
+
+    if (res.ok) {
+      if (pctValueInput.validity?.valid) pctValueInput.classList.remove('user-invalid-fallback');
+      syncAria(pctValueInput, false);
+      setBanner(pctErrorBanner, '');
+
+      const isReverse = res.mode === 'pct-to-cgpa';
+      const displayVal = isReverse ? res.cgpaFormatted : `${res.percentageFormatted}%`;
+      const extraRef =
+        res.university === 'ktu' ? ` · 10× reference: ${res.referenceTenX}%` : '';
+
+      showResult(
+        pctResultBox,
+        pctValueEl,
+        pctMetaEl,
+        displayVal,
+        `Formula: ${res.formulaLabel}${extraRef}`,
+        { scroll: isSubmit }
+      );
+      renderNextActions(
+        pctNextActionsEl,
+        [
+          {
+            label: `Plan target CGPA from ${res.cgpaFormatted} →`,
+            href: `/target-cgpa/?cgpa=${encodeURIComponent(res.cgpaFormatted)}&uni=${encodeURIComponent(res.university)}`,
+            actionName: 'plan_target_cgpa',
+          },
+          {
+            label: 'Semester GPA Calculator →',
+            href: '/',
+            actionName: 'go_to_semester_gpa',
+          },
+        ],
+        'pct'
+      );
+      schedulePersonalPromo({ ok: true, tab: 'pct', result: res.percentage }, { immediate: isSubmit });
+      recordCalculation(
+        'pct',
+        'computed_percentage',
+        {
+          university: res.university,
+          mode: res.mode,
+          percentage: res.percentage,
+          cgpa: res.cgpa,
+        },
+        res.percentage,
+        { isSubmit, signature: `${res.university}:${res.mode}:${res.percentage}:${res.cgpa}` }
+      );
+      return res;
+    }
+
+    hideResult(pctResultBox, pctValueEl, pctMetaEl, pctNextActionsEl);
+    clearPersonalPromo();
+    clearCalcTracking('pct');
+    if (!isSubmit) return res;
+
+    setBanner(pctErrorBanner, res.error);
+    setControlError(pctValueInput, { showVisual: true, announce: false });
+    pctValueInput.focus();
+    return res;
+  }
+
+  if (pctForm) {
+    const handlePctChange = () => evaluatePercentage({ isSubmit: false });
+    pctForm.addEventListener('input', handlePctChange);
+    pctForm.addEventListener('change', handlePctChange);
+    pctForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      pctForm.dataset.submitted = 'true';
+      evaluatePercentage({ isSubmit: true });
+    });
+
+    wireResetButton('reset-pct-btn', pctForm, () => {
+      setBanner(pctErrorBanner, '');
+      hideResult(pctResultBox, pctValueEl, pctMetaEl, pctNextActionsEl);
+      clearPersonalPromo();
+      clearCalcTracking('pct');
+      syncPctDirectionUi();
+      trackEvent('calculator_reset', { calculator: 'pct', university: config.id });
+    });
+
+    try {
+      const pParams = new URLSearchParams(window.location.search);
+      const qUni = (pParams.get('uni') || '').trim().toLowerCase();
+      if (pctUniSelect && ['vit', 'anna', 'ktu', 'srm'].includes(qUni)) {
+        pctUniSelect.value = qUni;
+      }
+      const qMode = pParams.get('mode');
+      if (pctDirectionSelect && (qMode === 'cgpa-to-pct' || qMode === 'pct-to-cgpa')) {
+        pctDirectionSelect.value = qMode;
+      }
+      if (pParams.has('pct') && pctValueInput) {
+        if (pctDirectionSelect) pctDirectionSelect.value = 'pct-to-cgpa';
+        pctValueInput.value = pParams.get('pct') || '';
+      } else if (pParams.has('cgpa') && pctValueInput) {
+        if (pctDirectionSelect) pctDirectionSelect.value = 'cgpa-to-pct';
+        pctValueInput.value = pParams.get('cgpa') || '';
+      }
+      syncPctDirectionUi();
+      if (pctValueInput?.value) {
+        evaluatePercentage({ isSubmit: false });
+      }
+    } catch {
+      syncPctDirectionUi();
+    }
   }
 
   // 8. PWA Registration, Install Prompt, Display Mode & Share Button, Footer Year
@@ -1643,10 +2108,12 @@ function initApp() {
         to: 'legacy',
         university: config.id,
       });
-      const activeBtn = document.querySelector('[role="tab"][aria-selected="true"][data-tab]');
+      const activeBtn =
+        document.querySelector('[role="tab"][aria-selected="true"][data-tab]') ||
+        document.querySelector('.mode-tab[aria-current="page"][data-tab]');
       const activeTabId = activeBtn?.dataset?.tab;
       const targetUrl = new URL('/legacy/', window.location.origin);
-      if (activeTabId && activeTabId !== 'sc') {
+      if (activeTabId && ['gc', 'ec', 'fc'].includes(activeTabId)) {
         targetUrl.searchParams.set('tab', activeTabId);
       }
       window.location.assign(targetUrl.toString());
@@ -1888,7 +2355,7 @@ function initApp() {
     async function enableOptInAd({ trigger = 'user_click', persist = true } = {}) {
       syncOptInUi(true, 'Loading display ads…');
       try {
-        const mod = await import('./ads-manager.js?v=23');
+        const mod = await import('./ads-manager.js?v=24');
         if (!adsEnabled) {
           mod.grantAdFreePass({ win: window, source: 'user_toggle' });
           mod.hideAllManagedAds();
@@ -1902,7 +2369,7 @@ function initApp() {
           mod.hideAllManagedAds();
           return;
         }
-        const totalEligible = res.mountedCount + res.lazyCount;
+        const totalEligible = res.mountedCount + res.lazyCount + (res.actionCount || 0);
         if (totalEligible === 0) {
           syncOptInUi(true, 'No eligible slots on this viewport');
         } else if (res.preview) {
@@ -1918,6 +2385,7 @@ function initApp() {
     }
 
     async function disableOptInAd() {
+      actionAdsUnlocked = false;
       const hiddenMsg = 'Ads hidden (24h left)';
       syncOptInUi(false, hiddenMsg);
       document.querySelectorAll('.ad-slot[data-ad-managed="true"]').forEach((slotEl) => {
@@ -1930,7 +2398,7 @@ function initApp() {
         optInSlot.hidden = true;
       }
       try {
-        const mod = await import('./ads-manager.js?v=23');
+        const mod = await import('./ads-manager.js?v=24');
         if (adsEnabled) return;
         const pass = mod.grantAdFreePass({ win: window, source: 'user_toggle' });
         mod.hideAllManagedAds();

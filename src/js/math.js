@@ -279,3 +279,130 @@ export function calculateAllSemCgpa(semesters) {
     percentage: formatScore(raw * 10),
   };
 }
+
+/**
+ * Calculate required average GPA across remaining credits to reach a target CGPA.
+ */
+export function calculateTargetCgpa(input = {}) {
+  const data = input && typeof input === 'object' ? input : {};
+  const currentCgpa = parseOptionalNumber(data.currentCgpa);
+  const completedCredits = parseOptionalNumber(data.completedCredits);
+  const targetCgpa = parseOptionalNumber(data.targetCgpa);
+  const remainingCredits = parseOptionalNumber(data.remainingCredits);
+
+  const invalidFields = [];
+  if (!isInRange(currentCgpa, 0, 10)) invalidFields.push('currentCgpa');
+  if (!isInRange(completedCredits, 0, 300)) invalidFields.push('completedCredits');
+  if (!isInRange(targetCgpa, 0, 10)) invalidFields.push('targetCgpa');
+  if (
+    remainingCredits === null ||
+    Number.isNaN(remainingCredits) ||
+    remainingCredits <= 0 ||
+    remainingCredits > 250
+  ) {
+    invalidFields.push('remainingCredits');
+  }
+
+  if (invalidFields.length > 0) {
+    return {
+      ok: false,
+      error:
+        'Enter valid numbers within range (CGPA 0–10, Completed Credits 0–300, Remaining Credits 1–250).',
+      invalidFields,
+    };
+  }
+
+  const totalCredits = completedCredits + remainingCredits;
+  const rawRequired = (targetCgpa * totalCredits - currentCgpa * completedCredits) / remainingCredits;
+  const maxPossibleRaw = (currentCgpa * completedCredits + 10 * remainingCredits) / totalCredits;
+
+  let status = 'achievable';
+  if (rawRequired <= 0) status = 'already_achieved';
+  else if (rawRequired > 10) status = 'impossible';
+
+  const requiredGpa = rawRequired <= 0 ? 0 : roundToTwo(rawRequired);
+
+  return {
+    ok: true,
+    status,
+    requiredGpa,
+    formatted: formatScore(requiredGpa),
+    rawRequired: roundToTwo(rawRequired),
+    totalCredits: roundToTwo(totalCredits),
+    maxPossibleCgpa: roundToTwo(maxPossibleRaw),
+    maxPossibleFormatted: formatScore(maxPossibleRaw),
+  };
+}
+
+/**
+ * Convert between CGPA and percentage using university-specific formulas.
+ */
+export function convertCgpaPercentage(input = {}) {
+  const data = input && typeof input === 'object' ? input : {};
+  const mode =
+    data.mode === undefined || data.mode === 'cgpa-to-pct'
+      ? 'cgpa-to-pct'
+      : data.mode === 'pct-to-cgpa'
+        ? 'pct-to-cgpa'
+        : '';
+
+  if (!mode) {
+    return {
+      ok: false,
+      error: 'Choose a valid conversion direction.',
+      invalidFields: ['mode'],
+    };
+  }
+
+  const uniRaw = typeof data.university === 'string' ? data.university.trim().toLowerCase() : 'vit';
+  const university = ['vit', 'anna', 'ktu', 'srm'].includes(uniRaw) ? uniRaw : 'vit';
+  const value = parseOptionalNumber(data.value);
+
+  if (mode === 'cgpa-to-pct') {
+    if (!isInRange(value, 0, 10)) {
+      return {
+        ok: false,
+        error: 'Enter a valid CGPA between 0 and 10.',
+        invalidFields: ['value'],
+      };
+    }
+    const rawPct = university === 'ktu' ? Math.max(0, value * 10 - 3.75) : value * 10;
+    const formulaLabel = university === 'ktu' ? '(CGPA × 10) − 3.75 (KTU Official)' : 'CGPA × 10';
+    return {
+      ok: true,
+      mode,
+      university,
+      cgpa: roundToTwo(value),
+      cgpaFormatted: formatScore(value),
+      percentage: roundToTwo(rawPct),
+      percentageFormatted: formatScore(rawPct),
+      referenceTenX: formatScore(value * 10),
+      formulaLabel,
+    };
+  }
+
+  if (!isInRange(value, 0, 100)) {
+    return {
+      ok: false,
+      error: 'Enter a valid percentage between 0 and 100.',
+      invalidFields: ['value'],
+    };
+  }
+
+  const rawCgpa =
+    university === 'ktu' ? Math.min(10, Math.max(0, (value + 3.75) / 10)) : value / 10;
+  const formulaLabel =
+    university === 'ktu' ? '(Percentage + 3.75) ÷ 10 (KTU Official)' : 'Percentage ÷ 10';
+
+  return {
+    ok: true,
+    mode,
+    university,
+    cgpa: roundToTwo(rawCgpa),
+    cgpaFormatted: formatScore(rawCgpa),
+    percentage: roundToTwo(value),
+    percentageFormatted: formatScore(value),
+    referenceTenX: formatScore(rawCgpa * 10),
+    formulaLabel,
+  };
+}
