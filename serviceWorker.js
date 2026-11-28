@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cgpa-calculator-v24';
+const CACHE_NAME = 'cgpa-calculator-v25';
 
 const PRECACHE_URLS = [
   '/',
@@ -7,17 +7,16 @@ const PRECACHE_URLS = [
   '/expected-marks/',
   '/all-semester-cgpa/',
   '/target-cgpa/',
-  '/percentage-converter/',
   '/college/anna-university.html',
   '/college/ktu.html',
   '/college/srm.html',
   '/src/css/vendor/pico.min.css',
-  '/src/css/app.css?v=21',
-  '/src/js/app.js?v=24',
+  '/src/css/app.css?v=22',
+  '/src/js/app.js?v=25',
   '/src/js/math.js',
   '/src/js/universities.js',
   '/src/js/analytics.js',
-  '/src/js/ads-manager.js?v=24',
+  '/src/js/ads-manager.js?v=25',
   '/src/js/promos.js',
   '/manifest/vit.json',
   '/manifest/anna.json',

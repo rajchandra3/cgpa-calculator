@@ -48,14 +48,7 @@ export function formatAdFreeRemaining(remainingMs) {
 }
 
 export function getAdPreference(win = window, now = Date.now()) {
-  if (getAdFreeRemainingMs(win, now) > 0) {
-    return false;
-  }
-  try {
-    return win?.localStorage?.getItem(AD_PREF_STORAGE_KEY) !== '0';
-  } catch {
-    return true;
-  }
+  return !(getAdFreeRemainingMs(win, now) > 0);
 }
 
 export function setAdPreference(
@@ -211,13 +204,6 @@ function findOptInSlot(doc) {
   );
 }
 
-function setOptInStatus(doc, message) {
-  const statusEl = doc?.getElementById?.('ad-optin-status');
-  if (statusEl) {
-    statusEl.textContent = message;
-  }
-}
-
 function trackAdEvent(win, name, props) {
   try {
     if (typeof win?.track === 'function') {
@@ -228,20 +214,18 @@ function trackAdEvent(win, name, props) {
   }
 }
 
-function observeAdStatus(insEl, slotEl, meta, doc, win, { updateOptInStatus = false } = {}) {
+function observeAdStatus(insEl, slotEl, meta, win) {
   if (typeof win?.MutationObserver !== 'function') return;
 
   const observer = new win.MutationObserver(() => {
     const status = insEl.getAttribute('data-ad-status');
     if (status === 'filled') {
       slotEl.classList.remove('is-loading', 'is-unfilled');
-      if (updateOptInStatus) setOptInStatus(doc, 'Ad slot active');
       trackAdEvent(win, 'ad_slot_filled', meta);
       observer.disconnect();
     } else if (status === 'unfilled') {
       slotEl.classList.remove('is-loading');
       slotEl.classList.add('is-unfilled');
-      if (updateOptInStatus) setOptInStatus(doc, 'No ad available right now');
       trackAdEvent(win, 'ad_slot_unfilled', meta);
       observer.disconnect();
     }
@@ -317,13 +301,12 @@ function renderPreviewSlot(slotEl, doc, slotId, viewportWidth) {
   mountIntoFrame(slotEl, box);
 }
 
-function ensureAdSenseScript(doc, win, slotEl, meta, { updateOptInStatus = false } = {}) {
+function ensureAdSenseScript(doc, win, slotEl, meta) {
   const attachErrorHandler = (scriptEl) => {
     scriptEl.addEventListener?.('error', () => {
       slotEl.classList.remove('is-loading');
       slotEl.classList.add('is-unfilled');
       slotEl.hidden = true;
-      if (updateOptInStatus) setOptInStatus(doc, 'Ad script blocked by browser or extension');
       trackAdEvent(win, 'ad_slot_unfilled', {
         ...meta,
         reason: 'script_blocked',
@@ -351,7 +334,7 @@ function ensureAdSenseScript(doc, win, slotEl, meta, { updateOptInStatus = false
 
 export function mountManagedSlot(
   slotEl,
-  { university = 'vit', trigger = 'default_on', doc = document, win = window, updateOptInStatus = false } = {}
+  { university = 'vit', trigger = 'default_on', doc = document, win = window } = {}
 ) {
   const preview = isPreviewMode(win?.location?.search || '');
   const viewportWidth = Number(win?.innerWidth || doc?.documentElement?.clientWidth || 0);
@@ -392,7 +375,7 @@ export function mountManagedSlot(
   };
 
   slotEl.classList?.add('is-loading');
-  ensureAdSenseScript(doc, win, slotEl, meta, { updateOptInStatus });
+  ensureAdSenseScript(doc, win, slotEl, meta);
 
   const ins = doc.createElement('ins');
   ins.className = 'adsbygoogle';
@@ -415,7 +398,7 @@ export function mountManagedSlot(
   }
 
   trackAdEvent(win, 'ad_slot_requested', meta);
-  observeAdStatus(ins, slotEl, meta, doc, win, { updateOptInStatus });
+  observeAdStatus(ins, slotEl, meta, win);
   observeAdViewability(slotEl, meta, win);
 
   return { preview: false, activated: true, slot: slotId };
@@ -428,6 +411,16 @@ export function initManagedAds({
   win = window,
 } = {}) {
   const preview = isPreviewMode(win?.location?.search || '');
+  if (!preview && !getAdPreference(win)) {
+    return {
+      preview: false,
+      mountedCount: 0,
+      lazyCount: 0,
+      actionCount: 0,
+      slots: [],
+    };
+  }
+
   const viewportWidth = Number(win?.innerWidth || doc?.documentElement?.clientWidth || 0);
 
   const priorObserver = lazyObservers.get(doc);
@@ -468,7 +461,6 @@ export function initManagedAds({
         trigger,
         doc,
         win,
-        updateOptInStatus: slotEl.id === 'ad-slot-optin',
       });
       if (res.activated) mounted.push(res.slot);
       continue;
@@ -604,7 +596,6 @@ export function activateOptInAd({
     trigger,
     doc,
     win,
-    updateOptInStatus: true,
   });
 }
 
@@ -630,6 +621,5 @@ export function activateAnnouncementAd({
     trigger,
     doc,
     win,
-    updateOptInStatus: false,
   });
 }

@@ -1189,7 +1189,7 @@ iframe.giscus-frame {
   line-height: 1.45;
 }
 
-/* Tier 3 Quiet Chrome Cards (.side-card, .contribute-card, .ad-control-card) */
+/* Tier 3 Quiet Chrome Cards (.side-card, .contribute-card) */
 .side-card {
   background: transparent;
   border: 1px solid var(--border);
@@ -1218,8 +1218,7 @@ iframe.giscus-frame {
   gap: 0.4375rem;
 }
 
-.side-card-actions > .btn,
-:is(button, a).btn.ad-optin-btn {
+.side-card-actions > .btn {
   width: 100%;
   max-inline-size: 100%;
   min-block-size: max(var(--target-size), 2.125rem);
@@ -1228,45 +1227,6 @@ iframe.giscus-frame {
   font-weight: 400;
   white-space: normal;
   text-align: center;
-}
-
-:is(button, a).btn.ad-optin-btn[aria-pressed="true"],
-:is(button, a).btn.ad-optin-btn[aria-pressed="true"]:focus,
-:is(button, a).btn.ad-optin-btn[aria-pressed="true"]:is(:hover, :active):not(:disabled, [aria-disabled="true"]) {
-  background-color: transparent;
-  border-color: var(--border);
-  color: var(--text-muted);
-  box-shadow: none;
-  --pico-box-shadow: none;
-}
-
-:is(button, a).btn.ad-optin-btn[aria-pressed="true"]:hover:not(:disabled, [aria-disabled="true"]) {
-  background-color: var(--surface-muted);
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-
-.ad-optin-status {
-  margin: 0;
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-
-.ad-control-card {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.625rem 0.75rem;
-}
-
-.ad-control-card .ad-optin-btn {
-  width: auto;
-  flex: 0 0 auto;
-  min-block-size: max(var(--target-size), 2rem);
-  padding: 0.25rem 0.625rem;
 }
 
 /* Lean Zero-CLS Ad Containers (strictly outside forms & comments) */
@@ -1317,7 +1277,7 @@ iframe.giscus-frame {
 .ad-slot-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 0.5rem;
   padding-inline: 0.625rem;
   margin-block-end: 0.375rem;
@@ -1332,33 +1292,7 @@ iframe.giscus-frame {
 
 .ad-slot-bar .ad-label {
   margin-block-end: 0;
-  text-align: start;
-}
-
-button.ad-hide-btn {
-  margin: 0;
-  padding: 0.125rem 0.25rem;
-  min-block-size: 1.5rem;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  box-shadow: none;
-  --pico-box-shadow: none;
-  font-family: inherit;
-  font-size: 0.6875rem;
-  font-weight: 400;
-  line-height: 1.2;
-  color: var(--text-muted);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-
-button.ad-hide-btn:hover,
-button.ad-hide-btn:focus-visible {
-  color: var(--text);
-  background: transparent;
+  text-align: center;
 }
 
 /* Top Announcement Banner / Desktop Leaderboard */
@@ -2186,11 +2120,6 @@ details.faq-item > p {
     min-inline-size: var(--target-size);
     min-block-size: var(--target-size);
   }
-
-  button.ad-hide-btn {
-    min-block-size: var(--target-size);
-    padding-inline: 0.375rem;
-  }
 }
 
 /* Motion */
@@ -2236,8 +2165,7 @@ details.faq-item > p {
     border: 1px solid CanvasText;
   }
 
-  :is(button, a).mode-tab:is([aria-selected="true"], [aria-current="page"], .is-active),
-  :is(button, a).btn.ad-optin-btn[aria-pressed="true"] {
+  :is(button, a).mode-tab:is([aria-selected="true"], [aria-current="page"], .is-active) {
     border-color: Highlight;
   }
 

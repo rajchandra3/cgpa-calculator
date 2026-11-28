@@ -373,15 +373,15 @@ test('pure helpers cover viewport buckets, preview flag, host checks, slot/forma
   assert.equal(formatAdFreeRemaining(30 * 60 * 1000), '< 1h left');
   assert.equal(formatAdFreeRemaining(12 * 3600 * 1000), '12h left');
 
-  // 24h TTL + legacy preference handling
+  // 24h rewarded TTL handling (no permanent opt-out bypass)
   const env = createEnvironment();
   const baseNow = 1_700_000_000_000;
   assert.equal(getAdPreference(env.win, baseNow), true);
   assert.equal(getAdFreeRemainingMs(env.win, baseNow), 0);
 
-  // Legacy '0' still disables ads
+  // Legacy '0' no longer suppresses ads when no 24h rewarded pass exists
   env.storageMap.set(AD_PREF_STORAGE_KEY, '0');
-  assert.equal(getAdPreference(env.win, baseNow), false);
+  assert.equal(getAdPreference(env.win, baseNow), true);
 
   // setAdPreference(false) stores 24h expiry and removes permanent '0'
   setAdPreference(env.win, false, { ttlMs: AD_FREE_TTL_MS, now: baseNow });
@@ -644,7 +644,6 @@ test('Desktop opt-in mounts rail slot once with staging data-adtest, status sync
   env.mutationObservers[0].trigger();
   assert.equal(slot.slotEl.classList.contains('is-loading'), false);
   assert.equal(slot.slotEl.classList.contains('is-unfilled'), false);
-  assert.equal(statusEl.textContent, 'Ad slot active');
 
   // IntersectionObserver viewability dwell cancellation + confirmation
   env.intersectionObservers[0].trigger([{ isIntersecting: true, intersectionRatio: 0.6 }]);
@@ -658,14 +657,12 @@ test('Desktop opt-in mounts rail slot once with staging data-adtest, status sync
 
   // Unfilled state on fresh slot sets .is-unfilled and clears .is-loading
   const unfilledSlot = createOptInSlot({ id: 'ad-slot-optin' });
-  const unfilledStatus = createFakeElement('p', { id: 'ad-optin-status' });
-  const unfilledEnv = createEnvironment({ slot: unfilledSlot, statusEl: unfilledStatus, width: 375 });
+  const unfilledEnv = createEnvironment({ slot: unfilledSlot, width: 375 });
   activateOptInAd({ university: 'anna', doc: unfilledEnv.doc, win: unfilledEnv.win });
   unfilledSlot.frame.children[0].setAttribute('data-ad-status', 'unfilled');
   unfilledEnv.mutationObservers[0].trigger();
   assert.equal(unfilledSlot.slotEl.classList.contains('is-unfilled'), true);
   assert.equal(unfilledSlot.slotEl.classList.contains('is-loading'), false);
-  assert.equal(unfilledStatus.textContent, 'No ad available right now');
 });
 
 test('initManagedAds and hideAllManagedAds orchestrate eager vs scroll-lazy slots across desktop and mobile cleanly', () => {
@@ -819,12 +816,12 @@ test('Production omits data-adtest, supports querySelector/appendChild fallbacks
   assert.deepEqual(res, { preview: false, activated: true, slot: '6993669367' });
   assert.equal(slot.slotEl.children[0].getAttribute('data-adtest'), null);
 
-  // Script blocked collapses slot, updates status, and fires ad_slot_unfilled with script_blocked
+  // Script blocked collapses slot gracefully even when win.track throws
   env.headChildren[0].dispatchEvent('error');
   assert.equal(slot.slotEl.classList.contains('is-unfilled'), true);
   assert.equal(slot.slotEl.classList.contains('is-loading'), false);
   assert.equal(slot.slotEl.hidden, true);
-  assert.equal(statusEl.textContent, 'Ad script blocked by browser or extension');
+  assert.equal(env.trackEvents.length, 0);
 
   // querySelector fallback (without getElementById), existing script, and appendChild without replaceChildren
   const fallbackSlot = createOptInSlot();
@@ -1030,8 +1027,15 @@ test('data-ad-load="action" stays hidden on boot and mounts once on unlockAction
   assert.deepEqual(secondUnlock, { preview: false, mountedCount: 0, slots: [] });
   assert.equal(env.win.adsbygoogle.length, 1);
 
-  // 24h ad-free TTL suppresses action unlock unless preview mode
+  // 24h rewarded ad-free TTL suppresses initManagedAds and unlockActionAds unless preview mode
   setAdPreference(env.win, false);
+  assert.deepEqual(initManagedAds({ doc: env.doc, win: env.win }), {
+    preview: false,
+    mountedCount: 0,
+    lazyCount: 0,
+    actionCount: 0,
+    slots: [],
+  });
   assert.deepEqual(unlockActionAds({ doc: env.doc, win: env.win }), {
     preview: false,
     mountedCount: 0,

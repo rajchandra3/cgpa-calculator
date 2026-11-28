@@ -5,7 +5,6 @@ import {
   calculateGpa,
   calculateQuickCgpa,
   calculateTargetCgpa,
-  convertCgpaPercentage,
 } from './math.js';
 import {
   ANNOUNCEMENT_BANNER,
@@ -16,9 +15,6 @@ import {
 } from './promos.js';
 
 const THEME_STORAGE_KEY = 'color-scheme';
-const AD_PREF_STORAGE_KEY = 'cgpa_ad_optin';
-const AD_HIDE_UNTIL_STORAGE_KEY = 'cgpa_ad_hide_until';
-const AD_FREE_TTL_MS = 24 * 60 * 60 * 1000;
 const UI_VERSION_STORAGE_KEY = 'cgpa_ui_version';
 const LEGACY_THEME_KEYS = ['ui_theme', 'theme'];
 const LEGACY_TAB_MAP = Object.freeze({
@@ -53,7 +49,7 @@ export function resolveGiscusTheme(mode) {
 export function getScoreBand(tab, score) {
   const num = Number(score);
   if (!Number.isFinite(num)) return 'unknown';
-  if (tab === 'ec' || tab === 'pct') {
+  if (tab === 'ec') {
     if (num >= 90) return '90_plus';
     if (num >= 80) return '80_to_90';
     if (num >= 70) return '70_to_80';
@@ -457,9 +453,9 @@ function initApp() {
   let actionAdsUnlocked = false;
 
   function unlockPostCalcAds(trigger = 'calculation_completed') {
-    if (actionAdsUnlocked || isAdFreeActiveLocal()) return;
+    if (actionAdsUnlocked) return;
     actionAdsUnlocked = true;
-    import('./ads-manager.js?v=24')
+    import('./ads-manager.js?v=25')
       .then((mod) => mod.unlockActionAds({ university: config.id, trigger }))
       .catch(() => {
         actionAdsUnlocked = false;
@@ -949,16 +945,16 @@ function initApp() {
                 actionName: 'carry_to_quick_cgpa',
               },
               {
-                label: `Convert ${res.formatted} to % →`,
-                href: `/percentage-converter/?cgpa=${encodeURIComponent(res.formatted)}&uni=vit`,
-                actionName: 'convert_to_percentage',
+                label: 'Can I hit my target CGPA? →',
+                href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=vit`,
+                actionName: 'plan_target_cgpa',
               },
             ]
           : [
               {
-                label: `Convert ${res.formatted} to % →`,
-                href: `/percentage-converter/?cgpa=${encodeURIComponent(res.formatted)}&uni=${encodeURIComponent(config.id)}`,
-                actionName: 'convert_to_percentage',
+                label: 'Can I hit my target CGPA? →',
+                href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=${encodeURIComponent(config.id)}`,
+                actionName: 'plan_target_cgpa',
               },
             ];
       renderNextActions(gpaNextActionsEl, gpaActions, 'sc');
@@ -1165,22 +1161,21 @@ function initApp() {
         `${res.totalCredits} total credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
-      renderNextActions(
-        quickNextActionsEl,
-        [
-          {
-            label: `Plan target CGPA from ${res.formatted} →`,
-            href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=${encodeURIComponent(config.id)}`,
-            actionName: 'plan_target_cgpa',
-          },
-          {
-            label: `Convert ${res.formatted} to % →`,
-            href: `/percentage-converter/?cgpa=${encodeURIComponent(res.formatted)}&uni=${encodeURIComponent(config.id)}`,
-            actionName: 'convert_to_percentage',
-          },
-        ],
-        'gc'
-      );
+      const quickActions = [
+        {
+          label: `Can I reach my target CGPA from ${res.formatted}? →`,
+          href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=${encodeURIComponent(config.id)}`,
+          actionName: 'plan_target_cgpa',
+        },
+      ];
+      if (config.id === 'vit') {
+        quickActions.push({
+          label: 'Calculate Semester GPA →',
+          href: '/',
+          actionName: 'go_to_semester_gpa',
+        });
+      }
+      renderNextActions(quickNextActionsEl, quickActions, 'gc');
       schedulePersonalPromo(
         { ok: true, tab: 'gc', result: res.cgpa, credits: res.totalCredits },
         { immediate: isSubmit }
@@ -1333,14 +1328,14 @@ function initApp() {
         ecNextActionsEl,
         [
           {
-            label: 'Calculate Semester GPA →',
+            label: 'See how this impacts Semester GPA →',
             href: '/',
             actionName: 'go_to_semester_gpa',
           },
           {
-            label: 'Quick CGPA Calculator →',
-            href: '/quick-cgpa/',
-            actionName: 'go_to_quick_cgpa',
+            label: 'Can I still reach my target CGPA? →',
+            href: '/target-cgpa/?uni=vit',
+            actionName: 'plan_target_cgpa',
           },
         ],
         'ec'
@@ -1535,22 +1530,21 @@ function initApp() {
         `${res.semesterCount} ${semWord} · ${res.totalCredits} credits · ~${res.percentage}%`,
         { scroll: isSubmit }
       );
-      renderNextActions(
-        allSemNextActionsEl,
-        [
-          {
-            label: `Plan target CGPA from ${res.formatted} →`,
-            href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=${encodeURIComponent(config.id)}`,
-            actionName: 'plan_target_cgpa',
-          },
-          {
-            label: `Convert ${res.formatted} to % →`,
-            href: `/percentage-converter/?cgpa=${encodeURIComponent(res.formatted)}&uni=${encodeURIComponent(config.id)}`,
-            actionName: 'convert_to_percentage',
-          },
-        ],
-        'fc'
-      );
+      const allSemActions = [
+        {
+          label: `Can I reach my target CGPA from ${res.formatted}? →`,
+          href: `/target-cgpa/?cgpa=${encodeURIComponent(res.formatted)}&credits=${encodeURIComponent(res.totalCredits)}&uni=${encodeURIComponent(config.id)}`,
+          actionName: 'plan_target_cgpa',
+        },
+      ];
+      if (config.id === 'vit') {
+        allSemActions.push({
+          label: 'Calculate Semester GPA →',
+          href: '/',
+          actionName: 'go_to_semester_gpa',
+        });
+      }
+      renderNextActions(allSemNextActionsEl, allSemActions, 'fc');
       schedulePersonalPromo(
         { ok: true, tab: 'fc', result: res.cgpa, credits: res.totalCredits },
         { immediate: isSubmit }
@@ -1773,16 +1767,19 @@ function initApp() {
         scroll: isSubmit,
         warning: isImpossible,
       });
+      const simLabel = isImpossible
+        ? 'Simulate max Semester GPA →'
+        : `Simulate ${res.formatted} Semester GPA →`;
       renderNextActions(
         targetNextActionsEl,
         [
           {
-            label: 'Simulate Semester GPA →',
+            label: simLabel,
             href: '/',
             actionName: 'simulate_semester_gpa',
           },
           {
-            label: 'Quick CGPA Calculator →',
+            label: 'Check Quick CGPA →',
             href: '/quick-cgpa/',
             actionName: 'go_to_quick_cgpa',
           },
@@ -1868,167 +1865,6 @@ function initApp() {
       }
     } catch {
       // Ignore query prefill errors
-    }
-  }
-
-  // 7c. CGPA <-> Percentage Converter (#percentage-form)
-  const pctForm = document.getElementById('percentage-form');
-  const pctUniSelect = document.getElementById('pct-university');
-  const pctDirectionSelect = document.getElementById('pct-direction');
-  const pctValueInput = document.getElementById('pct-value');
-  const pctValueLabel = document.getElementById('pct-value-label');
-  const pctValueHint = document.getElementById('pct-value-hint');
-  const pctValueError = document.getElementById('pct-value-error');
-  const pctErrorBanner = document.getElementById('pct-form-error');
-  const pctResultBox = document.getElementById('pct-result');
-  const pctResultLabel = document.getElementById('pct-result-label');
-  const pctValueEl = document.getElementById('pct-output');
-  const pctMetaEl = document.getElementById('pct-meta');
-  const pctNextActionsEl = document.getElementById('pct-next-actions');
-
-  function syncPctDirectionUi() {
-    if (!pctDirectionSelect || !pctValueInput) return;
-    const isPctToCgpa = pctDirectionSelect.value === 'pct-to-cgpa';
-    if (pctValueLabel) {
-      pctValueLabel.textContent = isPctToCgpa ? 'Percentage (%)' : 'CGPA or GPA';
-    }
-    if (pctValueHint) {
-      pctValueHint.textContent = isPctToCgpa ? 'Enter 0 to 100' : 'Enter 0 to 10';
-    }
-    if (pctValueError) {
-      pctValueError.textContent = isPctToCgpa
-        ? 'Enter a valid percentage between 0 and 100.'
-        : 'Enter a valid CGPA between 0 and 10.';
-    }
-    pctValueInput.setAttribute('max', isPctToCgpa ? '100' : '10');
-    pctValueInput.setAttribute('placeholder', isPctToCgpa ? 'e.g. 88.50' : 'e.g. 9.15');
-    if (pctResultLabel) {
-      pctResultLabel.textContent = isPctToCgpa ? 'Equivalent CGPA' : 'Equivalent Percentage';
-    }
-  }
-
-  function evaluatePercentage({ isSubmit = false } = {}) {
-    if (!pctForm || !pctValueInput) return { ok: false };
-    syncPctDirectionUi();
-    if (!isSubmit && !pctValueInput.validity?.badInput && pctValueInput.value === '') {
-      hideResult(pctResultBox, pctValueEl, pctMetaEl, pctNextActionsEl);
-      clearPersonalPromo();
-      clearCalcTracking('pct');
-      if (pctForm.dataset.submitted !== 'true') {
-        setBanner(pctErrorBanner, '');
-      }
-      return { ok: false };
-    }
-
-    const res = convertCgpaPercentage({
-      university: pctUniSelect?.value || config.id,
-      mode: pctDirectionSelect?.value || 'cgpa-to-pct',
-      value: readNumberInput(pctValueInput),
-    });
-
-    if (res.ok) {
-      if (pctValueInput.validity?.valid) pctValueInput.classList.remove('user-invalid-fallback');
-      syncAria(pctValueInput, false);
-      setBanner(pctErrorBanner, '');
-
-      const isReverse = res.mode === 'pct-to-cgpa';
-      const displayVal = isReverse ? res.cgpaFormatted : `${res.percentageFormatted}%`;
-      const extraRef =
-        res.university === 'ktu' ? ` · 10× reference: ${res.referenceTenX}%` : '';
-
-      showResult(
-        pctResultBox,
-        pctValueEl,
-        pctMetaEl,
-        displayVal,
-        `Formula: ${res.formulaLabel}${extraRef}`,
-        { scroll: isSubmit }
-      );
-      renderNextActions(
-        pctNextActionsEl,
-        [
-          {
-            label: `Plan target CGPA from ${res.cgpaFormatted} →`,
-            href: `/target-cgpa/?cgpa=${encodeURIComponent(res.cgpaFormatted)}&uni=${encodeURIComponent(res.university)}`,
-            actionName: 'plan_target_cgpa',
-          },
-          {
-            label: 'Semester GPA Calculator →',
-            href: '/',
-            actionName: 'go_to_semester_gpa',
-          },
-        ],
-        'pct'
-      );
-      schedulePersonalPromo({ ok: true, tab: 'pct', result: res.percentage }, { immediate: isSubmit });
-      recordCalculation(
-        'pct',
-        'computed_percentage',
-        {
-          university: res.university,
-          mode: res.mode,
-          percentage: res.percentage,
-          cgpa: res.cgpa,
-        },
-        res.percentage,
-        { isSubmit, signature: `${res.university}:${res.mode}:${res.percentage}:${res.cgpa}` }
-      );
-      return res;
-    }
-
-    hideResult(pctResultBox, pctValueEl, pctMetaEl, pctNextActionsEl);
-    clearPersonalPromo();
-    clearCalcTracking('pct');
-    if (!isSubmit) return res;
-
-    setBanner(pctErrorBanner, res.error);
-    setControlError(pctValueInput, { showVisual: true, announce: false });
-    pctValueInput.focus();
-    return res;
-  }
-
-  if (pctForm) {
-    const handlePctChange = () => evaluatePercentage({ isSubmit: false });
-    pctForm.addEventListener('input', handlePctChange);
-    pctForm.addEventListener('change', handlePctChange);
-    pctForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      pctForm.dataset.submitted = 'true';
-      evaluatePercentage({ isSubmit: true });
-    });
-
-    wireResetButton('reset-pct-btn', pctForm, () => {
-      setBanner(pctErrorBanner, '');
-      hideResult(pctResultBox, pctValueEl, pctMetaEl, pctNextActionsEl);
-      clearPersonalPromo();
-      clearCalcTracking('pct');
-      syncPctDirectionUi();
-      trackEvent('calculator_reset', { calculator: 'pct', university: config.id });
-    });
-
-    try {
-      const pParams = new URLSearchParams(window.location.search);
-      const qUni = (pParams.get('uni') || '').trim().toLowerCase();
-      if (pctUniSelect && ['vit', 'anna', 'ktu', 'srm'].includes(qUni)) {
-        pctUniSelect.value = qUni;
-      }
-      const qMode = pParams.get('mode');
-      if (pctDirectionSelect && (qMode === 'cgpa-to-pct' || qMode === 'pct-to-cgpa')) {
-        pctDirectionSelect.value = qMode;
-      }
-      if (pParams.has('pct') && pctValueInput) {
-        if (pctDirectionSelect) pctDirectionSelect.value = 'pct-to-cgpa';
-        pctValueInput.value = pParams.get('pct') || '';
-      } else if (pParams.has('cgpa') && pctValueInput) {
-        if (pctDirectionSelect) pctDirectionSelect.value = 'cgpa-to-pct';
-        pctValueInput.value = pParams.get('cgpa') || '';
-      }
-      syncPctDirectionUi();
-      if (pctValueInput?.value) {
-        evaluatePercentage({ isSubmit: false });
-      }
-    } catch {
-      syncPctDirectionUi();
     }
   }
 
@@ -2292,143 +2128,7 @@ function initApp() {
     });
   });
 
-  function getLocalAdFreeRemainingMs(now = Date.now()) {
-    const rawUntil = safeStorageGet(AD_HIDE_UNTIL_STORAGE_KEY);
-    if (rawUntil) {
-      const until = Number(rawUntil);
-      if (Number.isFinite(until) && until > now) {
-        return until - now;
-      }
-      safeStorageRemove(AD_HIDE_UNTIL_STORAGE_KEY);
-    }
-    return 0;
-  }
-
-  function isAdFreeActiveLocal(now = Date.now()) {
-    if (getLocalAdFreeRemainingMs(now) > 0) return true;
-    return safeStorageGet(AD_PREF_STORAGE_KEY) === '0';
-  }
-
-  function formatLocalRemaining(remainingMs) {
-    if (!Number.isFinite(remainingMs) || remainingMs <= 0) return '24h TTL active';
-    const hours = Math.ceil(remainingMs / 3600000);
-    return hours <= 1 ? '< 1h left' : `${hours}h left`;
-  }
-
-  function initOptInAdControl() {
-    const adControlCard = document.getElementById('ad-control-card');
-    const optInBtn = document.getElementById('ad-optin-btn');
-    const optInStatus = document.getElementById('ad-optin-status');
-    const optInSlot = document.getElementById('ad-slot-optin');
-    const inlineToggleBtns = Array.from(document.querySelectorAll('[data-ad-toggle="true"]'));
-    if (!optInBtn && !optInSlot && inlineToggleBtns.length === 0) return;
-
-    let adsEnabled = false;
-    let userInteracted = false;
-    let idleTimer = null;
-
-    function syncOptInUi(enabled, statusText) {
-      adsEnabled = Boolean(enabled);
-      if (adControlCard) {
-        adControlCard.hidden = adsEnabled;
-      }
-      if (optInBtn) {
-        optInBtn.setAttribute('aria-pressed', adsEnabled ? 'true' : 'false');
-        optInBtn.textContent = adsEnabled ? 'Hide ads (24h)' : 'Show ads';
-      }
-      inlineToggleBtns.forEach((btn) => {
-        btn.setAttribute('aria-pressed', adsEnabled ? 'true' : 'false');
-        btn.textContent = adsEnabled ? 'Hide ads (24h)' : 'Show ads';
-      });
-      if (optInStatus && statusText) {
-        optInStatus.textContent = statusText;
-      }
-    }
-
-    function cancelPendingAutoEnable() {
-      if (idleTimer !== null) {
-        window.clearTimeout(idleTimer);
-        idleTimer = null;
-      }
-    }
-
-    async function enableOptInAd({ trigger = 'user_click', persist = true } = {}) {
-      syncOptInUi(true, 'Loading display ads…');
-      try {
-        const mod = await import('./ads-manager.js?v=24');
-        if (!adsEnabled) {
-          mod.grantAdFreePass({ win: window, source: 'user_toggle' });
-          mod.hideAllManagedAds();
-          return;
-        }
-        if (persist) {
-          mod.setAdPreference(window, true);
-        }
-        const res = mod.initManagedAds({ university: config.id, trigger });
-        if (!adsEnabled) {
-          mod.hideAllManagedAds();
-          return;
-        }
-        const totalEligible = res.mountedCount + res.lazyCount + (res.actionCount || 0);
-        if (totalEligible === 0) {
-          syncOptInUi(true, 'No eligible slots on this viewport');
-        } else if (res.preview) {
-          syncOptInUi(true, 'Ad preview active · Zero ad scripts loaded');
-        } else {
-          syncOptInUi(true, 'Ad slots active');
-        }
-      } catch {
-        if (adsEnabled) {
-          syncOptInUi(false, 'Ads off · Unable to load ad module');
-        }
-      }
-    }
-
-    async function disableOptInAd() {
-      actionAdsUnlocked = false;
-      const hiddenMsg = 'Ads hidden (24h left)';
-      syncOptInUi(false, hiddenMsg);
-      document.querySelectorAll('.ad-slot[data-ad-managed="true"]').forEach((slotEl) => {
-        if (slotEl.id === 'announcement-banner' && slotEl.classList.contains('is-custom-announcement')) {
-          return;
-        }
-        slotEl.hidden = true;
-      });
-      if (optInSlot) {
-        optInSlot.hidden = true;
-      }
-      try {
-        const mod = await import('./ads-manager.js?v=24');
-        if (adsEnabled) return;
-        const pass = mod.grantAdFreePass({ win: window, source: 'user_toggle' });
-        mod.hideAllManagedAds();
-        const label = mod.formatAdFreeRemaining(pass.until - Date.now()) || '24h left';
-        syncOptInUi(false, `Ads hidden (${label})`);
-      } catch {
-        safeStorageSet(AD_HIDE_UNTIL_STORAGE_KEY, String(Date.now() + AD_FREE_TTL_MS));
-        safeStorageRemove(AD_PREF_STORAGE_KEY);
-      }
-    }
-
-    const handleToggleClick = () => {
-      userInteracted = true;
-      cancelPendingAutoEnable();
-      if (!adsEnabled) {
-        trackEvent('ad_optin_enabled', { university: config.id });
-        enableOptInAd({ trigger: 'user_click', persist: true });
-      } else {
-        trackEvent('ad_optin_disabled', { university: config.id, ttl_hours: 24 });
-        disableOptInAd();
-      }
-    };
-
-    if (optInBtn) {
-      optInBtn.addEventListener('click', handleToggleClick);
-    }
-    inlineToggleBtns.forEach((btn) => {
-      btn.addEventListener('click', handleToggleClick);
-    });
-
+  function initDisplayAds() {
     let previewMode = false;
     try {
       previewMode = new URLSearchParams(window.location.search).get('ads') === 'preview';
@@ -2436,40 +2136,38 @@ function initApp() {
       previewMode = false;
     }
 
-    if (previewMode) {
-      enableOptInAd({ trigger: 'preview', persist: false });
-      return;
-    }
-
-    if (isAdFreeActiveLocal()) {
-      const remainingMs = getLocalAdFreeRemainingMs();
-      const suffix = remainingMs > 0 ? formatLocalRemaining(remainingMs) : 'manual off';
-      syncOptInUi(false, `Ads hidden (${suffix})`);
-      return;
-    }
-
-    let autoStarted = false;
-    const runDefaultLeftAd = () => {
-      if (autoStarted || userInteracted) return;
-      autoStarted = true;
-      cancelPendingAutoEnable();
-      enableOptInAd({ trigger: 'default_on', persist: false });
+    let started = false;
+    const mountAds = (trigger) => {
+      if (started) return;
+      started = true;
+      import('./ads-manager.js?v=25')
+        .then((mod) => {
+          mod.initManagedAds({ university: config.id, trigger });
+        })
+        .catch(() => {
+          started = false;
+        });
     };
 
-    const scheduleDefaultLeftAd = () => {
-      if (autoStarted || userInteracted) return;
+    if (previewMode) {
+      mountAds('preview');
+      return;
+    }
+
+    const scheduleMount = () => {
+      if (started) return;
       if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(runDefaultLeftAd, { timeout: 1500 });
-        idleTimer = window.setTimeout(runDefaultLeftAd, 1500);
+        window.requestIdleCallback(() => mountAds('default_on'), { timeout: 1500 });
+        window.setTimeout(() => mountAds('default_on'), 1500);
       } else {
-        idleTimer = window.setTimeout(runDefaultLeftAd, 1500);
+        window.setTimeout(() => mountAds('default_on'), 1500);
       }
     };
 
     if (document.readyState === 'complete') {
-      scheduleDefaultLeftAd();
+      scheduleMount();
     } else {
-      window.addEventListener('load', scheduleDefaultLeftAd, { once: true });
+      window.addEventListener('load', scheduleMount, { once: true });
     }
   }
 
@@ -2504,17 +2202,15 @@ function initApp() {
       previewMode = false;
     }
 
-    if (!previewMode && (!ANNOUNCEMENT_BANNER.adFallbackEnabled || isAdFreeActiveLocal())) {
-      if (!ANNOUNCEMENT_BANNER.adFallbackEnabled) {
-        bannerEl.removeAttribute('data-ad-managed');
-      }
+    if (!previewMode && !ANNOUNCEMENT_BANNER.adFallbackEnabled) {
+      bannerEl.removeAttribute('data-ad-managed');
       bannerEl.hidden = true;
     }
   }
 
   initAnnouncementBanner();
   initGiscusComments();
-  initOptInAdControl();
+  initDisplayAds();
 }
 
 if (typeof document !== 'undefined') {

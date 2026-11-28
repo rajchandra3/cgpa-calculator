@@ -90,14 +90,14 @@ test('PWA manifests are valid JSON, reference existing icons, and use canonical 
   }
 });
 
-test('serviceWorker.js uses cgpa-calculator-v24, precaches 26 existing assets including VIT multi-page routes, pico.min.css, ads-manager.js?v=24, app.js?v=24, and promos.js, and uses SWR + network-first', () => {
+test('serviceWorker.js uses cgpa-calculator-v25, precaches 25 existing assets including VIT multi-page routes, pico.min.css, ads-manager.js?v=25, app.js?v=25, and promos.js, and uses SWR + network-first', () => {
   assert.equal(repoFileExists('src/css/vendor/pico.min.css'), true, 'Missing src/css/vendor/pico.min.css on disk');
   assert.equal(repoFileExists('src/js/ads-manager.js'), true, 'Missing src/js/ads-manager.js on disk');
   assert.equal(repoFileExists('src/js/promos.js'), true, 'Missing src/js/promos.js on disk');
   assert.equal(repoFileExists('src/images/icons/icon-96x96.png'), true, 'Missing src/images/icons/icon-96x96.png on disk');
 
   const swSource = readRepoFile('serviceWorker.js');
-  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v24'/);
+  assert.match(swSource, /const CACHE_NAME = 'cgpa-calculator-v25'/);
   assert.match(swSource, /caches\.delete/);
   assert.match(swSource, /event\.request\.method !== 'GET'/);
   assert.match(swSource, /requestUrl\.pathname\.startsWith\('\/src\/'\)/);
@@ -108,16 +108,16 @@ test('serviceWorker.js uses cgpa-calculator-v24, precaches 26 existing assets in
   assert.ok(arrayMatch, 'PRECACHE_URLS array must exist in serviceWorker.js');
 
   const urls = Array.from(arrayMatch[1].matchAll(/'([^']+)'/g), (m) => m[1]);
-  assert.equal(urls.length, 26);
+  assert.equal(urls.length, 25);
   assert.equal(urls.includes('/src/css/vendor/pico.min.css'), true);
-  assert.equal(urls.includes('/src/css/app.css?v=21'), true);
-  assert.equal(urls.includes('/src/js/app.js?v=24'), true);
-  assert.equal(urls.includes('/src/js/ads-manager.js?v=24'), true);
+  assert.equal(urls.includes('/src/css/app.css?v=22'), true);
+  assert.equal(urls.includes('/src/js/app.js?v=25'), true);
+  assert.equal(urls.includes('/src/js/ads-manager.js?v=25'), true);
   assert.equal(urls.includes('/quick-cgpa/'), true);
   assert.equal(urls.includes('/expected-marks/'), true);
   assert.equal(urls.includes('/all-semester-cgpa/'), true);
   assert.equal(urls.includes('/target-cgpa/'), true);
-  assert.equal(urls.includes('/percentage-converter/'), true);
+  assert.equal(urls.includes('/percentage-converter/'), false);
   assert.equal(urls.includes('/src/js/promos.js'), true);
   assert.equal(urls.includes('/src/images/icons/icon-96x96.png'), true);
 
@@ -323,15 +323,17 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
 
   const appSource = readRepoFile('src/js/app.js');
   assert.match(appSource, /trackEvent\('App Installed'/);
-  assert.match(appSource, /import\('\.\/ads-manager\.js\?v=24'\)/);
+  assert.match(appSource, /import\('\.\/ads-manager\.js\?v=25'\)/);
   assert.match(appSource, /unlockActionAds/);
   assert.match(appSource, /calculateTargetCgpa/);
-  assert.match(appSource, /convertCgpaPercentage/);
+  assert.doesNotMatch(appSource, /convertCgpaPercentage|percentage-converter/);
+  assert.doesNotMatch(appSource, /ad_optin_enabled|ad_optin_disabled|Hide ads \(24h\)/);
+  assert.match(appSource, /Can I hit my target CGPA\?/);
+  assert.match(appSource, /Can I reach my target CGPA from/);
+  assert.match(appSource, /Can I still reach my target CGPA\?/);
   assert.match(appSource, /from '\.\/promos\.js'/);
   assert.doesNotMatch(appSource, /scheduleAdsManager/);
   assert.match(appSource, /contribute_clicked/);
-  assert.match(appSource, /ad_optin_enabled/);
-  assert.match(appSource, /ad_optin_disabled/);
   assert.match(appSource, /promo_shown/);
   assert.match(appSource, /promo_clicked/);
   assert.match(appSource, /promo_dismissed/);
@@ -349,7 +351,6 @@ test('obsolete JS files are deleted and active JS/HTML files meet security and h
     'expected-marks/index.html',
     'all-semester-cgpa/index.html',
     'target-cgpa/index.html',
-    'percentage-converter/index.html',
     'college/anna-university.html',
     'college/ktu.html',
     'college/srm.html',
@@ -600,7 +601,6 @@ test('getScoreBand buckets 10-point GPA/CGPA and 100-point marks/percentage clea
   assert.equal(getScoreBand('sc', 7.0), '7_to_8');
   assert.equal(getScoreBand('sc', 6.8), 'below_7');
   assert.equal(getScoreBand('ec', 92), '90_plus');
-  assert.equal(getScoreBand('pct', 91.5), '90_plus');
   assert.equal(getScoreBand('ec', 84), '80_to_90');
   assert.equal(getScoreBand('ec', 71), '70_to_80');
   assert.equal(getScoreBand('ec', 60), 'below_70');
@@ -608,7 +608,7 @@ test('getScoreBand buckets 10-point GPA/CGPA and 100-point marks/percentage clea
   assert.equal(getScoreBand('ec', 'not-a-number'), 'unknown');
 });
 
-test('all 9 calculator pages (6 VIT routes + 3 college pages) match DOM contracts, ad slots, action-unlocked ads, JSON-LD parity, and sitemap', () => {
+test('all 8 calculator pages (5 VIT routes + 3 college pages) match DOM contracts, ad slots, action-unlocked ads, JSON-LD parity, and sitemap', () => {
   const spaSharedIds = [
     'gpa-form',
     'gpa-rows',
@@ -691,15 +691,6 @@ test('all 9 calculator pages (6 VIT routes + 3 college pages) match DOM contract
       pageIds: ['target-cgpa-form', 'target-prefill-note', 'target-current-cgpa', 'target-completed-credits', 'target-goal-cgpa', 'target-remaining-credits', 'target-submit-btn', 'target-result', 'target-required-gpa', 'target-meta', 'target-next-actions'],
     },
     {
-      file: 'percentage-converter/index.html',
-      uni: 'vit',
-      headerTitle: 'VIT CGPA Calculator',
-      discussionTerm: '5',
-      hasClassicLink: true,
-      hasLegacyRedirect: false,
-      pageIds: ['percentage-form', 'pct-university', 'pct-direction', 'pct-value', 'pct-submit-btn', 'pct-result', 'pct-output', 'pct-meta', 'pct-next-actions'],
-    },
-    {
       file: 'college/anna-university.html',
       uni: 'anna',
       headerTitle: 'Anna University CGPA Calculator',
@@ -735,9 +726,6 @@ test('all 9 calculator pages (6 VIT routes + 3 college pages) match DOM contract
     'contribute-section',
     'contribute-repo-link',
     'contribute-issue-link',
-    'ad-control-card',
-    'ad-optin-btn',
-    'ad-optin-status',
     'ad-slot-optin',
     'ad-slot-left-secondary',
     'ad-slot-post-calc',
@@ -756,11 +744,11 @@ test('all 9 calculator pages (6 VIT routes + 3 college pages) match DOM contract
     assert.doesNotMatch(html, /Google\+Sans:wght@[^"']*700/);
     assert.match(html, /Space\+Grotesk/);
     assert.match(html, /\/src\/css\/vendor\/pico\.min\.css/);
-    assert.match(html, /\/src\/css\/app\.css\?v=21/);
-    assert.match(html, /<link rel="modulepreload" href="\/src\/js\/app\.js\?v=24">/);
+    assert.match(html, /\/src\/css\/app\.css\?v=22/);
+    assert.match(html, /<link rel="modulepreload" href="\/src\/js\/app\.js\?v=25">/);
     assert.match(html, /<link rel="modulepreload" href="\/src\/js\/promos\.js">/);
     assert.match(html, /<script src="\/src\/js\/analytics\.js" defer fetchpriority="low"><\/script>/);
-    assert.match(html, /<script type="module" src="\/src\/js\/app\.js\?v=24" fetchpriority="high"><\/script>/);
+    assert.match(html, /<script type="module" src="\/src\/js\/app\.js\?v=25" fetchpriority="high"><\/script>/);
 
     // Header uses original logo image + college H1 title; no cross-college uni-nav or page-hero
     assert.match(html, /<img class="brand-logo" src="\/src\/images\/icons\/icon-96x96\.png"/);
@@ -768,14 +756,16 @@ test('all 9 calculator pages (6 VIT routes + 3 college pages) match DOM contract
     assert.doesNotMatch(html, /class="uni-nav"/);
     assert.doesNotMatch(html, /class="page-hero"/);
     assert.doesNotMatch(html, /class="footer-links"/);
+    assert.doesNotMatch(html, /percentage-converter/);
+    assert.doesNotMatch(html, /ad-control-card|data-ad-toggle|Hide ads/);
 
-    // Center starts directly with mode-tabs (nav or role=tablist); Left pane holds desktop rail ads + collapsed restore card; Right pane has Contribute ABOVE Discussions
+    // Center starts directly with mode-tabs (nav or role=tablist); Left pane holds desktop rail ads only; Right pane has Contribute ABOVE Discussions
     assert.match(html, /<div class="workspace-center">\s*<(?:nav|div) class="mode-tabs"/);
     const leftMatch = html.match(/<aside class="workspace-left"[\s\S]*?<\/aside>/);
     assert.ok(leftMatch, `${page.file} missing .workspace-left`);
     assert.match(leftMatch[0], /id="ad-slot-optin"/);
     assert.match(leftMatch[0], /id="ad-slot-left-secondary"/);
-    assert.match(leftMatch[0], /id="ad-control-card"/);
+    assert.doesNotMatch(leftMatch[0], /id="ad-control-card"/);
     assert.doesNotMatch(leftMatch[0], /id="contribute-section"/);
 
     const rightMatch = html.match(/<aside class="workspace-right"[\s\S]*?<\/aside>/);
@@ -812,11 +802,6 @@ test('all 9 calculator pages (6 VIT routes + 3 college pages) match DOM contract
       html,
       /id="contribute-issue-link"[^>]*data-contribute-action="issue"[^>]*href="https:\/\/github\.com\/rajchandra3\/cgpa-calculator\/issues\/new"/
     );
-    assert.match(
-      html,
-      /id="ad-optin-btn"[^>]*aria-pressed="false"[^>]*aria-controls="ad-slot-optin"[^>]*>Show ads<\/button>/
-    );
-    assert.match(html, /data-ad-toggle="true"[^>]*>Hide ads \(24h\)<\/button>/);
     assert.match(html, /<span id="thisYear"><\/span>/);
     assert.doesNotMatch(html, /<span id="thisYear">\d+<\/span>/);
 
@@ -894,11 +879,13 @@ test('all 9 calculator pages (6 VIT routes + 3 college pages) match DOM contract
     }
   }
 
-  // XML sitemap covers all canonical VIT routes + college routes
+  // XML sitemap covers all canonical VIT routes + college routes (and excludes removed percentage converter)
   const sitemapXml = readRepoFile('sitemap.xml');
-  for (const route of ['/', '/quick-cgpa/', '/expected-marks/', '/all-semester-cgpa/', '/target-cgpa/', '/percentage-converter/']) {
+  for (const route of ['/', '/quick-cgpa/', '/expected-marks/', '/all-semester-cgpa/', '/target-cgpa/']) {
     assert.match(sitemapXml, new RegExp(`https:\\/\\/cgpa-calculator\\.rajchandra\\.me${route.replace(/\//g, '\\/')}`));
   }
+  assert.doesNotMatch(sitemapXml, /percentage-converter/);
+  assert.equal(repoFileExists('percentage-converter/index.html'), false);
 });
 
 test('VIT /legacy/ Classic UI snapshot exists, uses manual AdSense slots (no Auto Ads), is noindex, and has safe JS + 2.0 switch toggle', () => {
@@ -986,7 +973,7 @@ test('src/css/app.css keeps .row-list single-column at all viewports and cleans 
   assert.match(css, /\.ad-slot--post-calc/);
   assert.match(css, /\.ad-slot--footer/);
   assert.match(css, /\.ad-slot-bar/);
-  assert.match(css, /button\.ad-hide-btn/);
+  assert.doesNotMatch(css, /button\.ad-hide-btn|\.ad-control-card/);
   assert.match(css, /\.personal-promo-card/);
   assert.match(css, /@media \(max-width: 640px\)[\s\S]*?\.header-inner\s*\{\s*flex-wrap:\s*wrap;/);
   assert.match(css, /\.header-actions \.theme-toggle-mobile/);
